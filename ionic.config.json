@@ -1,0 +1,7 @@
+{
+  "name": "CareRide",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
