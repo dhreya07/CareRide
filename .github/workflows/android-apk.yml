@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,13 +31,13 @@ jobs:
         run: npm ci
 
       - name: Build Ionic Angular
-        run: npx ionic build
-
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+        run: npx ng build --configuration production
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
 
       - name: Build Debug APK
         working-directory: android
