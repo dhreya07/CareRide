@@ -1,0 +1,401 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  display: block;
+  background: #f3fbf8;
+  color: #12312c;
+}
+
+.location-picker {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  background: #f3fbf8;
+}
+
+.picker-bar,
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+.picker-bar {
+  padding-top: calc(10px + env(safe-area-inset-top));
+  border-bottom: 1px solid #d8f3ea;
+}
+
+.picker-bar h2 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+}
+
+.text-button,
+.search-bar button,
+.area-search,
+.filters button,
+.facilities button,
+.confirm {
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+}
+
+.text-button {
+  min-width: 72px;
+  min-height: 44px;
+  background: transparent;
+  color: #0f766e;
+}
+
+.search-bar input {
+  flex: 1;
+  min-height: 48px;
+  border: 1px solid #b7e4d8;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: #f3fbf8;
+  color: #12312c;
+  font: inherit;
+}
+
+.search-bar button,
+.confirm {
+  min-height: 48px;
+  border-radius: 14px;
+  background: #0f766e;
+  color: #fff;
+  padding: 0 16px;
+}
+
+.search-results,
+.facilities {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px;
+  background: #fff;
+}
+
+.search-results {
+  flex: 0 0 auto;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.search-results button,
+.facilities button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: #fff;
+  color: #12312c;
+  border-bottom: 1px solid #d8f3ea;
+  padding: 10px 0;
+  touch-action: manipulation;
+}
+
+.search-results button span {
+  color: #3d5c56;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.search-results {
+  position: relative;
+  z-index: 5;
+}
+
+.map-stage {
+  position: relative;
+  flex: 1;
+  min-height: 180px;
+  background: #d7f3ee;
+}
+
+.picker-map {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  background: #d7f3ee;
+}
+
+.center-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 500;
+  pointer-events: none;
+}
+
+.center-pin span {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #12312c;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.center-pin.destination span {
+  background: #0f766e;
+}
+
+.center-pin::after {
+  content: '';
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: -4px auto 0;
+  border-radius: 50% 50% 50% 0;
+  background: #12312c;
+  transform: rotate(-45deg);
+}
+
+.center-pin.destination::after {
+  background: #0f766e;
+}
+
+.area-search,
+.tile-note {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+}
+
+.area-search {
+  top: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f766e;
+  box-shadow: 0 6px 16px #12312c22;
+}
+
+.tile-note,
+.status {
+  margin: 0;
+  color: #3d5c56;
+  font-size: 13px;
+}
+
+.tile-note {
+  bottom: 12px;
+  width: calc(100% - 24px);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 42dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid #d8f3ea;
+  box-shadow: 0 -8px 24px #12312c14;
+}
+
+.adjust-toggle {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 600;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f766e;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 6px 16px #12312c22;
+}
+
+.adjust-toggle.accept {
+  background: #0f766e;
+  color: #fff;
+}
+
+.retry {
+  min-height: 40px;
+  border: 1px solid #0f766e;
+  border-radius: 12px;
+  background: #fff;
+  color: #0f766e;
+  font: inherit;
+  font-weight: 800;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.address {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.coords {
+  margin: 0;
+  color: #3d5c56;
+  font-size: 13px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.filters button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #d8f3ea;
+  color: #12312c;
+  white-space: nowrap;
+}
+
+.filters button.selected,
+.facilities button.selected {
+  background: #0f766e;
+  color: #fff;
+}
+
+.facilities {
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+
+.facilities button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.facilities button span {
+  color: #3d5c56;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.facilities button.selected span {
+  color: #d8f3ea;
+}
+
+.confirm {
+  position: sticky;
+  bottom: 0;
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+:host ::ng-deep .care-selected-destination span {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+:host ::ng-deep .care-facility-pin {
+  background: transparent;
+  border: 0;
+}
+
+:host ::ng-deep .care-facility-pin {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: auto !important;
+  height: auto !important;
+}
+
+:host ::ng-deep .care-facility-pin .dot {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #0f766e;
+  box-shadow: 0 2px 6px #12312c55;
+  flex: 0 0 auto;
+}
+
+:host ::ng-deep .care-facility-pin .name {
+  max-width: 140px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #fff;
+  color: #12312c;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 6px #12312c33;
+}
+
+:host ::ng-deep .care-facility-pin.clinic .dot {
+  background: #3d8b84;
+}
+
+:host ::ng-deep .care-facility-pin.health-center .dot {
+  background: #115e59;
+}
+
+.selected-hospital {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 14px;
+  background: #f3fbf8;
+}
+
+.selected-hospital button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #0f766e;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+}
+
+:host.phone .sheet {
+  max-height: 50dvh;
+}
+
+:host.phone .picker-bar h2 {
+  font-size: 16px;
+}

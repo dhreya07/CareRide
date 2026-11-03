@@ -1,0 +1,473 @@
+<div class="driver-page care-frame">
+  <div class="driver-shell care-shell">
+    <div class="shell-scroll">
+
+      <header class="driver-topbar">
+        <div class="top-row">
+          <span class="role-chip">Driver</span>
+          <div class="top-actions">
+            <button type="button" class="notification-button" (click)="openNotifications()" aria-label="Notifications">
+              <ion-icon name="notifications-outline"></ion-icon>
+              <span class="notification-count" *ngIf="notificationCount > 0">{{ notificationCount > 9 ? '9+' : notificationCount }}</span>
+            </button>
+            <button type="button" class="sign-out-button" (click)="signOut()">
+              Sign out
+            </button>
+          </div>
+        </div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="driver-rating" *ngIf="myRating">Your rating · {{ myRating }}</p>
+        <p class="live-note">
+          <span class="live-dot" aria-hidden="true"></span>
+          Realtime
+        </p>
+        <p class="live-clock" aria-live="polite">
+          <strong>{{ clockTime }}</strong>
+          <span>{{ clockWeekday }}, {{ clockDate }}</span>
+        </p>
+      </header>
+
+      <section class="stats-grid" *ngIf="isHome" aria-label="Driver totals">
+        <div class="stat-card">
+          <span>Schedule</span>
+          <strong>{{ scheduleRides.length }}</strong>
+        </div>
+        <div class="stat-card">
+          <span>Assigned</span>
+          <strong>{{ assignedCount }}</strong>
+        </div>
+        <div class="stat-card">
+          <span>Ongoing</span>
+          <strong>{{ ongoingCount }}</strong>
+        </div>
+        <div class="stat-card">
+          <span>Done</span>
+          <strong>{{ historyRides.length }}</strong>
+        </div>
+      </section>
+
+      <section class="chart-card availability-card" *ngIf="isHome" aria-label="My availability">
+        <h2>My Availability</h2>
+        <p class="chart-note">Current status: {{ myAvailabilityLabel }}</p>
+        <div class="availability-choices" role="group" aria-label="Choose availability">
+          <button
+            type="button"
+            [class.selected]="myAvailability === 'available'"
+            [attr.aria-pressed]="myAvailability === 'available'"
+            (click)="setMyAvailability('available')"
+          >
+            Available
+          </button>
+          <button
+            type="button"
+            [class.selected]="myAvailability === 'busy'"
+            [attr.aria-pressed]="myAvailability === 'busy'"
+            (click)="setMyAvailability('busy')"
+          >
+            Busy
+          </button>
+          <button
+            type="button"
+            [class.selected]="myAvailability === 'offline'"
+            [attr.aria-pressed]="myAvailability === 'offline'"
+            (click)="setMyAvailability('offline')"
+          >
+            Offline
+          </button>
+        </div>
+      </section>
+
+      <section class="chart-card" *ngIf="isHome" aria-label="Trip overview">
+        <h2>Trip overview</h2>
+        <div class="bar-row" *ngFor="let bar of overviewBars">
+          <span>{{ bar.label }}</span>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="bar.pct"></div>
+          </div>
+          <strong>{{ bar.value }}</strong>
+        </div>
+      </section>
+
+      <section class="chart-card" *ngIf="isHome" aria-label="Client ratings">
+        <h2>Client ratings</h2>
+        <p class="chart-note">{{ ratedCount }} of {{ clientReviews.length }} completed trips have a rating.</p>
+        <div class="bar-row" *ngFor="let bar of ratingBars">
+          <span>{{ bar.label }}</span>
+          <div class="bar-track">
+            <div class="bar-fill rating" [style.width.%]="bar.pct"></div>
+          </div>
+          <strong>{{ bar.value }}</strong>
+        </div>
+      </section>
+
+      <ng-container *ngIf="listTab === 'schedule'">
+        <section class="calendar-card" aria-label="Schedule calendar">
+          <div class="calendar-nav">
+            <button type="button" class="cal-nav-button" (click)="shiftCalendar(-1)" aria-label="Previous month">
+              <ion-icon name="chevron-back-outline"></ion-icon>
+            </button>
+            <h2>{{ calendarTitle }}</h2>
+            <button type="button" class="cal-nav-button" (click)="shiftCalendar(1)" aria-label="Next month">
+              <ion-icon name="chevron-forward-outline"></ion-icon>
+            </button>
+          </div>
+          <div class="calendar-weekdays">
+            <span *ngFor="let label of weekdayLabels">{{ label }}</span>
+          </div>
+          <div class="calendar-grid">
+            <button
+              type="button"
+              class="calendar-day"
+              *ngFor="let cell of calendarDays"
+              [class.in-month]="cell.inMonth"
+              [class.muted]="!cell.inMonth"
+              [class.today]="cell.today"
+              [class.selected]="cell.selected"
+              [class.has-clients]="cell.count > 0"
+              (click)="selectCalendarDay(cell.key)"
+            >
+              <strong>{{ cell.day }}</strong>
+              <em *ngIf="cell.count">{{ cell.count }}</em>
+            </button>
+          </div>
+        </section>
+
+        <div class="section-heading">
+          <h2>{{ selectedDayLabel }}</h2>
+        </div>
+
+        <section class="empty-card" *ngIf="selectedDayRides.length === 0">
+          <div class="empty-icon">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <h2>No clients this day</h2>
+          <p>Passengers who scheduled a trip with you will appear on their date.</p>
+        </section>
+
+        <article class="ride-card compact" *ngFor="let ride of selectedDayRides; trackBy: trackRide">
+          <div class="ride-card-header">
+            <div>
+              <span class="ride-number">{{ formatTime(ride.time) }}</span>
+              <h2 class="person-name">{{ ride.passengerName || 'Passenger' }}</h2>
+            </div>
+            <span class="status-badge" [attr.data-tone]="statusTone(ride)">
+              {{ statusLabel(ride) }}
+            </span>
+          </div>
+          <section class="route-section">
+            <div class="route-item">
+              <div class="route-marker">A</div>
+              <div class="stack">
+                <span>Pickup</span>
+                <strong>{{ ride.pickupLocation }}</strong>
+              </div>
+            </div>
+            <div class="route-connector"></div>
+            <div class="route-item">
+              <div class="route-marker">B</div>
+              <div class="stack">
+                <span>Destination</span>
+                <strong>{{ ride.destination }}</strong>
+              </div>
+            </div>
+          </section>
+          <div class="ride-actions">
+            <button type="button" class="secondary-button" (click)="viewRide(ride)">
+              View details
+            </button>
+          </div>
+        </article>
+      </ng-container>
+
+      <section class="empty-card" *ngIf="!isHome && listTab !== 'schedule' && visibleRides.length === 0">
+        <div class="empty-icon">
+          <ion-icon [name]="listTab === 'history' ? 'time-outline' : 'car-outline'"></ion-icon>
+        </div>
+        <h2>
+          {{ listTab === 'active'
+            ? 'Waiting for assigned rides'
+            : listTab === 'clients'
+              ? 'No past clients yet'
+              : 'No completed trips yet' }}
+        </h2>
+        <p *ngIf="listTab === 'active'">
+          Immediate and scheduled requests for you appear here. Accept a future schedule to place it on My Schedule.
+        </p>
+        <p *ngIf="listTab === 'history'">
+          Completed, cancelled, and declined trips stay in this list.
+        </p>
+        <p *ngIf="listTab === 'clients'">
+          Completed trips appear here with the passenger’s star rating and comment after they rate you.
+        </p>
+      </section>
+
+      <ng-container *ngIf="!isHome && listTab !== 'schedule'">
+      <article class="ride-card" *ngFor="let ride of visibleRides; trackBy: trackRide">
+        <div class="ride-card-header">
+          <div>
+            <span class="ride-number">RIDE {{ ride.id | slice:0:12 }}</span>
+            <h2>{{ ride.passengerName || 'Passenger' }}</h2>
+          </div>
+          <span class="status-badge" [attr.data-tone]="statusTone(ride)">
+            {{ statusLabel(ride) }}
+          </span>
+        </div>
+
+        <p class="client-slot" *ngIf="isScheduledRequest(ride)">
+          Scheduled pickup · {{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}
+        </p>
+        <p class="client-slot" *ngIf="!isScheduledRequest(ride)">
+          {{ ride.status === 'Pending' ? 'Immediate ride' : 'Client' }} · {{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}
+        </p>
+
+        <section class="route-section">
+          <div class="route-item">
+            <div class="route-marker">A</div>
+            <div>
+              <span>Pickup</span>
+              <strong>{{ ride.pickupLocation }}</strong>
+            </div>
+          </div>
+          <div class="route-connector"></div>
+          <div class="route-item">
+            <div class="route-marker">B</div>
+            <div>
+              <span>Destination</span>
+              <strong>{{ ride.destination }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="details-grid">
+          <div class="detail-box">
+            <span>Date</span>
+            <strong>{{ formatDate(ride.date) }}</strong>
+          </div>
+          <div class="detail-box">
+            <span>Time</span>
+            <strong>{{ formatTime(ride.time) }}</strong>
+          </div>
+        </section>
+
+        <section class="info-section" *ngIf="ride.vehicleLabel">
+          <span>Assigned vehicle</span>
+          <strong>{{ ride.vehicleLabel }}</strong>
+        </section>
+
+        <section class="info-section">
+          <span>Trip purpose</span>
+          <strong>{{ ride.purpose || 'Not specified' }}</strong>
+        </section>
+
+        <section class="info-section">
+          <span>Assistance needed</span>
+          <strong>{{ assistanceSummary(ride) }}</strong>
+          <p *ngIf="ride.otherAssistanceNotes">{{ ride.otherAssistanceNotes }}</p>
+        </section>
+
+        <section class="info-section" *ngIf="ride.notes">
+          <span>Passenger notes</span>
+          <strong>{{ ride.notes }}</strong>
+        </section>
+
+        <section class="info-section" *ngIf="listTab === 'clients' || ride.clientRating">
+          <span>Rating from {{ ride.passengerName }}</span>
+          <strong>{{ stars(ride.clientRating) }}</strong>
+          <p *ngIf="ride.clientComment">“{{ ride.clientComment }}”</p>
+          <p *ngIf="!ride.clientRating">This passenger has not rated this trip yet.</p>
+        </section>
+
+        <section class="emergency-section" *ngIf="listTab !== 'clients'">
+          <span>Emergency contact</span>
+          <strong>{{ ride.emergencyContactName || 'Not provided' }}</strong>
+          <p>{{ ride.emergencyContactNumber || 'No number provided' }}</p>
+        </section>
+
+        <p class="referral-note" *ngIf="hasPendingReferral(ride)">
+          Pending referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
+        </p>
+        <p class="referral-note" *ngIf="ride.referralStatus === 'passenger_declined'">
+          The passenger declined the referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
+        </p>
+
+        <div class="ride-actions" *ngIf="listTab === 'active' && canAcceptReferral(ride)">
+          <button type="button" class="primary-button" (click)="acceptReferral(ride)">
+            Accept referral
+          </button>
+          <button type="button" class="secondary-button" (click)="declineReferral(ride)">
+            Decline referral
+          </button>
+        </div>
+
+        <div class="ride-actions" *ngIf="listTab === 'active' && canRespond(ride)">
+          <button type="button" class="primary-button" (click)="acceptRequest(ride)">
+            Accept
+          </button>
+          <button type="button" class="secondary-button" (click)="declineRequest(ride)">
+            Decline
+          </button>
+          <button
+            *ngIf="showRefer(ride)"
+            type="button"
+            class="secondary-button"
+            (click)="referRequest(ride)"
+          >
+            Refer to another driver
+          </button>
+        </div>
+
+        <div class="ride-actions" *ngIf="listTab === 'active' && !canRespond(ride)">
+          <button
+            *ngIf="canStartRide(ride)"
+            type="button"
+            class="primary-button"
+            [disabled]="rideActionId !== null"
+            (click)="startRide(ride)"
+          >
+            Start Ride
+          </button>
+          <button
+            *ngIf="canCompleteRide(ride)"
+            type="button"
+            class="primary-button"
+            [disabled]="rideActionId !== null"
+            (click)="completeRide(ride)"
+          >
+            Complete Ride
+          </button>
+          <button
+            *ngIf="canShareLocation(ride)"
+            type="button"
+            class="secondary-button"
+            (click)="toggleLocationShare(ride)"
+          >
+            {{ sharingLocation(ride) ? 'Stop sharing location' : 'Share my location' }}
+          </button>
+          <button type="button" class="secondary-button" (click)="viewRide(ride)">
+            View ride details
+          </button>
+          <button type="button" class="report-button" (click)="reportIssue(ride)">
+            Report an issue
+          </button>
+          <button
+            *ngIf="ride.status === 'Driver Assigned'"
+            type="button"
+            class="cancel-button"
+            (click)="cancelRide(ride)"
+          >
+            Cancel assignment
+          </button>
+        </div>
+
+        <section class="driver-share-map" *ngIf="sharingLocation(ride)">
+          <p *ngIf="!driverFix(ride)">Waiting for a GPS reading. No position was invented.</p>
+          <ng-container *ngIf="driverFix(ride) as fix">
+            <app-location-map
+              [compact]="true"
+              [selectionEnabled]="false"
+              [pickup]="ridePoint(ride.pickupLatitude, ride.pickupLongitude)"
+              [destination]="ridePoint(ride.destinationLatitude, ride.destinationLongitude)"
+              [driver]="{ latitude: fix.latitude, longitude: fix.longitude }"
+              [driverAccuracyMeters]="fix.accuracyMeters"
+            ></app-location-map>
+            <p>
+              Last update {{ fix.capturedAt }}.
+              <span *ngIf="fix.accuracyMeters !== null"> GPS ±{{ fix.accuracyMeters }} m.</span>
+            </p>
+            <p *ngIf="driverFixIsStale(fix)">This GPS reading is stale. It is not a new position.</p>
+            <p *ngIf="driverAccuracyNote(fix)">{{ driverAccuracyNote(fix) }}</p>
+            <p *ngIf="driverShareOffline">This device is offline. The last GPS reading is shown.</p>
+          </ng-container>
+        </section>
+
+        <div class="ride-actions" *ngIf="listTab === 'history' || listTab === 'clients'">
+          <button type="button" class="secondary-button" (click)="viewRide(ride)">
+            View ride details
+          </button>
+        </div>
+      </article>
+      </ng-container>
+    </div>
+
+    <app-driver-navigation></app-driver-navigation>
+
+    <div class="dialog-backdrop" *ngIf="dialog" (click)="closeDialog()">
+      <div
+        class="dialog-card"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="dialog.title"
+        (click)="$event.stopPropagation()"
+      >
+        <p class="dialog-kicker">CareRide Driver</p>
+        <h2>{{ dialog.title }}</h2>
+
+        <ng-container *ngIf="dialog.ride && dialog.kind !== 'notice'">
+          <div class="dialog-rows">
+            <div>
+              <span>Passenger</span>
+              <strong>{{ dialog.ride.passengerName }}</strong>
+            </div>
+            <div>
+              <span>Pickup</span>
+              <strong>{{ dialog.ride.pickupLocation }}</strong>
+            </div>
+            <div>
+              <span>Destination</span>
+              <strong>{{ dialog.ride.destination }}</strong>
+            </div>
+          </div>
+        </ng-container>
+
+        <label class="report-field" *ngIf="dialog.kind === 'report'">
+          <span>Describe the issue</span>
+          <textarea
+            rows="4"
+            [(ngModel)]="dialog.reportText"
+            placeholder="What happened on this trip?"
+          ></textarea>
+        </label>
+
+        <div class="referral-options" *ngIf="dialog.kind === 'refer'">
+          <p class="dialog-copy" *ngIf="!dialog.referralDrivers?.length">No available drivers can take this ride right now.</p>
+          <button
+            type="button"
+            class="referral-option"
+            *ngFor="let driver of dialog.referralDrivers"
+            [class.selected]="dialog.selectedReferralId === driver.id"
+            [attr.aria-pressed]="dialog.selectedReferralId === driver.id"
+            (click)="selectReferralDriver(driver.id)"
+          >
+            <strong>{{ driver.name }}</strong>
+            <span>Vehicle: {{ driver.vehicleType }}</span>
+            <span>Plate: {{ driver.plateNumber }}</span>
+            <span>{{ driver.availability }} · {{ driver.ratingText }}</span>
+          </button>
+        </div>
+
+        <p class="dialog-copy" *ngIf="dialog.kind === 'notice'">{{ dialog.message }}</p>
+
+        <div class="dialog-actions" [class.single]="dialog.kind === 'notice'">
+          <button
+            type="button"
+            class="dialog-secondary"
+            *ngIf="dialog.kind !== 'notice'"
+            [disabled]="dialog.busy"
+            (click)="closeDialog()"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            class="dialog-primary"
+            [class.danger]="dialog.kind === 'cancel'"
+            [disabled]="dialog.busy"
+            (click)="confirmDialog()"
+          >
+            {{ dialog.busy ? 'Please wait…' : (dialog.confirmLabel || 'OK') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

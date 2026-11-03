@@ -1,6 +1,9 @@
-# Specifies intentionally untracked files to ignore when using Git
-# http://git-scm.com/docs/gitignore
+﻿# ==========================================
+# CareRide - Git Ignore Configuration
+# Ionic Angular + Supabase
+# ==========================================
 
+# Temporary files
 *~
 *.sw[mnpcod]
 .tmp
@@ -9,30 +12,50 @@
 UserInterfaceState.xcuserstate
 $RECYCLE.BIN/
 
+# Logs
 *.log
 log.txt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-
-/.sourcemaps
-/.versions
-/coverage
-
-# Ionic
-/.ionic
-/www
-/platforms
-/plugins
+# Ionic generated files
+/.ionic/
+/www/
+/platforms/
+/plugins/
 
 # Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+/dist/
+/build/
+/tmp/
+/out-tsc/
+/bazel-out/
+/.sourcemaps/
+/.versions/
+/coverage/
 
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
+# Node.js dependencies
+/node_modules/
+
+# Environment files containing secrets
+.env
+.env.*
+!.env.example
+
+# Private credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+service-account*.json
+service_role*.json
+
+# Supabase local development
+/supabase/.temp/
+/supabase/.branches/
 
 # IDEs and editors
 .idea/
@@ -52,18 +75,14 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
-
 # Miscellaneous
-/.angular
-/.angular/cache
-.sass-cache/
-/.nx
-/.nx/cache
+/.angular/
+/.sass-cache/
+/.nx/
 /connect.lock
-/coverage
 /libpeerconnection.log
 testem.log
-/typings
+/typings/
 
 # System files
 .DS_Store

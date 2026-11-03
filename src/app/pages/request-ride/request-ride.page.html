@@ -1,0 +1,555 @@
+<div class="ride-page care-frame">
+
+  <div class="ride-container care-shell">
+    <div class="shell-scroll">
+
+    <header class="page-header">
+
+      <button
+        type="button"
+        class="back-button"
+        (click)="backToDashboard()"
+      >
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+
+      <div class="header-title">
+
+        <h1>{{ step === 'form' ? 'Request a Ride' : 'Review Request' }}</h1>
+
+        <p>
+          {{ step === 'form'
+            ? 'Tell us where you need to go.'
+            : 'Confirm the details before submitting.' }}
+        </p>
+
+      </div>
+
+      <div class="header-logo">
+        <ion-icon name="car-outline"></ion-icon>
+      </div>
+
+    </header>
+
+
+    <div class="progress-section">
+
+      <div class="progress-item" [class.active]="step === 'form'">
+        <div class="progress-circle">1</div>
+        <span>Trip</span>
+      </div>
+
+      <div class="progress-line" [class.filled]="step === 'review'"></div>
+
+      <div class="progress-item" [class.active]="step === 'review'">
+        <div class="progress-circle">2</div>
+        <span>Review</span>
+      </div>
+
+      <div class="progress-line"></div>
+
+      <div class="progress-item">
+        <div class="progress-circle">3</div>
+        <span>Confirm</span>
+      </div>
+
+    </div>
+
+
+    <ng-container *ngIf="step === 'form'">
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon blue"><ion-icon name="location-outline"></ion-icon></div>
+          <div>
+            <h2>Trip Details</h2>
+            <p>Where should we pick you up and take you?</p>
+          </div>
+        </div>
+
+        <div class="preview-shell">
+          <app-location-map
+            [compact]="true"
+            [selectionEnabled]="false"
+            [pickup]="mapPickup"
+            [destination]="mapDestination"
+            [currentLocation]="liveGpsPoint"
+            [currentAccuracyMeters]="liveAccuracyMeters"
+            [route]="roadRoute"
+            (previewPressed)="onPreviewMapPressed()"
+          ></app-location-map>
+          <button type="button" class="expand-map" (click)="onPreviewMapPressed()">Expand map</button>
+        </div>
+        <p class="road-summary" *ngIf="roadSummary">{{ roadSummary }}</p>
+        <p class="road-summary unavailable" *ngIf="routeUnavailable">{{ routeUnavailable }}</p>
+
+        <button type="button" class="place-card" (click)="openLocationPicker('pickup')">
+          <span class="place-pin pickup" aria-hidden="true"></span>
+          <span class="place-copy">
+            <small>Pickup</small>
+            <strong>{{ placeTitle('pickup') }}</strong>
+            <span>{{ placeDetail('pickup') }}</span>
+          </span>
+          <span class="place-edit">{{ pickupLatitude !== null ? 'Edit' : 'Choose' }}</span>
+        </button>
+
+        <button type="button" class="place-card" (click)="openLocationPicker('destination')">
+          <span class="place-pin destination" aria-hidden="true"></span>
+          <span class="place-copy">
+            <small>Destination</small>
+            <strong>{{ placeTitle('destination') }}</strong>
+            <span>{{ placeDetail('destination') }}</span>
+          </span>
+          <span class="place-edit">{{ destinationLatitude !== null ? 'Edit' : 'Choose' }}</span>
+        </button>
+
+        <div class="location-details" *ngIf="liveAccuracyMeters !== null || liveGpsError || locationNotice">
+          <p *ngIf="liveAccuracyMeters !== null">
+            GPS accuracy: {{ liveAccuracyMeters }} m.
+            <span *ngIf="liveGpsStale"> This reading is stale.</span>
+          </p>
+          <p *ngIf="liveGpsError">{{ liveGpsError }}</p>
+          <p *ngIf="locationNotice">{{ locationNotice }}</p>
+        </div>
+
+        <app-location-picker
+          *ngIf="pickerRole"
+          [role]="pickerRole"
+          [initialLatitude]="pickerRole === 'pickup' ? pickupLatitude : destinationLatitude"
+          [initialLongitude]="pickerRole === 'pickup' ? pickupLongitude : destinationLongitude"
+          [initialLabel]="pickerRole === 'pickup' ? pickupLocation : destination"
+          [currentLocation]="liveGpsPoint"
+          [currentAccuracyMeters]="liveAccuracyMeters"
+          [initialQuery]="pickerQuery"
+          [otherLatitude]="pickerRole === 'destination' ? pickupLatitude : destinationLatitude"
+          [otherLongitude]="pickerRole === 'destination' ? pickupLongitude : destinationLongitude"
+          (confirmed)="confirmLocationPicker($event)"
+          (cancelled)="cancelLocationPicker()"
+          (locate)="useCurrentLocation()"
+        ></app-location-picker>
+
+        <div class="trip-preview" *ngIf="pickupLocation.trim() && destination.trim()">
+          <small>Trip so far</small>
+          <p><strong>From</strong> {{ pickupLocation }}</p>
+          <p><strong>To</strong> {{ destination }}</p>
+        </div>
+
+        <div class="form-group">
+          <label for="purpose">Purpose of trip <span>*</span></label>
+          <input
+            id="purpose"
+            name="purpose"
+            class="standard-input"
+            type="text"
+            [(ngModel)]="purpose"
+            placeholder="Hospital visit, health center, government office, etc."
+          />
+        </div>
+
+      </section>
+
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon teal"><ion-icon name="time-outline"></ion-icon></div>
+          <div>
+            <h2>When do you need the ride?</h2>
+            <p>Ride now or schedule your trip in advance.</p>
+          </div>
+        </div>
+
+        <div class="selection-grid">
+
+          <button
+            type="button"
+            class="selection-card"
+            [class.selected]="rideType === 'now'"
+            (click)="selectRideType('now')"
+          >
+            <div class="selection-check">
+              <ion-icon *ngIf="rideType === 'now'" name="checkmark-outline"></ion-icon>
+            </div>
+            <div class="selection-icon"><ion-icon name="car-outline"></ion-icon></div>
+            <strong>Ride Now</strong>
+            <span>Request transportation as soon as possible</span>
+          </button>
+
+          <button
+            type="button"
+            class="selection-card"
+            [class.selected]="rideType === 'schedule'"
+            (click)="selectRideType('schedule')"
+          >
+            <div class="selection-check">
+              <ion-icon *ngIf="rideType === 'schedule'" name="checkmark-outline"></ion-icon>
+            </div>
+            <div class="selection-icon"><ion-icon name="calendar-outline"></ion-icon></div>
+            <strong>Schedule Ride</strong>
+            <span>Choose a preferred date and time</span>
+          </button>
+
+        </div>
+
+        <div class="schedule-fields">
+          <div class="form-group">
+            <label for="rideDate">Date <span>*</span></label>
+            <input
+              id="rideDate"
+              name="rideDate"
+              class="standard-input"
+              type="date"
+              [(ngModel)]="rideDate"
+              (ngModelChange)="refreshDrivers()"
+              [class.locked]="rideType === 'now'"
+              [readOnly]="rideType === 'now'"
+              [attr.tabindex]="rideType === 'now' ? -1 : 0"
+              (keydown)="blockLockedSchedule($event)"
+              (mousedown)="blockLockedSchedule($event)"
+              (focus)="blockLockedSchedule($event)"
+            />
+          </div>
+          <div class="form-group">
+            <label for="rideTime">Time <span>*</span></label>
+            <input
+              id="rideTime"
+              name="rideTime"
+              class="standard-input"
+              type="time"
+              [(ngModel)]="rideTime"
+              (ngModelChange)="refreshDrivers()"
+              [class.locked]="rideType === 'now'"
+              [readOnly]="rideType === 'now'"
+              [attr.tabindex]="rideType === 'now' ? -1 : 0"
+              (keydown)="blockLockedSchedule($event)"
+              (mousedown)="blockLockedSchedule($event)"
+              (focus)="blockLockedSchedule($event)"
+            />
+          </div>
+        </div>
+
+      </section>
+
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon purple"><ion-icon name="person-outline"></ion-icon></div>
+          <div>
+            <h2>Who is this ride for?</h2>
+            <p>You can request a ride for yourself or an authorized family member.</p>
+          </div>
+        </div>
+
+        <div class="passenger-options">
+
+          <button
+            type="button"
+            class="passenger-option"
+            [class.selected]="passengerType === 'self'"
+            (click)="selectPassengerType('self')"
+          >
+            <div class="radio-circle">
+              <div class="radio-inner" *ngIf="passengerType === 'self'"></div>
+            </div>
+            <div>
+              <strong>Myself</strong>
+              <span>I am the passenger</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="passenger-option"
+            [class.selected]="passengerType === 'family'"
+            (click)="selectPassengerType('family')"
+          >
+            <div class="radio-circle">
+              <div class="radio-inner" *ngIf="passengerType === 'family'"></div>
+            </div>
+            <div>
+              <strong>Family Member</strong>
+              <span>Request for an authorized loved one</span>
+            </div>
+          </button>
+
+        </div>
+
+        <div class="form-group" *ngIf="passengerType === 'family'">
+          <label for="passengerName">Passenger name <span>*</span></label>
+          <input
+            id="passengerName"
+            name="passengerName"
+            class="standard-input"
+            type="text"
+            [(ngModel)]="passengerName"
+            placeholder="Full name of the passenger"
+          />
+        </div>
+
+      </section>
+
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon blue"><ion-icon name="car-outline"></ion-icon></div>
+          <div>
+            <h2>Choose an available driver</h2>
+            <p *ngIf="rideType === 'now'">Approved drivers who set their status to Available.</p>
+            <p *ngIf="rideType === 'schedule'">Approved drivers for this future trip. A driver who is Busy right now can still be chosen.</p>
+          </div>
+        </div>
+
+        <p class="form-error" *ngIf="drivers.length === 0">
+          No available drivers at the moment.
+        </p>
+
+        <div class="driver-options">
+          <button
+            type="button"
+            class="driver-option"
+            *ngFor="let driver of drivers"
+            [class.selected]="selectedDriverId === driver.id"
+            [attr.aria-pressed]="selectedDriverId === driver.id"
+            (click)="selectDriver(driver)"
+          >
+            <div class="radio-circle">
+              <div class="radio-inner" *ngIf="selectedDriverId === driver.id"></div>
+            </div>
+            <div>
+              <strong>{{ driver.name }}</strong>
+              <span>Vehicle: {{ driver.vehicleType }}</span>
+              <span>Plate: {{ driver.plateNumber }}</span>
+              <span>{{ driver.ratingText }}</span>
+              <span *ngIf="driver.wheelchair">Wheelchair accessible</span>
+              <span *ngIf="driver.seniorAssistance">Senior assistance available</span>
+            </div>
+          </button>
+        </div>
+
+      </section>
+
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon orange"><ion-icon name="accessibility-outline"></ion-icon></div>
+          <div>
+            <h2>Assistance Needs</h2>
+            <p>Select any assistance needed during the ride.</p>
+          </div>
+        </div>
+
+        <div class="assistance-grid">
+
+          <label class="assistance-item" [class.checked]="wheelchair">
+            <input type="checkbox" name="wheelchair" [(ngModel)]="wheelchair" />
+            <span class="assistance-icon"><ion-icon name="accessibility-outline"></ion-icon></span>
+            <span>Wheelchair assistance</span>
+          </label>
+
+          <label class="assistance-item" [class.checked]="walker">
+            <input type="checkbox" name="walker" [(ngModel)]="walker" />
+            <span class="assistance-icon"><ion-icon name="walk-outline"></ion-icon></span>
+            <span>Walking assistance</span>
+          </label>
+
+          <label class="assistance-item" [class.checked]="visualAssistance">
+            <input type="checkbox" name="visualAssistance" [(ngModel)]="visualAssistance" />
+            <span class="assistance-icon"><ion-icon name="eye-outline"></ion-icon></span>
+            <span>Visual assistance</span>
+          </label>
+
+          <label class="assistance-item" [class.checked]="hearingAssistance">
+            <input type="checkbox" name="hearingAssistance" [(ngModel)]="hearingAssistance" />
+            <span class="assistance-icon"><ion-icon name="ear-outline"></ion-icon></span>
+            <span>Hearing assistance</span>
+          </label>
+
+          <label class="assistance-item" [class.checked]="companion">
+            <input type="checkbox" name="companion" [(ngModel)]="companion" />
+            <span class="assistance-icon"><ion-icon name="people-outline"></ion-icon></span>
+            <span>Companion assistance</span>
+          </label>
+
+          <label class="assistance-item" [class.checked]="otherAssistance">
+            <input type="checkbox" name="otherAssistance" [(ngModel)]="otherAssistance" />
+            <span class="assistance-icon"><ion-icon name="add-outline"></ion-icon></span>
+            <span>Other special assistance</span>
+          </label>
+
+        </div>
+
+        <div class="form-group" *ngIf="otherAssistance">
+          <label for="otherAssistanceNotes">Other assistance notes</label>
+          <input
+            id="otherAssistanceNotes"
+            name="otherAssistanceNotes"
+            class="standard-input"
+            type="text"
+            [(ngModel)]="otherAssistanceNotes"
+            placeholder="Describe any other support needed"
+          />
+        </div>
+
+      </section>
+
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon gray"><ion-icon name="create-outline"></ion-icon></div>
+          <div>
+            <h2>Additional Notes</h2>
+            <p>Tell the driver anything important about your transportation needs.</p>
+          </div>
+        </div>
+
+        <textarea
+          name="notes"
+          [(ngModel)]="notes"
+          placeholder="Example: Please call when you arrive. I need extra time when boarding."
+          maxlength="300"
+        ></textarea>
+
+        <div class="character-count">
+          {{ notes.length }}/300
+        </div>
+
+      </section>
+
+
+      <section class="form-card">
+
+        <div class="section-heading">
+          <div class="section-icon orange"><ion-icon name="medkit-outline"></ion-icon></div>
+          <div>
+            <h2>Emergency Contact</h2>
+            <p>Someone CareRide can reach if support is needed during the trip.</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="emergencyContactName">Contact name <span>*</span></label>
+          <input
+            id="emergencyContactName"
+            name="emergencyContactName"
+            class="standard-input"
+            type="text"
+            [(ngModel)]="emergencyContactName"
+            placeholder="Full name"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="emergencyContactNumber">Contact number <span>*</span></label>
+          <input
+            id="emergencyContactNumber"
+            name="emergencyContactNumber"
+            class="standard-input"
+            type="tel"
+            [(ngModel)]="emergencyContactNumber"
+            placeholder="Phone number"
+          />
+        </div>
+
+      </section>
+
+
+      <div class="safety-notice">
+        <div class="safety-icon"><ion-icon name="shield-checkmark-outline"></ion-icon></div>
+        <div>
+          <strong>Your comfort and safety come first.</strong>
+          <p>Your ride information helps CareRide provide appropriate transportation assistance.</p>
+        </div>
+      </div>
+
+      <p class="form-error" *ngIf="formError">{{ formError }}</p>
+
+      <button type="button" class="review-button" (click)="goToReview()" [disabled]="!selectedDriverId">
+        Review Ride Request
+        <ion-icon name="arrow-forward-outline"></ion-icon>
+      </button>
+
+      <button type="button" class="cancel-button" (click)="backToDashboard()">
+        Cancel
+      </button>
+
+    </ng-container>
+
+
+    <ng-container *ngIf="step === 'review'">
+
+      <p class="form-error" *ngIf="formError">{{ formError }}</p>
+      <p class="form-success" *ngIf="submitting">Saving your ride request…</p>
+
+      <section class="form-card review-card">
+        <h2>Trip summary</h2>
+        <p class="review-intro">Please confirm these details before submitting.</p>
+
+        <div class="trip-preview">
+          <small>Your route</small>
+          <p><strong>From</strong> {{ pickupLocation }}</p>
+          <p><strong>To</strong> {{ destination }}</p>
+        </div>
+
+        <div class="review-row">
+          <small>Passenger</small>
+          <strong>{{ passengerLabel() }}</strong>
+        </div>
+        <div class="review-row">
+          <small>Purpose</small>
+          <strong>{{ purpose }}</strong>
+        </div>
+        <div class="review-row">
+          <small>Date and time</small>
+          <strong>{{ scheduleLabel() }}</strong>
+        </div>
+        <div class="review-row" *ngIf="selectedDriver() as driver">
+          <small>Preferred driver</small>
+          <strong>{{ driver.name }} · {{ driver.ratingText }}</strong>
+        </div>
+        <div class="review-row">
+          <small>Assistance</small>
+          <strong>{{ assistanceSummary() }}</strong>
+        </div>
+        <div class="review-row" *ngIf="otherAssistance && otherAssistanceNotes">
+          <small>Other assistance notes</small>
+          <strong>{{ otherAssistanceNotes }}</strong>
+        </div>
+        <div class="review-row" *ngIf="notes">
+          <small>Additional notes</small>
+          <strong>{{ notes }}</strong>
+        </div>
+        <div class="review-row">
+          <small>Emergency contact</small>
+          <strong>{{ emergencyContactName }} · {{ emergencyContactNumber }}</strong>
+        </div>
+        <div class="review-row">
+          <small>Save destination</small>
+          <strong>{{ backendConfigured ? 'CareRide account (Supabase)' : 'This device only until Supabase is connected' }}</strong>
+        </div>
+      </section>
+
+      <button
+        type="button"
+        class="review-button"
+        (click)="submitRideRequest()"
+        [disabled]="submitting || !selectedDriverId"
+      >
+        {{ submitting ? 'Saving request…' : 'Submit Ride Request' }}
+        <ion-icon name="checkmark-outline"></ion-icon>
+      </button>
+
+      <button type="button" class="cancel-button" (click)="editRequest()">
+        Edit details
+      </button>
+
+    </ng-container>
+
+    </div>
+    <app-navigation></app-navigation>
+  </div>
+</div>

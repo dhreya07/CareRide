@@ -1,0 +1,214 @@
+<div class="profile-page care-frame">
+
+  <div class="profile-container care-shell">
+    <div class="shell-scroll">
+
+      <header class="identity-card">
+        <div class="avatar" aria-hidden="true">{{ initials }}</div>
+        <div class="identity-copy">
+          <p>My Profile</p>
+          <h1>{{ name || 'Complete your profile' }}</h1>
+          <small *ngIf="email">{{ email }}</small>
+        </div>
+      </header>
+
+      <p class="page-subtitle">
+        Keep your personal, assistance, and emergency details ready for every CareRide trip.
+      </p>
+
+      <form (ngSubmit)="save()" #profileForm="ngForm">
+
+        <section class="profile-card">
+          <div class="card-heading">
+            <span class="card-icon"><ion-icon name="person-outline"></ion-icon></span>
+            <div>
+              <p class="section-kicker">About you</p>
+              <h2>Personal details</h2>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="profileEmail">Email address</label>
+            <input
+              id="profileEmail"
+              name="email"
+              type="email"
+              [ngModel]="email"
+              readonly
+              autocomplete="email"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="profileName">Full name</label>
+            <input
+              id="profileName"
+              name="name"
+              type="text"
+              [(ngModel)]="name"
+              (ngModelChange)="isSaved = false"
+              placeholder="Enter your full name"
+              autocomplete="name"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="profilePhone">Contact number</label>
+            <input
+              id="profilePhone"
+              name="phone"
+              type="tel"
+              [(ngModel)]="phone"
+              (ngModelChange)="isSaved = false"
+              placeholder="09171234567"
+              autocomplete="tel"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="profileAddress">Home address</label>
+            <textarea
+              id="profileAddress"
+              name="address"
+              [(ngModel)]="address"
+              (ngModelChange)="isSaved = false"
+              placeholder="Street, barangay, city"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="passengerType">Passenger type</label>
+            <select
+              id="passengerType"
+              name="passengerType"
+              [(ngModel)]="passengerType"
+              (ngModelChange)="isSaved = false"
+            >
+              <option>Elderly</option>
+              <option>Person with a disability</option>
+              <option>Family member</option>
+              <option>Prefer not to say</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="profile-card">
+          <div class="card-heading">
+            <span class="card-icon"><ion-icon name="accessibility-outline"></ion-icon></span>
+            <div>
+              <p class="section-kicker">Ride support</p>
+              <h2>Assistance preferences</h2>
+            </div>
+          </div>
+
+          <p class="section-description">
+            Choose the support that helps make boarding and travel safer.
+          </p>
+
+          <div class="assistance-list">
+            <label
+              class="assistance-option"
+              *ngFor="let need of needs"
+              [class.checked]="assistance.includes(need)"
+            >
+              <span class="need-icon" aria-hidden="true">
+                <ion-icon [name]="needIcons[need]"></ion-icon>
+              </span>
+              <span class="need-label">{{ need }}</span>
+              <input
+                type="checkbox"
+                [checked]="assistance.includes(need)"
+                (change)="toggle(need)"
+              >
+            </label>
+          </div>
+
+          <div class="form-field">
+            <label for="otherNeeds">
+              Other support
+              <span class="optional">(optional)</span>
+            </label>
+            <textarea
+              id="otherNeeds"
+              name="otherNeeds"
+              [(ngModel)]="otherNeeds"
+              (ngModelChange)="isSaved = false"
+              placeholder="Describe any other ride-related assistance"
+              rows="3"
+            ></textarea>
+          </div>
+        </section>
+
+        <section class="profile-card">
+          <div class="card-heading">
+            <span class="card-icon"><ion-icon name="medkit-outline"></ion-icon></span>
+            <div>
+              <p class="section-kicker">If help is needed</p>
+              <h2>Emergency contact</h2>
+            </div>
+          </div>
+
+          <p class="section-description">
+            This person may be contacted if assistance is needed during your trip.
+          </p>
+
+          <div class="form-field">
+            <label for="emergencyName">Contact name</label>
+            <input
+              id="emergencyName"
+              name="emergencyName"
+              type="text"
+              [(ngModel)]="emergencyName"
+              (ngModelChange)="isSaved = false"
+              placeholder="Emergency contact name"
+            >
+          </div>
+
+          <div class="form-field">
+            <label for="emergencyPhone">Contact number</label>
+            <input
+              id="emergencyPhone"
+              name="emergencyPhone"
+              type="tel"
+              [(ngModel)]="emergencyPhone"
+              (ngModelChange)="isSaved = false"
+              placeholder="09171234567"
+            >
+          </div>
+
+          <button type="button" class="secondary-button" (click)="callEmergencyContact()">
+            <ion-icon name="call-outline"></ion-icon>
+            Call emergency contact
+          </button>
+        </section>
+
+        <section class="info-banner">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <div>
+            <strong>Saved on this device</strong>
+            <p>
+              Your profile stays on this phone until the CareRide account database is connected.
+            </p>
+          </div>
+        </section>
+
+        <p class="form-error" *ngIf="formError">{{ formError }}</p>
+        <p class="saved-message" *ngIf="isSaved">Profile saved on this device.</p>
+
+        <button type="submit" class="save-button">
+          <ion-icon name="save-outline"></ion-icon>
+          Save profile
+        </button>
+
+        <button type="button" class="sign-out-button" (click)="signOut()">
+          <ion-icon name="log-out-outline"></ion-icon>
+          Sign out
+        </button>
+
+      </form>
+
+    </div>
+    <app-navigation></app-navigation>
+  </div>
+</div>

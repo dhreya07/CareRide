@@ -1,0 +1,295 @@
+<div class="safety-page care-frame">
+
+  <div class="safety-container care-shell">
+    <div class="shell-scroll">
+
+    <!-- HEADER -->
+
+    <header class="page-header">
+
+      <a
+        routerLink="/dashboard"
+        class="brand"
+      >
+        Care<span>Ride</span>
+      </a>
+
+      <a
+        routerLink="/profile"
+        class="profile-chip"
+      >
+        CR
+      </a>
+
+    </header>
+
+
+    <!-- TITLE -->
+
+    <h1 class="page-title">
+      Safety & Support
+    </h1>
+
+    <p class="page-subtitle">
+      Quick access to safety information and
+      assistance during your CareRide journey.
+    </p>
+
+
+    <!-- EMERGENCY -->
+
+    <section class="safety-card emergency-card">
+
+      <div class="card-icon emergency-icon">
+        <ion-icon name="call-outline"></ion-icon>
+      </div>
+
+      <div class="card-content">
+
+        <h2>
+          Emergency Help
+        </h2>
+
+        <p>
+          If you are in immediate danger or need
+          urgent medical, police, or emergency
+          assistance, contact emergency services.
+        </p>
+
+        <button
+          type="button"
+          class="danger-button"
+          (click)="emergencyHelp()"
+        >
+          Call 911
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- CURRENT RIDE -->
+
+    <section class="safety-card">
+
+      <div class="card-icon">
+        <ion-icon name="car-outline"></ion-icon>
+      </div>
+
+      <div class="card-content">
+
+        <h2>
+          Current Ride
+        </h2>
+
+
+        <ng-container *ngIf="currentRide; else noCurrentRide">
+
+          <p>
+            You have an active or upcoming
+            CareRide request.
+          </p>
+
+          <span class="status-badge" [ngClass]="statusTone(currentRide)">
+            {{ currentRide.status }}
+          </span>
+
+          <p class="ride-route">
+            <strong>
+              {{ currentRide.pickupLocation }}
+            </strong>
+
+            <span>→</span>
+
+            <strong>
+              {{ currentRide.destination }}
+            </strong>
+          </p>
+
+
+          <button
+            type="button"
+            class="primary-button"
+            (click)="viewCurrentRide()"
+          >
+            View Ride Details
+          </button>
+
+        </ng-container>
+
+
+        <ng-template #noCurrentRide>
+
+          <p>
+            You currently have no active or
+            upcoming ride.
+          </p>
+
+          <a
+            routerLink="/request-ride"
+            class="text-link"
+          >
+            Request a Ride
+          </a>
+
+        </ng-template>
+
+      </div>
+
+    </section>
+
+
+    <!-- EMERGENCY CONTACT -->
+
+    <section class="safety-card">
+
+      <div class="card-icon">
+        <ion-icon name="call-outline"></ion-icon>
+      </div>
+
+      <div class="card-content">
+
+        <h2>
+          Emergency Contact
+        </h2>
+
+
+        <ng-container *ngIf="currentRide; else noContactRide">
+
+          <p>
+            Contact the emergency person
+            registered for your current ride.
+          </p>
+
+
+          <div class="contact-info">
+
+            <strong>
+              {{ currentRide.emergencyContactName }}
+            </strong>
+
+            <span>
+              {{ currentRide.emergencyContactNumber }}
+            </span>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="callEmergencyContact()"
+          >
+            Call Emergency Contact
+          </button>
+
+        </ng-container>
+
+
+        <ng-template #noContactRide>
+
+          <p>
+            Emergency contact information will
+            appear here when you have an active
+            ride.
+          </p>
+
+        </ng-template>
+
+      </div>
+
+    </section>
+
+
+    <!-- REPORT SAFETY CONCERN -->
+
+    <section class="safety-card">
+
+      <div class="card-icon warning-icon">
+        <ion-icon name="warning-outline"></ion-icon>
+      </div>
+
+      <div class="card-content">
+
+        <h2>
+          Report a Safety Concern
+        </h2>
+
+        <p>
+          Report inappropriate behavior,
+          harassment, unsafe driving, or another
+          concern related to your CareRide trip.
+        </p>
+
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="reportSafetyConcern()"
+        >
+          Report a Concern
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- TRUSTED CONTACT -->
+
+    <section class="safety-card">
+
+      <div class="card-icon">
+        <ion-icon name="heart-outline"></ion-icon>
+      </div>
+
+      <div class="card-content">
+
+        <h2>
+          Trusted Contact
+        </h2>
+
+        <p>
+          Manage your passenger and contact
+          information from your CareRide profile.
+        </p>
+
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="manageProfile()"
+        >
+          Manage Profile
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- DEVELOPMENT NOTICE -->
+
+    <section class="info-banner">
+
+      <strong>
+        CareRide Safety
+      </strong>
+
+      <p>
+        Automatic SMS alerts, live driver tracking,
+        and administrator incident reporting will
+        become available when the backend and
+        external services are connected.
+      </p>
+
+    </section>
+
+
+    <div class="bottom-space"></div>
+
+    </div>
+    <app-navigation></app-navigation>
+  </div>
+</div>

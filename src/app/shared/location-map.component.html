@@ -1,0 +1,6 @@
+<div class="location-map-frame" [class.compact]="compact">
+  <div #mapHost class="location-map-canvas" role="application" aria-label="Pickup and destination map"></div>
+  <p class="map-tile-note" *ngIf="tilesFailed">
+    The map tiles could not be loaded. You can still type a pickup and destination.
+  </p>
+</div>

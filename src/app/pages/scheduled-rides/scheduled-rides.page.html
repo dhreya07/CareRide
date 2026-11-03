@@ -1,0 +1,90 @@
+<div class="rides-page care-frame">
+  <div class="rides-container care-shell">
+    <div class="shell-scroll">
+
+    <header class="page-header">
+      <a routerLink="/dashboard" class="brand">Care<span>Ride</span></a>
+      <a routerLink="/profile" class="profile-chip">CR</a>
+    </header>
+
+    <h1 class="page-title">Scheduled rides</h1>
+    <p class="page-subtitle">Your upcoming bookings and their current progress.</p>
+
+    <section class="empty-state" *ngIf="rides.length === 0">
+      <span class="empty-icon"><ion-icon name="calendar-outline"></ion-icon></span>
+      <h2>No upcoming rides</h2>
+      <p>When you request a ride, its progress will appear here.</p>
+      <a routerLink="/request-ride" class="primary-link">Schedule a ride</a>
+    </section>
+
+    <article class="ride-card" *ngFor="let ride of rides">
+      <div class="ride-card-top">
+        <div class="ride-when">
+          <span class="when-icon"><ion-icon name="calendar-outline"></ion-icon></span>
+          <div>
+            <strong>{{ formatDate(ride) }}</strong>
+            <p>{{ formatTime(ride) }}</p>
+          </div>
+        </div>
+        <div class="status-badge" [ngClass]="statusTone(ride)">{{ ride.status }}</div>
+      </div>
+
+      <p class="meta"><strong>Booking ID:</strong> {{ ride.id }}</p>
+      <p class="meta"><strong>Ride type:</strong> {{ rideTypeLabel(ride) }}</p>
+
+      <ol class="progress-timeline" aria-label="Booking progress">
+        <li *ngFor="let step of progressSteps(ride)" [class.done]="step.state === 'done'" [class.current]="step.state === 'current'">
+          <span class="progress-mark" aria-hidden="true"></span>
+          <span>
+            <strong>{{ step.label }}</strong>
+            <small>{{ step.text }}</small>
+          </span>
+        </li>
+      </ol>
+      <p class="progress-outcome" *ngIf="progressOutcome(ride)">{{ progressOutcome(ride) }}</p>
+      <p class="referral-notice" *ngIf="referralNotice(ride) as notice">
+        {{ notice }}
+        <a *ngIf="needsPassengerConfirm(ride)" routerLink="/dashboard">Review driver change</a>
+      </p>
+
+      <div class="route">
+        <div>
+          <small>Pickup</small>
+          <strong>{{ ride.pickupLocation }}</strong>
+        </div>
+        <div>
+          <small>Destination</small>
+          <strong>{{ ride.destination }}</strong>
+        </div>
+      </div>
+
+      <p class="meta"><strong>Passenger:</strong> {{ ride.passengerName }}</p>
+      <p class="meta"><strong>Assistance:</strong> {{ assistanceSummary(ride) }}</p>
+      <p class="meta"><strong>Assigned driver:</strong> {{ assignedDriver(ride) }}</p>
+      <p class="meta"><strong>Vehicle:</strong> {{ vehicleText(ride) }}</p>
+      <p class="meta"><strong>Plate:</strong> {{ plateText(ride) }}</p>
+      <p class="meta" *ngIf="hasAssignedDriver(ride)">
+        <strong>Location:</strong> {{ driverLocationTitle(ride) }} · {{ driverLocationDetail(ride) }}
+      </p>
+      <p class="meta" *ngIf="!hasAssignedDriver(ride)">Waiting for the driver to accept this request.</p>
+
+      <div class="ride-actions">
+        <button type="button" class="details-button" (click)="viewDetails(ride)">
+          View Details
+        </button>
+        <button
+          type="button"
+          class="cancel-ride-button"
+          *ngIf="canCancel(ride)"
+          [disabled]="cancellingId !== null"
+          (click)="cancelRide(ride)"
+        >
+          Cancel Booking
+        </button>
+      </div>
+    </article>
+
+    </div>
+    <app-navigation></app-navigation>
+  </div>
+</div>

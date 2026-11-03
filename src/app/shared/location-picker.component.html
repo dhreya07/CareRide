@@ -1,0 +1,88 @@
+<section class="location-picker" role="dialog" aria-modal="true" [attr.aria-label]="role === 'pickup' ? 'Find pickup on the map' : 'Choose destination'">
+  <header class="picker-bar">
+    <button type="button" class="text-button" (click)="cancel()">Cancel</button>
+    <h2>{{ role === 'pickup' ? 'Choose Pickup' : 'Choose Destination' }}</h2>
+    <button type="button" class="text-button" (click)="useMyLocation()">Current location</button>
+  </header>
+
+  <form class="search-bar" (ngSubmit)="runSearch()">
+    <input
+      name="pickerSearch"
+      type="search"
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="scheduleSearch()"
+      [placeholder]="role === 'destination' ? 'Search a hospital, street, or place' : 'Search a place, street, hospital, or health center'"
+      autocomplete="off"
+    />
+    <button type="submit" [disabled]="searching">{{ searching ? 'Searching…' : 'Search' }}</button>
+  </form>
+  <ul class="search-results" *ngIf="searchResults.length">
+    <li *ngFor="let place of searchResults">
+      <button
+        type="button"
+        [class.selected]="selectedSearchId === place.id"
+        (click)="chooseSearchResult(place); $event.stopPropagation()"
+      >
+        <strong>{{ placePrimary(place) }}</strong>
+        <span *ngIf="placeSecondary(place)">{{ placeSecondary(place) }}</span>
+      </button>
+    </li>
+  </ul>
+  <p class="status" *ngIf="gpsMessage">{{ gpsMessage }}</p>
+  <p class="status" *ngIf="selectionMessage">{{ selectionMessage }}</p>
+  <p class="status" *ngIf="searchMessage">{{ searchMessage }}</p>
+
+  <div class="filters" role="tablist" aria-label="Healthcare facilities">
+    <button
+      *ngFor="let filter of filters"
+      type="button"
+      [class.selected]="facilityFilter === filter.id"
+      (click)="setFilter(filter.id)"
+    >
+      {{ filter.label }}
+    </button>
+  </div>
+
+  <div class="map-stage">
+    <div #mapHost class="picker-map" role="application" aria-label="Location picker map"></div>
+    <div class="center-pin" *ngIf="adjustingLocation" [class.destination]="role === 'destination'" aria-hidden="true">
+      <span>{{ adjustingLocation ? 'Adjust' : (role === 'pickup' ? 'Pickup' : 'Destination') }}</span>
+    </div>
+    <button type="button" class="area-search" *ngIf="showSearchArea && !facilitiesLoading" (click)="searchThisArea()">
+      Search this area
+    </button>
+    <button type="button" class="adjust-toggle" *ngIf="!adjustingLocation" (click)="beginAdjusting()">
+      Adjust on map
+    </button>
+    <button type="button" class="adjust-toggle accept" *ngIf="adjustingLocation" (click)="useAdjustedPoint()">
+      Use This Location
+    </button>
+    <p class="tile-note" *ngIf="tilesFailed">Map tiles could not be loaded. You can still search for a place or confirm the selected location.</p>
+  </div>
+
+  <section class="sheet">
+    <article class="selected-hospital" *ngIf="selectionReady && draftTitle">
+      <p class="eyebrow">{{ selectionHeading() }}</p>
+      <strong>{{ draftTitle }}</strong>
+      <p *ngIf="cardDetail()">{{ cardDetail() }}</p>
+      <p *ngIf="roadSummary">{{ roadSummary }}</p>
+      <p *ngIf="roadUnavailable">{{ roadUnavailable }}</p>
+    </article>
+
+    <p class="status" *ngIf="facilitiesLoading">Looking for nearby hospitals…</p>
+    <p class="status" *ngIf="!facilitiesLoading && facilitiesMessage">{{ facilitiesMessage }}</p>
+    <button type="button" class="retry" *ngIf="facilitiesFailed && !facilitiesLoading" (click)="searchThisArea()">Try again</button>
+
+    <ul class="facilities">
+      <li *ngFor="let facility of visibleFacilities()">
+        <button type="button" [class.selected]="selectedFacilityId === facility.id" (click)="chooseFacility(facility); $event.stopPropagation()">
+          <strong>{{ facilityTitle(facility) }}</strong>
+          <span>{{ facilityMeta(facility) }}</span>
+        </button>
+      </li>
+    </ul>
+    <button type="button" class="confirm" (click)="confirmSelection()">
+      {{ role === 'pickup' ? 'Confirm Pickup' : 'Confirm Destination' }}
+    </button>
+  </section>
+</section>

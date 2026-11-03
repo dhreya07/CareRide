@@ -1,0 +1,820 @@
+<div class="admin-page care-frame">
+  <div class="admin-shell care-shell">
+    <div class="shell-scroll">
+
+      <header class="admin-topbar">
+        <div class="top-row">
+          <span class="role-chip">Admin</span>
+          <button type="button" class="sign-out-button" (click)="signOut()">
+            Sign out
+          </button>
+        </div>
+        <h1>{{ pageTitle }}</h1>
+        <p class="live-note">
+          <span class="live-dot" aria-hidden="true"></span>
+          Realtime
+        </p>
+        <p class="live-clock" aria-live="polite">
+          <strong>{{ clockTime }}</strong>
+          <span>{{ clockWeekday }}, {{ clockDate }}</span>
+        </p>
+      </header>
+
+      <section class="operations-report" *ngIf="listTab === 'active'" aria-label="Operations report">
+        <div class="section-heading">
+          <h2>Operations</h2>
+        </div>
+        <div class="booking-filter period-filter" role="group" aria-label="Report period">
+          <button type="button" [class.selected]="reportPeriod === 'all'" (click)="selectReportPeriod('all')">All Time</button>
+          <button type="button" [class.selected]="reportPeriod === 'today'" (click)="selectReportPeriod('today')">Today</button>
+          <button type="button" [class.selected]="reportPeriod === 'week'" (click)="selectReportPeriod('week')">This Week</button>
+          <button type="button" [class.selected]="reportPeriod === 'month'" (click)="selectReportPeriod('month')">This Month</button>
+        </div>
+        <p class="referral-note">
+          Booking counts use the date each booking was created on this device. This week runs Sunday through Saturday. These cards do not change a booking.
+        </p>
+
+        <h3>Booking activity</h3>
+        <p class="empty-note">
+          Each booking is counted once, in its current status. A referral on a booking is not a second booking.
+        </p>
+        <section class="stats-grid report-grid" aria-label="Booking activity">
+          <div class="stat-card">
+            <span>Total bookings</span>
+            <strong>{{ totalCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Pending bookings</span>
+            <strong>{{ pendingCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Confirmed bookings</span>
+            <strong>{{ confirmedCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Ongoing rides</span>
+            <strong>{{ ongoingCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Completed rides</span>
+            <strong>{{ completedCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Cancelled bookings</span>
+            <strong>{{ cancelledCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Declined bookings</span>
+            <strong>{{ declinedCount }}</strong>
+          </div>
+        </section>
+        <p class="empty-note" *ngIf="totalCount === 0">
+          {{ reportPeriod === 'all' ? 'No bookings are stored in this browser.' : 'No bookings were created in this period.' }}
+        </p>
+        <p class="empty-note" *ngIf="bookingsMissingCreatedAt > 0">
+          {{ bookingsMissingCreatedAt }} booking{{ bookingsMissingCreatedAt === 1 ? '' : 's' }} have no creation time, so they are left out of this period.
+        </p>
+        <ul class="status-bars" aria-label="Booking status share">
+          <li *ngFor="let item of bookingStatusBars">
+            <div class="bar-label">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.count }}</strong>
+            </div>
+            <div
+              class="bar-track"
+              role="progressbar"
+              [attr.aria-valuenow]="item.count"
+              aria-valuemin="0"
+              [attr.aria-valuemax]="totalCount"
+              [attr.aria-label]="item.label"
+            >
+              <div class="bar-fill" [ngClass]="item.tone" [style.width.%]="item.percent"></div>
+            </div>
+          </li>
+        </ul>
+
+        <h3>Current accounts</h3>
+        <p class="empty-note">
+          These totals are the accounts stored now. The date filter does not change them. Available drivers are approved drivers marked Available.
+        </p>
+        <section class="stats-grid report-grid" aria-label="Current accounts">
+          <div class="stat-card">
+            <span>Registered passengers</span>
+            <strong>{{ registeredPassengerCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Registered drivers</span>
+            <strong>{{ registeredDriverCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Approved drivers</span>
+            <strong>{{ approvedDriverCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Pending passenger approvals</span>
+            <strong>{{ pendingPassengerCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Pending driver approvals</span>
+            <strong>{{ pendingDriverCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Available drivers</span>
+            <strong>{{ availableDriverCount }}</strong>
+          </div>
+        </section>
+
+        <h3>Referrals</h3>
+        <p class="referral-note" *ngIf="referralMetricsAvailable">
+          Each booking keeps one current referral. These counts are bookings with a referral, not extra bookings. Referral times are not stored.
+        </p>
+        <p class="referral-note" *ngIf="!referralMetricsAvailable">
+          Referral times are not stored, so Today, This Week, and This Month cannot be calculated. Choose All Time to see each booking’s current referral.
+        </p>
+        <section class="stats-grid report-grid" *ngIf="referralMetricsAvailable" aria-label="Referral summary">
+          <div class="stat-card">
+            <span>Referral attempts</span>
+            <strong>{{ referralAttemptCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Pending referrals</span>
+            <strong>{{ pendingReferralCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Accepted by replacement</span>
+            <strong>{{ referralAcceptedCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Passenger confirmed</span>
+            <strong>{{ confirmedReferralCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Declined referrals</span>
+            <strong>{{ declinedReferralCount }}</strong>
+          </div>
+        </section>
+        <p class="empty-note" *ngIf="referralMetricsAvailable && referralAttemptCount === 0">
+          No referrals are stored in this browser.
+        </p>
+
+        <h3>Driver performance</h3>
+        <p class="referral-note" *ngIf="performanceMetricsAvailable">
+          Completed rides are counted for the final assigned driver. Ratings come from passenger reviews on those rides. Completion time is not stored, so this list is All Time.
+        </p>
+        <p class="referral-note" *ngIf="!performanceMetricsAvailable">
+          Completed rides do not store a completion time, so Today, This Week, and This Month cannot be calculated. Choose All Time to see completed rides and ratings.
+        </p>
+        <p class="empty-note" *ngIf="performanceMetricsAvailable && driverPerformance.length === 0">
+          No approved drivers yet.
+        </p>
+        <div class="performance-list" *ngIf="performanceMetricsAvailable && driverPerformance.length > 0">
+          <article class="performance-row" *ngFor="let driver of driverPerformance">
+            <strong>{{ driver.name }}</strong>
+            <span>{{ driver.completed }} completed</span>
+            <span>{{ driver.averageLabel }}</span>
+            <span>{{ driver.reviewLabel }}</span>
+          </article>
+        </div>
+        <p class="empty-note" *ngIf="performanceMetricsAvailable && completedRidesOutsideApprovedDrivers > 0">
+          {{ completedRidesOutsideApprovedDrivers }} completed ride{{ completedRidesOutsideApprovedDrivers === 1 ? '' : 's' }}
+          {{ completedRidesOutsideApprovedDrivers === 1 ? 'is' : 'are' }} assigned to a driver who is not an approved account, so
+          {{ completedRidesOutsideApprovedDrivers === 1 ? 'it is' : 'they are' }} not listed here.
+        </p>
+      </section>
+
+      <div class="booking-filter" *ngIf="listTab === 'active'" role="group" aria-label="Booking status">
+        <button type="button" [class.selected]="bookingFilter === 'all'" (click)="selectBookingFilter('all')">
+          All <em>{{ bookingFilterCount('all') }}</em>
+        </button>
+        <button type="button" [class.selected]="bookingFilter === 'pending'" (click)="selectBookingFilter('pending')">
+          Pending <em>{{ bookingFilterCount('pending') }}</em>
+        </button>
+        <button type="button" [class.selected]="bookingFilter === 'confirmed'" (click)="selectBookingFilter('confirmed')">
+          Confirmed <em>{{ bookingFilterCount('confirmed') }}</em>
+        </button>
+        <button type="button" [class.selected]="bookingFilter === 'ongoing'" (click)="selectBookingFilter('ongoing')">
+          Ongoing <em>{{ bookingFilterCount('ongoing') }}</em>
+        </button>
+        <button type="button" [class.selected]="bookingFilter === 'completed'" (click)="selectBookingFilter('completed')">
+          Completed <em>{{ bookingFilterCount('completed') }}</em>
+        </button>
+        <button type="button" [class.selected]="bookingFilter === 'cancelled'" (click)="selectBookingFilter('cancelled')">
+          Cancelled <em>{{ bookingFilterCount('cancelled') }}</em>
+        </button>
+        <button type="button" [class.selected]="bookingFilter === 'declined'" (click)="selectBookingFilter('declined')">
+          Declined <em>{{ bookingFilterCount('declined') }}</em>
+        </button>
+      </div>
+
+      <section class="empty-card" *ngIf="listTab !== 'drivers' && listTab !== 'accounts' && visibleRides.length === 0">
+        <div class="empty-icon">
+          <ion-icon [name]="listTab === 'history' ? 'time-outline' : 'car-outline'"></ion-icon>
+        </div>
+        <h2>{{ emptyTitle }}</h2>
+        <p *ngIf="listTab === 'active'">
+          Bookings saved in this browser appear here. This view does not accept, decline, or reassign them.
+        </p>
+        <p *ngIf="listTab === 'accepted'">
+          Accepted trips stay here while a driver is assigned or the ride is underway.
+        </p>
+        <p *ngIf="listTab === 'history'">
+          Completed, cancelled, and rejected trips will show in this list.
+        </p>
+      </section>
+
+      <ng-container *ngIf="listTab !== 'drivers' && listTab !== 'accounts'">
+      <article class="ride-card" *ngFor="let ride of visibleRides; trackBy: trackRide">
+        <div class="ride-card-header">
+          <div>
+            <span class="ride-id">{{ ride.id }}</span>
+            <h3 class="person-name">{{ ride.passengerName || 'Passenger' }}</h3>
+          </div>
+          <span class="status-badge" [ngClass]="statusTone(ride)">{{ ride.status }}</span>
+        </div>
+
+        <div class="passenger-info">
+          <span>Booking</span>
+          <strong>{{ bookingTypeLabel(ride) }}</strong>
+        </div>
+
+        <div class="passenger-info">
+          <span>Assigned driver</span>
+          <strong>{{ assignedDriverName(ride) }}</strong>
+        </div>
+
+        <div class="passenger-info">
+          <span>Created</span>
+          <strong>{{ createdLabel(ride) }}</strong>
+        </div>
+
+        <div class="passenger-info">
+          <span>Passenger</span>
+          <strong>
+            {{ ride.passengerType === 'family' ? 'Family member booking' : 'Self booking' }}
+          </strong>
+        </div>
+
+        <section class="driver-panel preferred" *ngIf="!hasAssignedDriver(ride) && ride.preferredDriverName">
+          <div class="driver-panel-head">
+            <span class="driver-avatar" aria-hidden="true">
+              <ion-icon name="person-outline"></ion-icon>
+            </span>
+            <div class="stack">
+              <span>Passenger selected driver</span>
+              <strong>{{ ride.preferredDriverName }}</strong>
+              <p>{{ ride.preferredVehicleLabel }}</p>
+              <p *ngIf="ride.preferredDriverRating">{{ ratingLabel(ride.preferredDriverRating) }}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="driver-panel" *ngIf="hasAssignedDriver(ride)">
+          <div class="driver-panel-head">
+            <span class="driver-avatar" aria-hidden="true">
+              <ion-icon name="person-outline"></ion-icon>
+            </span>
+            <div class="stack">
+              <span>Assigned driver</span>
+              <strong>{{ assignedDriverName(ride) }}</strong>
+              <p>{{ ride.vehicleLabel || 'Not provided' }}</p>
+            </div>
+          </div>
+          <div class="driver-location">
+            <span>Current location</span>
+            <strong>{{ driverLocationTitle(ride) }}</strong>
+            <p>{{ driverLocationDetail(ride) }}</p>
+            <small *ngIf="driverCoordinates(ride)">{{ driverCoordinates(ride) }}</small>
+          </div>
+          <div class="driver-panel-actions">
+            <button type="button" class="view-button" (click)="openDriverLocation(ride)">
+              Open map
+            </button>
+            <button
+              type="button"
+              class="view-button"
+              *ngIf="ride.driverPhone"
+              (click)="callDriver(ride)"
+            >
+              Call driver
+            </button>
+          </div>
+        </section>
+
+        <section class="route-box">
+          <div class="route-item">
+            <div class="route-marker pickup">A</div>
+            <div class="stack">
+              <span>Pickup</span>
+              <strong>{{ ride.pickupLocation }}</strong>
+            </div>
+          </div>
+          <div class="route-line"></div>
+          <div class="route-item">
+            <div class="route-marker destination">B</div>
+            <div class="stack">
+              <span>Destination</span>
+              <strong>{{ ride.destination }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="details-grid">
+          <div class="detail-card">
+            <span>{{ bookingTypeLabel(ride) === 'Scheduled' ? 'Pickup date' : 'Date' }}</span>
+            <strong>{{ ride.date ? formatDate(ride.date) : 'Not set' }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>{{ bookingTypeLabel(ride) === 'Scheduled' ? 'Pickup time' : 'Time' }}</span>
+            <strong>{{ ride.time ? formatTime(ride.time) : 'Not set' }}</strong>
+          </div>
+        </div>
+
+        <section class="info-box">
+          <span>Trip purpose</span>
+          <strong>{{ ride.purpose || 'Not specified' }}</strong>
+        </section>
+
+        <section class="info-box">
+          <span>Assistance needed</span>
+          <strong>{{ assistanceSummary(ride) }}</strong>
+          <p *ngIf="ride.otherAssistanceNotes">{{ ride.otherAssistanceNotes }}</p>
+        </section>
+
+        <section class="info-box" *ngIf="ride.notes">
+          <span>Passenger notes</span>
+          <p>{{ ride.notes }}</p>
+        </section>
+
+        <section class="emergency-box">
+          <span>Emergency contact</span>
+          <strong>{{ ride.emergencyContactName || 'Not provided' }}</strong>
+          <p>{{ ride.emergencyContactNumber || 'No number provided' }}</p>
+        </section>
+
+        <div class="admin-actions">
+          <button type="button" class="view-button" (click)="viewRide(ride)">
+            View ride details
+          </button>
+        </div>
+      </article>
+      </ng-container>
+
+      <section class="referral-history" *ngIf="listTab === 'history'" aria-labelledby="referral-history-title">
+        <div class="section-heading">
+          <h2 id="referral-history-title">Referral history</h2>
+        </div>
+        <p class="referral-note">
+          Each booking keeps one current referral. Referral times are not stored, so the timeline has no dates.
+        </p>
+
+        <section class="stats-grid" aria-label="Referral totals">
+          <div class="stat-card">
+            <span>Total</span>
+            <strong>{{ referralRides.length }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Pending</span>
+            <strong>{{ pendingReferralCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Confirmed</span>
+            <strong>{{ confirmedReferralCount }}</strong>
+          </div>
+          <div class="stat-card">
+            <span>Declined</span>
+            <strong>{{ declinedReferralCount }}</strong>
+          </div>
+        </section>
+
+        <div class="booking-filter" role="group" aria-label="Referral status">
+          <button type="button" [class.selected]="referralFilter === 'all'" (click)="selectReferralFilter('all')">
+            All <em>{{ referralFilterCount('all') }}</em>
+          </button>
+          <button type="button" [class.selected]="referralFilter === 'pending'" (click)="selectReferralFilter('pending')">
+            Pending <em>{{ referralFilterCount('pending') }}</em>
+          </button>
+          <button
+            type="button"
+            [class.selected]="referralFilter === 'accepted_by_replacement'"
+            (click)="selectReferralFilter('accepted_by_replacement')"
+          >
+            Accepted by Replacement <em>{{ referralFilterCount('accepted_by_replacement') }}</em>
+          </button>
+          <button
+            type="button"
+            [class.selected]="referralFilter === 'passenger_confirmed'"
+            (click)="selectReferralFilter('passenger_confirmed')"
+          >
+            Passenger Confirmed <em>{{ referralFilterCount('passenger_confirmed') }}</em>
+          </button>
+          <button
+            type="button"
+            [class.selected]="referralFilter === 'passenger_declined'"
+            (click)="selectReferralFilter('passenger_declined')"
+          >
+            Passenger Declined <em>{{ referralFilterCount('passenger_declined') }}</em>
+          </button>
+        </div>
+
+        <section class="empty-card" *ngIf="visibleReferrals.length === 0">
+          <div class="empty-icon">
+            <ion-icon name="time-outline"></ion-icon>
+          </div>
+          <h2>{{ referralEmptyTitle }}</h2>
+          <p>Referral records saved on bookings in this browser appear here. This view does not change them.</p>
+        </section>
+
+        <article class="ride-card" *ngFor="let ride of visibleReferrals; trackBy: trackRide">
+          <div class="ride-card-header">
+            <div>
+              <span class="ride-id">{{ ride.id }}</span>
+              <h3 class="person-name">{{ ride.passengerName || 'Passenger' }}</h3>
+            </div>
+            <span class="status-badge" [ngClass]="referralTone(ride)">{{ referralStatusLabel(ride) }}</span>
+          </div>
+          <div class="passenger-info">
+            <span>Referral ID</span>
+            <strong>Not stored</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Booking ID</span>
+            <strong>{{ ride.id }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Original driver</span>
+            <strong>{{ referralOriginalName(ride) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Replacement driver</span>
+            <strong>{{ referralReplacementName(ride) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Referral status</span>
+            <strong>{{ referralStatusLabel(ride) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Referral created</span>
+            <strong>Not stored</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Replacement response</span>
+            <strong>{{ referralResponseLabel(ride) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Passenger decision</span>
+            <strong>{{ referralDecisionLabel(ride) }}</strong>
+          </div>
+          <section class="info-box">
+            <span>Timeline</span>
+            <ol class="referral-timeline">
+              <li *ngFor="let event of referralEvents(ride)">{{ event }}</li>
+            </ol>
+          </section>
+        </article>
+      </section>
+
+      <ng-container *ngIf="listTab === 'accounts'">
+        <div class="account-switch" role="group" aria-label="Account category">
+          <button
+            type="button"
+            [class.selected]="accountGroup === 'passenger'"
+            [attr.aria-pressed]="accountGroup === 'passenger'"
+            (click)="selectAccountGroup('passenger')"
+          >
+            Passenger Accounts
+            <em>{{ accountCount('passenger') }}</em>
+          </button>
+          <button
+            type="button"
+            [class.selected]="accountGroup === 'driver'"
+            [attr.aria-pressed]="accountGroup === 'driver'"
+            (click)="selectAccountGroup('driver')"
+          >
+            Driver Accounts
+            <em>{{ accountCount('driver') }}</em>
+          </button>
+        </div>
+
+        <div class="status-switch" role="group" aria-label="Account status">
+          <button
+            type="button"
+            [class.selected]="accountFilter === 'pending'"
+            [attr.aria-pressed]="accountFilter === 'pending'"
+            (click)="selectAccountFilter('pending')"
+          >
+            Pending
+            <em>{{ statusCount('pending') }}</em>
+          </button>
+          <button
+            type="button"
+            [class.selected]="accountFilter === 'approved'"
+            [attr.aria-pressed]="accountFilter === 'approved'"
+            (click)="selectAccountFilter('approved')"
+          >
+            Approved
+            <em>{{ statusCount('approved') }}</em>
+          </button>
+          <button
+            type="button"
+            [class.selected]="accountFilter === 'rejected'"
+            [attr.aria-pressed]="accountFilter === 'rejected'"
+            (click)="selectAccountFilter('rejected')"
+          >
+            Rejected
+            <em>{{ statusCount('rejected') }}</em>
+          </button>
+        </div>
+
+        <section class="empty-card" *ngIf="accountsLoading">
+          <div class="empty-icon">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <h2>Loading accounts</h2>
+          <p>Registered passenger and driver accounts are being read.</p>
+        </section>
+
+        <section class="empty-card" *ngIf="!accountsLoading && accountsError">
+          <div class="empty-icon">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <h2>Accounts could not be loaded</h2>
+          <p>{{ accountsError }}</p>
+          <button type="button" class="assign-button" (click)="reloadAccounts()">Try again</button>
+        </section>
+
+        <section class="empty-card" *ngIf="!accountsLoading && !accountsError && visibleAccounts.length === 0">
+          <div class="empty-icon">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+          <h2>{{ accountEmptyTitle }}</h2>
+          <p>{{ accountEmptyCopy }}</p>
+        </section>
+
+        <article class="ride-card" *ngFor="let account of visibleAccounts" [hidden]="accountsLoading || accountsError">
+          <div class="ride-card-header">
+            <div>
+              <span class="ride-id">{{ accountKind(account) }}</span>
+              <h3 class="person-name">{{ account.fullName }}</h3>
+            </div>
+            <span class="status-badge" [ngClass]="accountStatusClass(account)">{{ accountStatusLabel(account) }}</span>
+          </div>
+          <div class="passenger-info">
+            <span>Email</span>
+            <strong>{{ account.email }}</strong>
+          </div>
+          <div class="passenger-info" *ngIf="cloudAccountsEnabled && accountRegisteredOn(account)">
+            <span>Registered</span>
+            <strong>{{ accountRegisteredOn(account) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Phone</span>
+            <strong>{{ account.phone || 'Not provided' }}</strong>
+          </div>
+          <div class="passenger-info" *ngIf="account.address">
+            <span>Address</span>
+            <strong>{{ account.address }}</strong>
+          </div>
+          <div class="passenger-info" *ngFor="let line of vehicleLines(account)">
+            <span>{{ line.label }}</span>
+            <strong>{{ line.value }}</strong>
+          </div>
+          <div class="admin-actions account-actions" *ngIf="canReviewAccount(account)">
+            <button
+              type="button"
+              class="assign-button"
+              (click)="confirmAccountDecision(account, 'approved')"
+              [disabled]="reviewingAccountId !== null"
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              class="reject-button"
+              (click)="confirmAccountDecision(account, 'rejected')"
+              [disabled]="reviewingAccountId !== null"
+            >
+              Reject
+            </button>
+          </div>
+        </article>
+      </ng-container>
+
+      <ng-container *ngIf="listTab === 'drivers'">
+        <section class="driver-stats" aria-label="Approved driver totals">
+          <article class="stat-card">
+            <span>Total approved</span>
+            <strong>{{ driverCount('all') }}</strong>
+          </article>
+          <article class="stat-card">
+            <span>Available</span>
+            <strong>{{ driverCount('available') }}</strong>
+          </article>
+          <article class="stat-card">
+            <span>Busy</span>
+            <strong>{{ driverCount('busy') }}</strong>
+          </article>
+          <article class="stat-card">
+            <span>Offline</span>
+            <strong>{{ driverCount('offline') }}</strong>
+          </article>
+        </section>
+
+        <div class="driver-filters" role="group" aria-label="Driver availability">
+          <button type="button" [class.selected]="driverAvailabilityFilter === 'all'" (click)="selectDriverFilter('all')">
+            All
+            <em>{{ driverCount('all') }}</em>
+          </button>
+          <button type="button" [class.selected]="driverAvailabilityFilter === 'available'" (click)="selectDriverFilter('available')">
+            Available
+            <em>{{ driverCount('available') }}</em>
+          </button>
+          <button type="button" [class.selected]="driverAvailabilityFilter === 'busy'" (click)="selectDriverFilter('busy')">
+            Busy
+            <em>{{ driverCount('busy') }}</em>
+          </button>
+          <button type="button" [class.selected]="driverAvailabilityFilter === 'offline'" (click)="selectDriverFilter('offline')">
+            Offline
+            <em>{{ driverCount('offline') }}</em>
+          </button>
+        </div>
+
+        <section class="empty-card" *ngIf="visibleApprovedDrivers.length === 0">
+          <div class="empty-icon">
+            <ion-icon name="people-outline"></ion-icon>
+          </div>
+          <h2>{{ driverEmptyTitle }}</h2>
+          <p>{{ driverEmptyCopy }}</p>
+        </section>
+
+        <article class="ride-card" *ngFor="let driver of visibleApprovedDrivers">
+          <div class="driver-panel-head">
+            <span class="driver-avatar light" aria-hidden="true">
+              <ion-icon name="person-outline"></ion-icon>
+            </span>
+            <div class="stack">
+              <span class="status-chip" [ngClass]="driverAvailability(driver)">{{ driverAvailabilityLabel(driver) }}</span>
+              <h3>{{ driver.fullName }}</h3>
+              <p>Approved</p>
+            </div>
+          </div>
+          <div class="passenger-info">
+            <span>Vehicle</span>
+            <strong>{{ driverVehicleType(driver) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Plate</span>
+            <strong>{{ driverPlate(driver) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Rating</span>
+            <strong>{{ driverRatingText(driver) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Availability</span>
+            <strong>{{ driverAvailabilityLabel(driver) }}</strong>
+          </div>
+          <div class="passenger-info">
+            <span>Approval</span>
+            <strong>Approved</strong>
+          </div>
+        </article>
+      </ng-container>
+
+    </div>
+
+    <div
+      class="dialog-backdrop"
+      *ngIf="dialog"
+      (click)="closeDialog()"
+    >
+      <div
+        class="dialog-card"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="dialog.title"
+        (click)="$event.stopPropagation()"
+      >
+        <p class="dialog-kicker">CareRide Admin</p>
+        <h2>{{ dialog.title }}</h2>
+
+        <ng-container *ngIf="dialog.kind === 'drivers'">
+          <p class="dialog-copy">Only drivers free at this time are listed, with ratings.</p>
+          <p class="dialog-copy" *ngIf="!dialog.drivers?.length">No drivers are available right now.</p>
+          <button
+            type="button"
+            class="driver-pick"
+            *ngFor="let driver of dialog.drivers"
+            disabled
+          >
+            <strong>{{ driver.driverName }}</strong>
+            <span>{{ ratingLabel(driver.rating, driver.ratingCount) }}</span>
+            <span>{{ driver.vehicleLabel }}</span>
+            <span>{{ driver.available ? 'Available' : 'On a trip' }}</span>
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="dialog.kind === 'assign' && dialog.ride">
+          <div class="dialog-driver" *ngIf="dialog.cloudChoices?.length">
+            <span>Approved available drivers</span>
+            <button
+              type="button"
+              class="driver-pick"
+              *ngFor="let driver of dialog.cloudChoices"
+              (click)="selectAssignmentDriver(driver)"
+            >
+              <strong>{{ driver.driverName }}</strong>
+              <span>{{ driver.vehicleLabel }}</span>
+              <span>Available · {{ ratingLabel(driver.rating, driver.ratingCount) }}</span>
+            </button>
+          </div>
+          <p class="dialog-copy" *ngIf="!dialog.cloudChoices">
+            The passenger already chose this driver. Accept to confirm the trip.
+          </p>
+          <div class="dialog-driver">
+            <span>Selected driver</span>
+            <strong>{{ dialog.driverName }}</strong>
+            <span *ngIf="dialog.vehicleLabel">{{ dialog.vehicleLabel }}</span>
+            <span *ngIf="dialog.driverRating">{{ ratingLabel(dialog.driverRating) }}</span>
+          </div>
+          <div class="dialog-rows">
+            <div>
+              <span>Passenger</span>
+              <strong>{{ dialog.ride.passengerName }}</strong>
+            </div>
+            <div>
+              <span>Pickup</span>
+              <strong>{{ dialog.ride.pickupLocation }}</strong>
+            </div>
+            <div>
+              <span>Destination</span>
+              <strong>{{ dialog.ride.destination }}</strong>
+            </div>
+            <div>
+              <span>Schedule</span>
+              <strong>{{ formatDate(dialog.ride.date) }} · {{ formatTime(dialog.ride.time) }}</strong>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="(dialog.kind === 'reject' || dialog.kind === 'cancel') && dialog.ride">
+          <p class="dialog-copy">
+            {{ dialog.ride.passengerName }} · {{ dialog.ride.pickupLocation }} → {{ dialog.ride.destination }}
+          </p>
+        </ng-container>
+
+        <p class="dialog-copy" *ngIf="dialog.kind === 'notice'">{{ dialog.message }}</p>
+
+        <ng-container *ngIf="dialog.kind === 'driver-profile'">
+          <div class="dialog-driver">
+            <span>{{ dialog.ride ? 'On a trip' : 'Available' }}</span>
+            <strong>{{ ratingLabel(dialog.driverRating) }}</strong>
+            <span>{{ dialog.vehicleLabel }}</span>
+            <span>{{ dialog.driverPhone }}</span>
+          </div>
+          <div class="dialog-rows" *ngIf="dialog.ride">
+            <div>
+              <span>Passenger</span>
+              <strong>{{ dialog.ride.passengerName }}</strong>
+            </div>
+            <div>
+              <span>Location</span>
+              <strong>{{ driverLocationTitle(dialog.ride) }} · {{ driverLocationDetail(dialog.ride) }}</strong>
+            </div>
+            <div>
+              <span>Route</span>
+              <strong>{{ dialog.ride.pickupLocation }} → {{ dialog.ride.destination }}</strong>
+            </div>
+          </div>
+          <p class="dialog-copy" *ngIf="!dialog.reviews?.length">No passenger ratings yet.</p>
+          <div class="review-card" *ngFor="let review of dialog.reviews">
+            <strong>{{ review.passengerName }} · {{ review.clientRating }} / 5</strong>
+            <p>{{ review.clientComment || 'No comment' }}</p>
+          </div>
+        </ng-container>
+
+        <div class="dialog-actions" [class.single]="dialog.kind === 'notice' || dialog.kind === 'drivers' || dialog.kind === 'driver-profile'">
+          <button
+            type="button"
+            class="dialog-secondary"
+            *ngIf="dialog.kind !== 'notice' && dialog.kind !== 'drivers' && dialog.kind !== 'driver-profile'"
+            [disabled]="dialog.busy"
+            (click)="closeDialog()"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            class="dialog-primary"
+            [class.danger]="dialog.kind === 'reject' || dialog.kind === 'cancel'"
+            [disabled]="dialog.busy"
+            (click)="confirmDialog()"
+          >
+            {{ dialog.busy ? 'Please wait…' : (dialog.confirmLabel || 'OK') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-admin-navigation></app-admin-navigation>
+  </div>
+</div>

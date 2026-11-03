@@ -12,5 +12,8 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
+    expect(typeof window.careRideProbeApprovedAdmin).toBe('function');
+    expect(typeof window.openCareRidePasswordRecovery).toBe('function');
+    expect(document.getElementById('care-ride-password-recovery-test')).toBeNull();
   });
 });

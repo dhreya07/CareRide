@@ -35,3 +35,312 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+:root {
+  --care-blue: #4A5C6A;
+  --care-teal: #253745;
+  --care-ink: #06141B;
+  --care-muted: #4A5C6A;
+  --care-bg: #9BA8AB;
+  --care-shell-bg: #CCD0CF;
+  --care-border: #9BA8AB;
+  --care-cream: #CCD0CF;
+  --care-stone: #9BA8AB;
+  --care-taupe: #4A5C6A;
+  --care-brown: #11212D;
+  --care-espresso: #06141B;
+  --care-navy: #11212D;
+  --care-slate: #253745;
+  --care-shell-width: 100%;
+  --care-shell-shadow: 0 0 40px rgba(6, 20, 27, 0.18);
+  --care-control-height: 54px;
+  --care-nav-clearance: 16px;
+  --ion-font-family: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html, body, ion-app, ion-router-outlet {
+  background: var(--care-bg);
+  color: var(--care-ink);
+  font-family: var(--ion-font-family);
+}
+
+button, input, select, textarea {
+  font-family: var(--ion-font-family);
+}
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button,
+input[type="password"]::-webkit-caps-lock-indicator,
+input[type="password"]::-webkit-contacts-auto-fill-button {
+  display: none;
+  visibility: hidden;
+  pointer-events: none;
+  margin: 0;
+  width: 0;
+  height: 0;
+}
+
+ion-icon {
+  pointer-events: none;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+ion-content.app-content {
+  --background: var(--care-bg);
+}
+
+.care-frame {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--care-bg);
+}
+
+.care-shell {
+  box-sizing: border-box;
+  width: min(100%, var(--care-shell-width));
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0 auto;
+  background: var(--care-shell-bg);
+  box-shadow: var(--care-shell-shadow);
+}
+
+.shell-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 16px 18px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.shell-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+app-navigation,
+app-driver-navigation,
+app-admin-navigation {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.app-page {
+  width: min(100%, var(--care-shell-width));
+  max-width: var(--care-shell-width);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 20px 16px 18px;
+  background: var(--care-shell-bg);
+  box-shadow: var(--care-shell-shadow);
+}
+
+.app-topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin: 3px 0 26px; }
+.app-brand { color:var(--care-ink); font-size:20px; font-weight:850; letter-spacing:-.04em; text-decoration:none; }
+.app-brand span { color:var(--care-teal); }
+.profile-chip { width:44px; height:44px; display:grid; place-items:center; border-radius:50%; background:var(--care-stone); color:var(--care-espresso); font-weight:800; text-decoration:none; }
+.profile-chip ion-icon { font-size: 20px; }
+.page-title { font-size:28px; line-height:1.12; margin:0; color:var(--care-ink); letter-spacing:-.04em; }
+.page-subtitle { color:var(--care-muted); margin:8px 0 24px; font-size:15px; line-height:1.5; }
+.surface { background:var(--care-cream); border:1px solid var(--care-border); border-radius:22px; padding:22px; box-shadow:0 8px 24px rgba(6, 20, 27, 0.10); }
+.section-title { margin:0 0 16px; color:var(--care-ink); font-size:19px; font-weight:750; }
+.field-label { display:block; margin:0 0 7px 2px; color:var(--care-ink); font-size:14px; font-weight:700; }
+.form-field { margin:0 0 18px; }
+.form-field ion-item { --background:var(--care-stone); --border-radius:13px; --padding-start:12px; --inner-padding-end:12px; --min-height:54px; border:1px solid var(--care-border); border-radius:13px; }
+.primary-action { --background:var(--care-brown); --border-radius:14px; height:54px; font-weight:750; text-transform:none; --color: var(--care-cream); }
+.secondary-action { --border-radius:14px; height:54px; font-weight:700; text-transform:none; }
+.info-banner { background:var(--care-stone); border-radius:16px; padding:15px 17px; color:var(--care-espresso); font-size:14px; line-height:1.5; }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.status-badge.pending { background: #9BA8AB; color: #06141B; }
+.status-badge.active { background: #4A5C6A; color: #CCD0CF; }
+.status-badge.completed { background: #11212D; color: #CCD0CF; }
+.status-badge.cancelled { background: #06141B; color: #CCD0CF; }
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Body text stays readable on phones, tablets, and laptops. */
+@media (min-width: 0px) {
+  .care-frame p,
+  .care-frame label,
+  .care-frame input,
+  .care-frame textarea,
+  .care-frame .field-label,
+  .care-frame .page-subtitle,
+  .care-frame .section-description,
+  .care-frame .greet-kicker,
+  .care-frame .activity-details strong,
+  .care-frame .activity-details span,
+  .care-frame .clock-copy strong,
+  .care-frame .detail-row strong {
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+  }
+
+  .care-frame small,
+  .care-frame .card-kicker,
+  .care-frame .section-kicker,
+  .care-frame .clock-label,
+  .care-frame .eyebrow,
+  .care-frame .ride-number,
+  .care-frame .status-badge,
+  .care-frame .status-pill,
+  .care-frame .bottom-nav small {
+    font-size: 14px !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1.3 !important;
+  }
+
+  .care-frame button:not(.eye-button):not(.notification-button):not(.star-button):not(.calendar-day) {
+    font-size: 16px !important;
+    min-height: 48px;
+  }
+
+  .care-frame input,
+  .care-frame textarea {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .shell-scroll {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .care-frame .bottom-nav small {
+    font-size: 12px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --care-shell-width: 760px;
+  }
+
+  .care-frame {
+    padding: 16px;
+  }
+
+  .care-shell,
+  .app-page {
+    border-radius: 28px;
+  }
+
+  .shell-scroll {
+    padding: 22px 20px 20px;
+  }
+
+  .app-page {
+    min-height: calc(100dvh - 32px);
+    margin: 16px auto;
+    padding: 24px 20px 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --care-shell-width: 100%;
+  }
+
+  .care-frame {
+    padding: 0;
+    background: #CCD0CF;
+  }
+
+  .care-shell {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .shell-scroll {
+    width: min(1120px, calc(100% - 64px));
+    margin-inline: auto;
+    padding: 28px 8px 24px;
+  }
+
+  .ride-page .shell-scroll,
+  .profile-page .shell-scroll,
+  .safety-page .shell-scroll,
+  .details-page .shell-scroll,
+  .rides-page .shell-scroll,
+  .history-page .shell-scroll {
+    width: min(760px, calc(100% - 64px));
+  }
+
+  .admin-page .shell-scroll,
+  .driver-page .shell-scroll {
+    width: min(960px, calc(100% - 64px));
+  }
+
+  app-navigation,
+  app-driver-navigation,
+  app-admin-navigation {
+    background: #CCD0CF;
+  }
+}
+
+/*
+ * Leaflet must load after Ionic. Ionic's normalize rule `img { max-width: 100% }`
+ * and `* { box-sizing: border-box }` shrink tiles below the 256px grid, which
+ * leaves blank bands between tiles that loaded successfully.
+ * Leaflet 1.9 also sets mix-blend-mode: plus-lighter, which washes tiles out.
+ */
+@import 'leaflet/dist/leaflet.css';
+
+.leaflet-container .leaflet-tile,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-tile {
+  box-sizing: content-box !important;
+  mix-blend-mode: normal !important;
+  max-width: none !important;
+  max-height: none !important;
+  width: 256px !important;
+  height: 256px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

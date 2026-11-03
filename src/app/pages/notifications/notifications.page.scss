@@ -1,0 +1,158 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.notes-page {
+  background: #9BA8AB;
+  color: #06141B;
+}
+
+.notes-shell {
+  background: #CCD0CF;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.brand {
+  color: #06141B;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brand span {
+  color: #11212D;
+}
+
+.back-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: #11212D;
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 36px);
+}
+
+.page-subtitle,
+.empty-state p,
+.note-open p,
+.note-open small {
+  color: #253745;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.note-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.note-filters button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1.5px solid rgba(17, 33, 45, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  color: #06141B;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.note-filters button.selected {
+  border-color: #11212D;
+  background: #11212D;
+  color: #fff;
+}
+
+.note-filters button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.note-filters em {
+  font-style: normal;
+}
+
+.empty-state,
+.note-card {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid #9BA8AB;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.empty-state {
+  text-align: center;
+}
+
+.empty-state ion-icon {
+  font-size: 32px;
+  color: #11212D;
+}
+
+.empty-state h2 {
+  margin: 10px 0 6px;
+  font-size: 22px;
+}
+
+.note-card.unread {
+  border-color: #11212D;
+}
+
+.note-open {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-open strong {
+  font-size: 18px;
+}
+
+.note-state {
+  color: #4A5C6A;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.note-open p,
+.note-open small {
+  margin: 0;
+}
+
+.mark-read {
+  min-height: 44px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid #11212D;
+  border-radius: 12px;
+  background: #fff;
+  color: #11212D;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}

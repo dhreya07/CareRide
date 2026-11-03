@@ -1,0 +1,538 @@
+<div class="register-page">
+
+  <main class="register-shell">
+
+    <div class="background-art" aria-hidden="true"></div>
+
+
+    <header class="brand-area">
+
+      <div class="brand-mark">
+        <ion-icon name="heart-outline" aria-hidden="true"></ion-icon>
+      </div>
+
+      <div class="brand-copy">
+        <h1>Care<span>Ride</span></h1>
+        <p>Mobility with care.</p>
+      </div>
+
+    </header>
+
+
+    <section class="register-panel" *ngIf="screen === 'choose'">
+      <button type="button" class="back-button" (click)="backToLogin()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        Back to login
+      </button>
+
+      <div class="welcome-copy">
+        <h2>Create account</h2>
+        <p>Choose Passenger or Driver. Admin accounts cannot be created here.</p>
+      </div>
+
+      <div class="role-choices">
+        <button type="button" class="account-card role-card" (click)="choosePassenger()">
+          <span class="account-icon" aria-hidden="true">
+            <ion-icon name="accessibility-outline"></ion-icon>
+          </span>
+          <span class="account-text">
+            <strong>I'm a Passenger</strong>
+            <small>Book a ride for yourself or a family member</small>
+          </span>
+        </button>
+
+        <button type="button" class="account-card role-card" (click)="chooseDriver()">
+          <span class="account-icon" aria-hidden="true">
+            <ion-icon name="car-outline"></ion-icon>
+          </span>
+          <span class="account-text">
+            <strong>I'm a Driver</strong>
+            <small>Apply to drive for CareRide</small>
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <section class="register-panel" *ngIf="screen === 'driver'">
+      <div class="choice-nav">
+        <button type="button" class="back-button" (click)="backToLogin()" [disabled]="isLoading">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Back to login
+        </button>
+        <button type="button" class="back-button" (click)="backToChoices()" [disabled]="isLoading">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Back to choices
+        </button>
+      </div>
+
+      <div class="welcome-copy">
+        <h2>Driver registration</h2>
+        <p>Apply to drive for CareRide. An admin must approve the account before you can sign in.</p>
+      </div>
+
+      <form (ngSubmit)="registerDriver()" novalidate>
+        <h3 class="form-section">Personal information</h3>
+
+        <label class="field-label" for="driverFullName">Full name</label>
+        <div class="input-field">
+          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverFullName"
+            name="driverFullName"
+            type="text"
+            [(ngModel)]="driverFullName"
+            (input)="clearMessages()"
+            placeholder="Your full name"
+            autocomplete="name"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <label class="field-label" for="driverEmail">Email address</label>
+        <div class="input-field">
+          <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverEmail"
+            name="driverEmail"
+            type="email"
+            [(ngModel)]="driverEmail"
+            (input)="clearMessages()"
+            placeholder="name@email.com"
+            autocomplete="email"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <label class="field-label" for="driverPhone">Mobile number</label>
+        <div class="input-field">
+          <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverPhone"
+            name="driverPhone"
+            type="tel"
+            [(ngModel)]="driverPhone"
+            (input)="clearMessages()"
+            placeholder="09XX XXX XXXX"
+            autocomplete="tel"
+            inputmode="tel"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <label class="field-label" for="driverAddress">Complete address</label>
+        <div class="input-field">
+          <ion-icon name="home-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverAddress"
+            name="driverAddress"
+            type="text"
+            [(ngModel)]="driverAddress"
+            (input)="clearMessages()"
+            placeholder="Street, barangay, city"
+            autocomplete="street-address"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <h3 class="form-section">Account information</h3>
+
+        <label class="field-label" for="driverPassword">Password</label>
+        <div class="input-field">
+          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverPassword"
+            name="driverPassword"
+            [type]="showDriverPassword ? 'text' : 'password'"
+            [(ngModel)]="driverPassword"
+            (input)="clearMessages()"
+            placeholder="At least 6 characters"
+            autocomplete="new-password"
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="eye-button"
+            (click)="toggleDriverPassword()"
+            [disabled]="isLoading"
+            [attr.aria-label]="showDriverPassword ? 'Hide password' : 'Show password'"
+          >
+            <ion-icon [name]="showDriverPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+
+        <label class="field-label" for="driverConfirmPassword">Confirm password</label>
+        <div class="input-field">
+          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverConfirmPassword"
+            name="driverConfirmPassword"
+            [type]="showDriverConfirmPassword ? 'text' : 'password'"
+            [(ngModel)]="driverConfirmPassword"
+            (input)="clearMessages()"
+            placeholder="Enter password again"
+            autocomplete="new-password"
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="eye-button"
+            (click)="toggleDriverConfirmPassword()"
+            [disabled]="isLoading"
+            [attr.aria-label]="showDriverConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+          >
+            <ion-icon [name]="showDriverConfirmPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+
+        <h3 class="form-section">Driver information</h3>
+
+        <label class="field-label" for="driverLicense">Driver's license number</label>
+        <div class="input-field">
+          <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverLicense"
+            name="driverLicense"
+            type="text"
+            [(ngModel)]="driverLicense"
+            (input)="clearMessages()"
+            placeholder="License number"
+            autocomplete="off"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <label class="field-label" for="driverVehicleType">Vehicle type</label>
+        <div class="input-field">
+          <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+          <select
+            id="driverVehicleType"
+            name="driverVehicleType"
+            [(ngModel)]="driverVehicleType"
+            (change)="clearMessages()"
+            [disabled]="isLoading"
+          >
+            <option value="">Select vehicle type</option>
+            <option value="Accessible van">Accessible van</option>
+            <option value="Sedan">Sedan</option>
+            <option value="SUV">SUV</option>
+            <option value="Multicab">Multicab</option>
+          </select>
+        </div>
+
+        <label class="field-label" for="driverPlate">Vehicle plate number</label>
+        <div class="input-field">
+          <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="driverPlate"
+            name="driverPlate"
+            type="text"
+            [(ngModel)]="driverPlate"
+            (input)="clearMessages()"
+            placeholder="ABC 1234"
+            autocomplete="off"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <h3 class="form-section">Accessibility</h3>
+        <label class="check-row">
+          <input
+            type="checkbox"
+            name="driverWheelchair"
+            [(ngModel)]="driverWheelchair"
+            [disabled]="isLoading"
+          />
+          <span>Wheelchair accessible</span>
+        </label>
+        <label class="check-row">
+          <input
+            type="checkbox"
+            name="driverSeniorAssistance"
+            [(ngModel)]="driverSeniorAssistance"
+            [disabled]="isLoading"
+          />
+          <span>Senior assistance available</span>
+        </label>
+
+        <div *ngIf="errorMessage" class="form-message error-message" role="alert" aria-live="polite">
+          {{ errorMessage }}
+        </div>
+        <div *ngIf="successMessage" class="form-message success-message" role="status" aria-live="polite">
+          {{ successMessage }}
+        </div>
+
+        <p class="privacy-notice">
+          Your information is used only for CareRide transportation and safety support.
+        </p>
+
+        <button type="submit" class="primary-button" [disabled]="isLoading">
+          <span *ngIf="!isLoading">
+            Submit driver application
+            <ion-icon name="arrow-forward-outline" class="arrow"></ion-icon>
+          </span>
+          <span *ngIf="isLoading" class="loading-content">
+            <span class="spinner"></span>
+            Submitting application...
+          </span>
+        </button>
+      </form>
+    </section>
+
+    <section class="register-panel" *ngIf="screen === 'passenger'">
+
+      <button
+        type="button"
+        class="back-button"
+        (click)="backToChoices()"
+        [disabled]="isLoading"
+      >
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        Back to choices
+      </button>
+      <button
+        type="button"
+        class="back-button"
+        (click)="backToLogin()"
+        [disabled]="isLoading"
+      >
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        Back to login
+      </button>
+
+
+      <div class="welcome-copy">
+        <h2>Passenger account</h2>
+        <p>
+          Set up a CareRide profile for yourself
+          or an authorized family member.
+        </p>
+      </div>
+
+
+      <form (ngSubmit)="register()" novalidate>
+
+        <fieldset class="account-section">
+
+          <legend>I am registering as</legend>
+
+          <div class="account-types">
+
+            <button
+              type="button"
+              class="account-card"
+              [class.selected]="accountType === 'passenger'"
+              (click)="selectAccountType('passenger')"
+              [disabled]="isLoading"
+            >
+              <span class="account-icon" aria-hidden="true">
+                <ion-icon name="accessibility-outline"></ion-icon>
+              </span>
+              <span class="account-text">
+                <strong>Passenger</strong>
+                <small>Elderly or PWD</small>
+              </span>
+              <span class="check" aria-hidden="true">
+                <ion-icon *ngIf="accountType === 'passenger'" name="checkmark-outline"></ion-icon>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="account-card"
+              [class.selected]="accountType === 'family'"
+              (click)="selectAccountType('family')"
+              [disabled]="isLoading"
+            >
+              <span class="account-icon" aria-hidden="true">
+                <ion-icon name="people-outline"></ion-icon>
+              </span>
+              <span class="account-text">
+                <strong>Family member</strong>
+                <small>Book for a loved one</small>
+              </span>
+              <span class="check" aria-hidden="true">
+                <ion-icon *ngIf="accountType === 'family'" name="checkmark-outline"></ion-icon>
+              </span>
+            </button>
+
+          </div>
+
+        </fieldset>
+
+
+        <label class="field-label" for="fullName">Full name</label>
+        <div class="input-field">
+          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="fullName"
+            name="fullName"
+            type="text"
+            [(ngModel)]="fullName"
+            (input)="clearMessages()"
+            placeholder="Your full name"
+            autocomplete="name"
+            [disabled]="isLoading"
+          />
+        </div>
+
+
+        <label class="field-label" for="email">Email address</label>
+        <div class="input-field">
+          <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            (input)="clearMessages()"
+            placeholder="name@email.com"
+            autocomplete="email"
+            [disabled]="isLoading"
+          />
+        </div>
+
+
+        <label class="field-label" for="phone">Mobile number</label>
+        <div class="input-field">
+          <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            [(ngModel)]="phone"
+            (input)="clearMessages()"
+            placeholder="09XX XXX XXXX"
+            autocomplete="tel"
+            inputmode="tel"
+            [disabled]="isLoading"
+          />
+        </div>
+
+
+        <label class="field-label" for="address">
+          Home address
+          <span class="optional">optional</span>
+        </label>
+        <div class="input-field">
+          <ion-icon name="home-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="address"
+            name="address"
+            type="text"
+            [(ngModel)]="address"
+            (input)="clearMessages()"
+            placeholder="Street, barangay, city"
+            autocomplete="street-address"
+            [disabled]="isLoading"
+          />
+        </div>
+
+
+        <label class="field-label" for="password">Password</label>
+        <div class="input-field">
+          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="password"
+            name="password"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            (input)="clearMessages()"
+            placeholder="At least 6 characters"
+            autocomplete="new-password"
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="eye-button"
+            (click)="togglePassword()"
+            [disabled]="isLoading"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+
+
+        <label class="field-label" for="confirmPassword">Confirm password</label>
+        <div class="input-field">
+          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            [(ngModel)]="confirmPassword"
+            (input)="clearMessages()"
+            placeholder="Enter password again"
+            autocomplete="new-password"
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="eye-button"
+            (click)="toggleConfirmPassword()"
+            [disabled]="isLoading"
+            [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+          >
+            <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+
+
+        <div
+          *ngIf="errorMessage"
+          class="form-message error-message"
+          role="alert"
+          aria-live="polite"
+        >
+          {{ errorMessage }}
+        </div>
+
+        <div
+          *ngIf="successMessage"
+          class="form-message success-message"
+          role="status"
+          aria-live="polite"
+        >
+          {{ successMessage }}
+        </div>
+
+
+        <p class="privacy-notice">
+          Your information is used only for CareRide transportation and safety support.
+        </p>
+
+
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">
+            Create my account
+            <ion-icon name="arrow-forward-outline" class="arrow"></ion-icon>
+          </span>
+          <span *ngIf="isLoading" class="loading-content">
+            <span class="spinner"></span>
+            Creating account...
+          </span>
+        </button>
+
+      </form>
+
+
+      <div class="login-link">
+        <span>Already have an account?</span>
+        <button
+          type="button"
+          (click)="backToLogin()"
+          [disabled]="isLoading"
+        >
+          Sign in
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+</div>

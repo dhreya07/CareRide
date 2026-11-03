@@ -1,0 +1,250 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.history-page {
+  background: #9BA8AB;
+  color: #06141B;
+}
+
+.history-container {
+  background: #CCD0CF;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.brand {
+  color: #06141B;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brand span {
+  color: #11212D;
+}
+
+.profile-chip {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #9BA8AB;
+  color: #11212D;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.page-title {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 36px);
+  letter-spacing: -0.04em;
+}
+
+.page-subtitle {
+  color: #11212D;
+  margin: 8px 0 22px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.empty-state,
+.ride-card {
+  background: white;
+  border: 1px solid #9BA8AB;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 8px 24px #06141B08;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.empty-state span {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  background: #9BA8AB;
+  color: #11212D;
+}
+
+.empty-state ion-icon {
+  font-size: 28px;
+}
+
+.empty-state h2 {
+  margin: 18px 0 7px;
+  font-size: 21px;
+}
+
+.empty-state p {
+  max-width: 370px;
+  color: #11212D;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+
+.primary-link,
+.details-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background: #11212D;
+  color: white;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.ride-card {
+  margin-bottom: 14px;
+}
+
+.ride-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ride-card-top p {
+  margin: 4px 0 0;
+  color: #11212D;
+}
+
+.route {
+  display: grid;
+  gap: 12px;
+  margin: 6px 0 14px;
+  padding: 14px 0;
+  border-top: 1px solid #9BA8AB;
+  border-bottom: 1px solid #9BA8AB;
+}
+
+.route small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #11212D;
+  font-weight: 800;
+}
+
+.route strong {
+  font-size: 16px;
+  color: #06141B;
+  line-height: 1.4;
+}
+
+.meta {
+  margin: 0 0 8px;
+  color: #11212D;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.ride-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.details-button {
+  width: 100%;
+  margin-top: 0;
+  min-height: 48px;
+  font-size: 15px;
+}
+
+@media (min-width: 700px) and (max-width: 1023px) {
+  .history-page {
+    padding: 24px;
+  }
+}
+
+.progress-timeline {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+}
+
+.progress-timeline li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding-bottom: 12px;
+}
+
+.progress-timeline li:last-child {
+  padding-bottom: 0;
+}
+
+.progress-mark {
+  width: 14px;
+  height: 14px;
+  margin-top: 4px;
+  border: 2px solid #9BA8AB;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.progress-timeline .done .progress-mark {
+  border-color: #11212D;
+  background: #11212D;
+}
+
+.progress-timeline .current .progress-mark {
+  border-color: #11212D;
+  background: #CCD0CF;
+  box-shadow: 0 0 0 3px #11212D;
+}
+
+.progress-timeline strong,
+.progress-timeline small {
+  display: block;
+}
+
+.progress-timeline strong {
+  color: #06141B;
+  font-size: 16px;
+}
+
+.progress-timeline small,
+.progress-outcome {
+  color: #253745;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.progress-outcome {
+  margin: 0 0 12px;
+  color: #06141B;
+  font-size: 16px;
+}
+
+@media (min-width: 1024px) {
+  .history-page {
+    background: #CCD0CF;
+    padding: 0;
+  }
+}

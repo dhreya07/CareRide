@@ -1,0 +1,168 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.details-page {
+  background: #9BA8AB;
+  color: #06141B;
+}
+
+.details-container {
+  background: #CCD0CF;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.brand {
+  color: #06141B;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brand span {
+  color: #11212D;
+}
+
+.page-title {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 36px);
+  letter-spacing: -0.04em;
+}
+
+.page-subtitle {
+  color: #11212D;
+  margin: 8px 0 22px;
+  font-size: 15px;
+}
+
+.detail-card,
+.empty-state {
+  background: white;
+  border: 1px solid #9BA8AB;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 8px 24px #06141B08;
+  margin-bottom: 14px;
+}
+
+.detail-card h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.detail-card p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.muted {
+  color: #11212D;
+}
+
+.status-chip {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #9BA8AB;
+  color: #b16a12;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.when p {
+  margin: 4px 0 0;
+  color: #11212D;
+}
+
+.route {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #9BA8AB;
+}
+
+.route small {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4A5C6A;
+  font-weight: 800;
+}
+
+.info-banner {
+  background: #9BA8AB;
+  border-radius: 16px;
+  padding: 15px 17px;
+  color: #06141B;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.primary-link,
+.secondary-link,
+.cancel-ride-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  border-radius: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.primary-link {
+  background: #11212D;
+  color: white;
+}
+
+.secondary-link {
+  gap: 8px;
+  border: 1px solid #dbe6ef;
+  color: #11212D;
+  background: white;
+}
+
+.secondary-link ion-icon,
+.profile-chip ion-icon {
+  font-size: 18px;
+}
+
+.cancel-ride-button {
+  width: 100%;
+  margin-bottom: 10px;
+  border: 1px solid #4A5C6A;
+  background: white;
+  color: #06141B;
+  font-size: 15px;
+}
+
+.empty-state {
+  text-align: center;
+}
+
+@media (min-width: 700px) and (max-width: 1023px) {
+  .details-page {
+    padding: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .details-page {
+    background: #CCD0CF;
+    padding: 0;
+  }
+}

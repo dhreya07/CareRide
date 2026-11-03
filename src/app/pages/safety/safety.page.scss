@@ -1,0 +1,376 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* =========================
+   PAGE
+========================= */
+
+.safety-page {
+  background: #9BA8AB;
+  color: #06141B;
+}
+
+.safety-container {
+  background: #CCD0CF;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 30px;
+}
+
+.brand {
+  color: #06141B;
+
+  font-size: 23px;
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+.brand span {
+  color: #11212D;
+}
+
+.profile-chip {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: #9BA8AB;
+  color: #11212D;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  text-decoration: none;
+}
+
+
+/* =========================
+   PAGE TITLE
+========================= */
+
+.page-title {
+  margin: 0;
+
+  font-size: 30px;
+  font-weight: 800;
+
+  color: #06141B;
+}
+
+.page-subtitle {
+  margin: 8px 0 25px;
+
+  color: #11212D;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+
+/* =========================
+   SAFETY CARDS
+========================= */
+
+.safety-card {
+  display: flex;
+
+  gap: 15px;
+
+  margin-bottom: 15px;
+
+  padding: 20px;
+
+  background: #CCD0CF;
+
+  border: 1px solid #9BA8AB;
+  border-radius: 20px;
+
+  box-shadow:
+    0 5px 18px
+    rgba(38, 71, 88, 0.05);
+}
+
+
+/* =========================
+   CARD ICON
+========================= */
+
+.card-icon {
+  flex: 0 0 48px;
+
+  width: 48px;
+  height: 48px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 15px;
+
+  background: #9BA8AB;
+  color: #11212D;
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.card-icon ion-icon {
+  font-size: 22px;
+}
+
+.emergency-icon {
+  background: #9BA8AB;
+  color: #06141B;
+}
+
+.warning-icon {
+  background: #9BA8AB;
+  color: #11212D;
+}
+
+
+/* =========================
+   CARD CONTENT
+========================= */
+
+.card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-content h2 {
+  margin: 2px 0 7px;
+
+  font-size: 19px;
+
+  color: #06141B;
+}
+
+.card-content p {
+  margin: 0 0 13px;
+
+  color: #11212D;
+
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+
+/* =========================
+   EMERGENCY CARD
+========================= */
+
+.emergency-card {
+  border-color: #4A5C6A;
+}
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+.danger-button,
+.primary-button,
+.secondary-button {
+  width: 100%;
+
+  min-height: 52px;
+
+  padding: 11px 16px;
+
+  border-radius: 13px;
+
+  font-size: 16px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.danger-button {
+  border: 0;
+
+  background: #06141B;
+  color: #ffffff;
+}
+
+.primary-button {
+  border: 0;
+
+  background: #11212D;
+  color: #ffffff;
+}
+
+.secondary-button {
+  border: 1px solid #4A5C6A;
+
+  background: #CCD0CF;
+  color: #11212D;
+}
+
+
+/* =========================
+   EMERGENCY CONTACT
+========================= */
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  margin-bottom: 14px;
+
+  padding: 12px;
+
+  border-radius: 12px;
+
+  background: #CCD0CF;
+}
+
+.contact-info strong {
+  color: #06141B;
+}
+
+.contact-info span {
+  color: #11212D;
+
+  font-size: 13px;
+}
+
+
+/* =========================
+   RIDE ROUTE
+========================= */
+
+.card-content .status-badge {
+  margin: 0 0 12px;
+}
+
+.ride-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  gap: 7px;
+}
+
+
+/* =========================
+   LINKS
+========================= */
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #11212D;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+
+/* =========================
+   INFORMATION BANNER
+========================= */
+
+.info-banner {
+  margin-top: 18px;
+
+  padding: 17px;
+
+  border-radius: 16px;
+
+  background: #CCD0CF;
+}
+
+.info-banner strong {
+  color: #11212D;
+}
+
+.info-banner p {
+  margin: 6px 0 0;
+
+  color: #11212D;
+
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+
+/* =========================
+   BOTTOM SPACE
+========================= */
+
+.bottom-space {
+  width: 100%;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 480px) {
+
+  .safety-page .shell-scroll {
+    padding: 18px 15px 16px;
+  }
+
+  .page-title {
+    font-size: 27px;
+  }
+
+  .safety-card {
+    padding: 17px;
+
+    gap: 12px;
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+
+    flex-basis: 44px;
+  }
+
+  .card-content h2 {
+    font-size: 17px;
+  }
+
+}
+
+@media (min-width: 700px) and (max-width: 1023px) {
+  .safety-page {
+    padding: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .safety-page {
+    background: #CCD0CF;
+    padding: 0;
+  }
+}

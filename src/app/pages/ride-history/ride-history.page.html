@@ -1,0 +1,218 @@
+<div class="history-page care-frame">
+
+  <div class="history-container care-shell">
+    <div class="shell-scroll">
+
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="page-header">
+
+      <a
+        routerLink="/dashboard"
+        class="brand"
+      >
+        Care<span>Ride</span>
+      </a>
+
+
+      <a
+        routerLink="/profile"
+        class="profile-chip"
+        aria-label="Open profile"
+      >
+        CR
+      </a>
+
+    </header>
+
+
+    <!-- =========================
+         PAGE TITLE
+    ========================== -->
+
+    <h1 class="page-title">
+      Ride History
+    </h1>
+
+
+    <p class="page-subtitle">
+
+      Review your completed and cancelled
+      CareRide journeys.
+
+    </p>
+
+
+    <!-- =========================
+         EMPTY HISTORY
+    ========================== -->
+
+    <section
+      class="empty-state"
+      *ngIf="rides.length === 0"
+    >
+
+      <span class="empty-icon" aria-hidden="true">
+        <ion-icon name="time-outline"></ion-icon>
+      </span>
+
+
+      <h2>
+        No ride history yet
+      </h2>
+
+
+      <p>
+        Completed and cancelled trips will
+        appear here after they leave
+        Scheduled Rides.
+      </p>
+
+
+      <button
+        type="button"
+        class="primary-link"
+        (click)="requestRide()"
+      >
+        Request a Ride
+      </button>
+
+    </section>
+
+
+    <!-- =========================
+         HISTORY LIST
+    ========================== -->
+
+    <article
+      class="ride-card"
+      *ngFor="let ride of rides"
+    >
+
+
+      <!-- DATE + STATUS -->
+
+      <div class="ride-card-top">
+
+        <div>
+
+          <strong>
+            {{ formatDate(ride) }}
+          </strong>
+
+
+          <p>
+            {{ formatTime(ride) }}
+          </p>
+
+        </div>
+
+
+        <div
+          class="status-badge"
+          [ngClass]="statusTone(ride)"
+        >
+          {{ needsRating(ride) ? 'Rate driver' : ride.status }}
+        </div>
+
+      </div>
+
+
+      <p class="meta"><strong>Booking ID:</strong> {{ ride.id }}</p>
+      <p class="meta"><strong>Ride type:</strong> {{ rideTypeLabel(ride) }}</p>
+      <p class="meta"><strong>Assigned driver:</strong> {{ assignedDriver(ride) }}</p>
+      <p class="meta"><strong>Vehicle:</strong> {{ vehicleText(ride) }}</p>
+      <p class="meta"><strong>Plate:</strong> {{ plateText(ride) }}</p>
+
+      <ol class="progress-timeline" aria-label="Booking progress">
+        <li *ngFor="let step of progressSteps(ride)" [class.done]="step.state === 'done'" [class.current]="step.state === 'current'">
+          <span class="progress-mark" aria-hidden="true"></span>
+          <span>
+            <strong>{{ step.label }}</strong>
+            <small>{{ step.text }}</small>
+          </span>
+        </li>
+      </ol>
+      <p class="progress-outcome" *ngIf="progressOutcome(ride)">{{ progressOutcome(ride) }}</p>
+
+      <div class="route">
+        <div>
+          <small>Pickup</small>
+          <strong>{{ ride.pickupLocation }}</strong>
+        </div>
+        <div>
+          <small>Destination</small>
+          <strong>{{ ride.destination }}</strong>
+        </div>
+      </div>
+
+
+      <!-- PASSENGER -->
+
+      <p class="meta">
+
+        <strong>
+          Passenger:
+        </strong>
+
+        {{ ride.passengerName }}
+
+      </p>
+
+
+      <!-- PURPOSE -->
+
+      <p
+        class="meta"
+        *ngIf="ride.purpose"
+      >
+
+        <strong>
+          Purpose:
+        </strong>
+
+        {{ ride.purpose }}
+
+      </p>
+
+
+      <!-- =========================
+           ACTIONS
+      ========================== -->
+
+      <div class="ride-actions">
+
+
+        <!-- VIEW DETAILS -->
+
+        <button
+          type="button"
+          class="details-button"
+          (click)="viewDetails(ride)"
+        >
+          {{ needsRating(ride) ? 'Rate driver' : 'View Details' }}
+        </button>
+
+
+        <!-- REQUEST AGAIN -->
+
+        <button
+          type="button"
+          class="details-button"
+          (click)="requestAgain(ride)"
+        >
+          Request Again
+        </button>
+
+
+      </div>
+
+    </article>
+
+    </div>
+    <app-navigation></app-navigation>
+  </div>
+</div>

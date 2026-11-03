@@ -1,0 +1,164 @@
+<div class="login-page">
+
+  <main class="login-shell">
+
+    <section class="hero" aria-hidden="true">
+      <div class="background-art"></div>
+    </section>
+
+    <header class="brand-area">
+      <div class="brand-chip">
+        <span class="brand-mark">
+          <ion-icon name="heart-outline" aria-hidden="true"></ion-icon>
+        </span>
+        <div class="brand-copy">
+          <h1>Care<span>Ride</span></h1>
+          <p>Mobility with care</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="login-panel">
+
+      <div class="welcome-copy">
+        <h2>Welcome back</h2>
+        <p>Sign in to your CareRide account and we will get you moving.</p>
+      </div>
+
+      <form (ngSubmit)="login()" novalidate>
+
+        <label class="field-label" for="email">Email address</label>
+        <div class="input-field">
+          <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            (input)="clearError()"
+            placeholder="name@email.com"
+            autocomplete="email"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <label class="field-label" for="password">Password</label>
+        <div class="input-field">
+          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+          <input
+            id="password"
+            name="password"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            (input)="clearError()"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            [disabled]="isLoading"
+          />
+          <button
+            type="button"
+            class="eye-button"
+            (click)="togglePassword()"
+            [disabled]="isLoading"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+          </button>
+        </div>
+
+        <div class="login-options">
+          <label class="remember-option">
+            <input
+              type="checkbox"
+              name="rememberMe"
+              [(ngModel)]="rememberMe"
+              [disabled]="isLoading"
+            />
+            <span>Remember me</span>
+          </label>
+
+          <button
+            type="button"
+            class="forgot-button"
+            (click)="forgotPassword()"
+            [disabled]="isLoading"
+          >
+            Forgot password?
+          </button>
+        </div>
+
+        <div
+          *ngIf="errorMessage"
+          class="error-message"
+          role="alert"
+        >
+          {{ errorMessage }}
+        </div>
+
+        <button
+          type="submit"
+          class="primary-button"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">
+            Sign in
+            <ion-icon name="arrow-forward-outline" class="arrow"></ion-icon>
+          </span>
+          <span *ngIf="isLoading" class="loading-content">
+            <span class="spinner"></span>
+            Signing in...
+          </span>
+        </button>
+      </form>
+
+      <div class="divider">
+        <span></span>
+        <small>or continue with</small>
+        <span></span>
+      </div>
+
+      <div class="social-buttons">
+        <button type="button" (click)="socialLogin('Google')">
+          <ion-icon name="logo-google" aria-hidden="true"></ion-icon>
+          Google
+        </button>
+        <button type="button" (click)="socialLogin('Facebook')">
+          <ion-icon name="logo-facebook" aria-hidden="true"></ion-icon>
+          Facebook
+        </button>
+      </div>
+
+      <div class="register-area">
+        <span>New to CareRide?</span>
+        <button type="button" (click)="goToRegister()">
+          Create an account
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="trust-row">
+        <div class="trust-item">
+          <div class="trust-icon">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </div>
+          <span>Safe rides</span>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <ion-icon name="accessibility-outline"></ion-icon>
+          </div>
+          <span>Accessible</span>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <ion-icon name="heart-outline"></ion-icon>
+          </div>
+          <span>Caring team</span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+</div>

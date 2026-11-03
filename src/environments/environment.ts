@@ -3,7 +3,18 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  // Public client values only. Never put a service-role or secret key here.
+  // cloudMigration stays false until booking data moves to Supabase.
+  // cloudAuthEnabled stays false until a later step turns on Supabase sign-in.
+  supabase: {
+    url: 'https://rvswyreywmibgmiahdhw.supabase.co',
+    anonKey: 'sb_publishable_AJI4FYGNrQJBZw1NzDsvlg_YnjlazHr',
+    cloudMigration: false,
+    cloudAuthEnabled: false,
+  },
+  // Browser key restricted to this origin and Maps JavaScript API.
+  googleMaps: { apiKey: '' },
 };
 
 /*

@@ -1,0 +1,39 @@
+<div class="notes-page care-frame">
+  <div class="notes-shell care-shell">
+    <div class="shell-scroll">
+      <header class="page-header">
+        <a [routerLink]="homePath" class="brand">Care<span>Ride</span></a>
+        <a [routerLink]="homePath" class="back-link">Back</a>
+      </header>
+      <h1>Notifications</h1>
+      <p class="page-subtitle">Notices for your account on this browser. These are not text messages or push alerts.</p>
+
+      <div class="note-filters" role="group" aria-label="Notification filter">
+        <button type="button" [class.selected]="filter === 'all'" (click)="selectFilter('all')">All</button>
+        <button type="button" [class.selected]="filter === 'unread'" (click)="selectFilter('unread')">
+          Unread <em *ngIf="unreadCount">{{ unreadCount }}</em>
+        </button>
+        <button type="button" (click)="markAllRead()" [disabled]="unreadCount === 0">Mark all as read</button>
+      </div>
+
+      <section class="empty-state" *ngIf="items.length === 0">
+        <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
+        <h2>{{ filter === 'unread' ? 'No unread notices' : 'No notices yet' }}</h2>
+        <p>New booking updates will appear here after they are saved.</p>
+      </section>
+
+      <article class="note-card" *ngFor="let item of items" [class.unread]="!item.read">
+        <button type="button" class="note-open" (click)="openNotification(item)">
+          <span class="note-state">{{ item.read ? 'Read' : 'Unread' }}</span>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.message }}</p>
+          <small>{{ formatWhen(item.createdAt) }}</small>
+          <small *ngIf="item.rideId">Booking {{ item.rideId }}</small>
+        </button>
+        <button type="button" class="mark-read" *ngIf="!item.read" (click)="markRead(item)">Mark as read</button>
+      </article>
+    </div>
+    <app-navigation *ngIf="!isDriver"></app-navigation>
+    <app-driver-navigation *ngIf="isDriver"></app-driver-navigation>
+  </div>
+</div>

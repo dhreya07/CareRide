@@ -1,0 +1,326 @@
+<div class="details-page care-frame">
+
+  <div class="details-container care-shell">
+    <div class="shell-scroll">
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="page-header">
+
+      <a
+        routerLink="/dashboard"
+        class="brand"
+      >
+        Care<span>Ride</span>
+      </a>
+
+    </header>
+
+
+    <h1 class="page-title">
+      Ride Details
+    </h1>
+
+
+    <!-- =========================
+         RIDE NOT FOUND
+    ========================== -->
+
+    <section
+      class="empty-state"
+      *ngIf="!ride"
+    >
+
+      <h2>
+        Ride not found
+      </h2>
+
+      <p>
+        This ride is not saved on this device,
+        or the link is missing a ride ID.
+      </p>
+
+      <a
+        routerLink="/scheduled-rides"
+        class="primary-link"
+      >
+        Go to Scheduled Rides
+      </a>
+
+    </section>
+
+
+    <!-- =========================
+         RIDE INFORMATION
+    ========================== -->
+
+    <ng-container *ngIf="ride as currentRide">
+
+
+      <p class="page-subtitle">
+
+        Request
+
+        <strong>
+          {{ currentRide.id }}
+        </strong>
+
+      </p>
+
+
+      <!-- =========================
+           TRIP DETAILS
+      ========================== -->
+
+      <section class="detail-card">
+
+        <div class="status-chip">
+          {{ currentRide.status }}
+        </div>
+
+
+        <div class="when">
+
+          <strong>
+            {{ formatDate(currentRide) }}
+          </strong>
+
+          <p>
+            {{ formatTime(currentRide) }}
+          </p>
+
+        </div>
+
+
+        <div class="route">
+
+          <div>
+
+            <small>
+              Pickup
+            </small>
+
+            <strong>
+              {{ currentRide.pickupLocation }}
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <small>
+              Destination
+            </small>
+
+            <strong>
+              {{ currentRide.destination }}
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =========================
+           PASSENGER
+      ========================== -->
+
+      <section class="detail-card">
+
+        <h2>
+          Passenger
+        </h2>
+
+
+        <p>
+          <strong>
+            {{ currentRide.passengerName }}
+          </strong>
+        </p>
+
+
+        <p class="muted">
+
+          {{
+            currentRide.passengerType === 'family'
+              ? 'Booked for a family member'
+              : 'Booked for myself'
+          }}
+
+        </p>
+
+
+        <p>
+
+          <strong>
+            Purpose:
+          </strong>
+
+          {{ currentRide.purpose }}
+
+        </p>
+
+      </section>
+
+
+      <!-- =========================
+           ASSISTANCE
+      ========================== -->
+
+      <section class="detail-card">
+
+        <h2>
+          Assistance Needs
+        </h2>
+
+
+        <p>
+          {{ assistanceSummary(currentRide) }}
+        </p>
+
+
+        <p
+          *ngIf="currentRide.otherAssistanceNotes"
+        >
+
+          <strong>
+            Other assistance:
+          </strong>
+
+          {{ currentRide.otherAssistanceNotes }}
+
+        </p>
+
+
+        <p
+          *ngIf="currentRide.notes"
+        >
+
+          <strong>
+            Additional notes:
+          </strong>
+
+          {{ currentRide.notes }}
+
+        </p>
+
+      </section>
+
+
+      <!-- =========================
+           EMERGENCY CONTACT
+      ========================== -->
+
+      <section class="detail-card">
+
+        <h2>
+          Emergency Contact
+        </h2>
+
+
+        <p>
+
+          <strong>
+            {{ currentRide.emergencyContactName }}
+          </strong>
+
+        </p>
+
+
+        <p class="muted">
+
+          {{ currentRide.emergencyContactNumber }}
+
+        </p>
+
+
+        <button
+          type="button"
+          class="secondary-link"
+          (click)="callEmergencyContact(currentRide)"
+        >
+
+          ☎ Call Emergency Contact
+
+        </button>
+
+      </section>
+
+
+      <!-- =========================
+           CURRENT SYSTEM NOTICE
+      ========================== -->
+
+      <section class="info-banner">
+
+        <strong>
+          Ride updates
+        </strong>
+
+        <p>
+          Live driver location and SMS updates
+          will be connected when the CareRide
+          backend and external services are ready.
+        </p>
+
+      </section>
+
+
+      <!-- =========================
+           SAFETY CENTER
+      ========================== -->
+
+      <button
+        type="button"
+        class="secondary-link"
+        (click)="openSafetyCenter()"
+      >
+
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        Open Safety Center
+
+      </button>
+
+
+      <!-- =========================
+           CANCEL RIDE
+      ========================== -->
+
+      <button
+        type="button"
+        class="cancel-ride-button"
+        *ngIf="canCancel(currentRide)"
+        (click)="cancelRide(currentRide)"
+      >
+
+        Cancel Ride
+
+      </button>
+
+
+      <!-- =========================
+           BACK
+      ========================== -->
+
+      <a
+        class="secondary-link"
+        [routerLink]="backLink(currentRide)"
+      >
+
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        {{ backLabel(currentRide) }}
+
+      </a>
+
+
+    </ng-container>
+
+    </div>
+    <app-navigation></app-navigation>
+  </div>
+</div>
