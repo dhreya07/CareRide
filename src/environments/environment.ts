@@ -12,7 +12,7 @@ export const environment = {
     // and are not migrated automatically.
     // Staging bookings use the approved Supabase booking RPCs. Production keeps
     // its own environment setting and is intentionally not changed here.
-    cloudMigration: false,
+    cloudMigration: true,
 
     // Enable Supabase Auth for development testing.
     cloudAuthEnabled: true,

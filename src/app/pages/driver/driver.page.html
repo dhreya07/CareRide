@@ -342,7 +342,77 @@
             </button>
           </article>
         </section>
+
+        <!-- UPCOMING TRIPS -->
+        <section class="schedule-day-section" aria-label="Upcoming trips">
+          <div class="schedule-day-heading">
+            <div>
+              <span class="schedule-panel-eyebrow">YOUR NEXT RIDES</span>
+              <h2>Upcoming Trips</h2>
+            </div>
+            <span class="schedule-trip-count">
+              {{ upcomingHomeRides.length }}
+              {{ upcomingHomeRides.length === 1 ? 'trip' : 'trips' }}
+            </span>
+          </div>
+
+          <div class="schedule-day-empty" *ngIf="upcomingHomeRides.length === 0">
+            <span class="schedule-empty-icon" aria-hidden="true">
+              <ion-icon name="calendar-clear-outline"></ion-icon>
+            </span>
+            <h3>No upcoming trips</h3>
+            <p>Your next scheduled pickups will appear here.</p>
+          </div>
+
+          <article
+            class="schedule-ride-card"
+            *ngFor="let ride of upcomingHomeRides; trackBy: trackRide"
+          >
+            <div class="schedule-ride-card-top">
+              <span class="schedule-ride-time">
+                <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+                {{ ride.date }} · {{ formatTime(ride.time) }}
+              </span>
+              <span class="status-badge" [attr.data-tone]="statusTone(ride)">
+                {{ statusLabel(ride) }}
+              </span>
+            </div>
+
+            <h3 class="schedule-passenger-name">
+              {{ ride.passengerName || 'Passenger' }}
+            </h3>
+
+            <div class="schedule-route-list">
+              <div class="schedule-route-row">
+                <span class="schedule-route-marker pickup" aria-hidden="true"></span>
+                <div class="schedule-route-copy">
+                  <span>Pickup</span>
+                  <strong>{{ ride.pickupLocation }}</strong>
+                </div>
+              </div>
+
+              <div class="schedule-route-row">
+                <span class="schedule-route-marker destination" aria-hidden="true"></span>
+                <div class="schedule-route-copy">
+                  <span>Destination</span>
+                  <strong>{{ ride.destination }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="schedule-view-details"
+              (click)="viewRide(ride)"
+            >
+              View trip details
+              <ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+            </button>
+          </article>
+        </section>
       </div>
+
+      
 
       <!-- Read-only nearby pickup map: only requests already visible to this driver. -->
       <section *ngIf="listTab === 'active'" class="ride-card" aria-label="Nearby booking requests" style="margin-bottom: 16px;">
@@ -745,4 +815,4 @@
       </div>
     </div>
   </div>
-</div>
+
