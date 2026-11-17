@@ -1,4 +1,4 @@
-<div class="login-page">
+﻿<div class="login-page">
 
   <main class="login-shell">
 
@@ -7,7 +7,7 @@
     </section>
 
     <header class="brand-area">
-      <img class="brand-logo" src="assets/careride-healthcare-mark.png" alt="CareRide — Your healthcare transportation">
+      <img class="brand-logo" src="assets/careride-healthcare-mark.png" alt="CareRide â€” Your healthcare transportation">
     </header>
 
     <section class="login-panel">
@@ -100,6 +100,13 @@
             Signing in...
           </span>
         </button>
+            <button
+        type="button"
+        class="google-signin-button"
+        (click)="googleSignIn()"
+        [disabled]="isLoading">
+        Continue with Google
+      </button>
       </form>
 
       <div class="divider">
@@ -149,3 +156,4 @@
   </main>
 
 </div>
+

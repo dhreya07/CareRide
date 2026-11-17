@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
+﻿import { ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -39,6 +39,17 @@ export class LoginPage implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const googleError = this.route.snapshot.queryParamMap.get('googleError');
+
+    if (googleError) {
+      this.errorMessage = googleError;
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { googleError: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
     const confirmation = this.route.snapshot.queryParamMap.get('authConfirmation');
     if (confirmation === 'confirmed') {
       this.successMessage = 'Email confirmed. Sign in to check your account status; pending accounts still require Admin approval.';
@@ -68,6 +79,31 @@ export class LoginPage implements OnInit {
     }
   }
 
+  async googleSignIn(): Promise<void> {
+    if (this.isLoading) return;
+
+    this.clearError();
+
+    if (!this.auth.cloudAuthEnabled) {
+      this.errorMessage = 'Google Sign-In requires cloud authentication.';
+      return;
+    }
+
+    this.isLoading = true;
+
+    try {
+      await this.auth.startGoogleSignIn();
+    } catch (error) {
+      this.errorMessage = error instanceof Error
+        ? error.message
+        : 'Unable to start Google Sign-In.';
+    } finally {
+      this.isLoading = false;
+      if (!this.destroyRef.destroyed) {
+        this.changeDetector.detectChanges();
+      }
+    }
+  }
   togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
@@ -191,4 +227,6 @@ export class LoginPage implements OnInit {
     );
   }
 }
+
+
 

@@ -1,5 +1,7 @@
-import { Component, OnDestroy } from '@angular/core';
+﻿import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from './core/services/auth.service';
+import { homePathForRole } from './core/models/care-ride.models';
 import { App } from '@capacitor/app';
 import { Capacitor, PluginListenerHandle } from '@capacitor/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular';
@@ -24,6 +26,7 @@ export class AppComponent implements OnDestroy {
   constructor(
     private readonly router: Router,
     private readonly signupCallback: SignupConfirmationCallbackService,
+    private readonly auth: AuthService,
   ) {
     registerCareIcons();
     installAdminAuthProbe();
@@ -31,7 +34,7 @@ export class AppComponent implements OnDestroy {
     installPasswordRecoveryTestDialog();
     if (Capacitor.isNativePlatform()) {
       void this.listenForNativeCallbacks();
-    } else if (typeof window !== 'undefined' && isBrowserSignupCallback(window.location.href)) {
+    } else if (typeof window !== 'undefined' && (isBrowserSignupCallback(window.location.href) || this.isBrowserGoogleCallback(window.location.href))) {
       void this.handleCallback(window.location.href, false);
     }
   }
@@ -62,7 +65,72 @@ export class AppComponent implements OnDestroy {
     }
   }
 
+  private isBrowserGoogleCallback(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+
+      if (
+        !['http:', 'https:'].includes(parsed.protocol) ||
+        parsed.pathname !== '/login'
+      ) {
+        return false;
+      }
+
+      const hash = new URLSearchParams(parsed.hash.slice(1));
+
+      return (
+        parsed.searchParams.has('code') ||
+        hash.has('access_token') ||
+        hash.has('error')
+      );
+    } catch {
+      return false;
+    }
+  }
   private async handleCallback(url: string, native: boolean): Promise<void> {
+    // Google OAuth callback is separate from signup confirmation.
+    let isGoogleCallback = false;
+
+    try {
+      const parsed = new URL(url);
+      isGoogleCallback = native
+        ? parsed.protocol === 'careride-staging:' &&
+          parsed.hostname === 'oauth' &&
+          parsed.pathname === '/callback'
+        : parsed.pathname === '/login' &&
+          (parsed.searchParams.has('code') ||
+           parsed.hash.includes('access_token='));
+    } catch {
+      return;
+    }
+
+    if (isGoogleCallback) {
+      if (!native && typeof window !== 'undefined') {
+        window.history.replaceState(
+          {},
+          '',
+          window.location.pathname
+        );
+      }
+
+      try {
+        const role = await this.auth.completeGoogleSignIn(url);
+        await this.router.navigate([homePathForRole(role)], {
+          replaceUrl: true,
+        });
+      } catch (error) {
+        await this.router.navigate(['/login'], {
+          queryParams: {
+            googleError: error instanceof Error
+              ? error.message
+              : 'Google Sign-In failed.',
+          },
+          replaceUrl: true,
+        });
+      }
+      return;
+    }
+
     const result = await this.signupCallback.handle(url, native);
     if (result === 'not-callback' || result === 'duplicate' || this.destroyed) return;
 
@@ -75,3 +143,6 @@ export class AppComponent implements OnDestroy {
     });
   }
 }
+
+
+

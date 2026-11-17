@@ -1,3 +1,6 @@
+﻿import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { getSharedSupabaseClient } from './supabase-client';
 import { DriverLocationPublisherService } from './driver-location-publisher.service';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
@@ -109,6 +112,116 @@ export class AuthService {
     return environment.supabase.cloudAuthEnabled === true;
   }
 
+  async completeGoogleSignIn(callbackUrl: string): Promise<AccountRole> {
+    if (!this.cloudAuthEnabled) {
+      throw new Error('Cloud authentication is disabled.');
+    }
+
+    const url = new URL(callbackUrl);
+
+    const isNativeCallback =
+      url.protocol === 'careride-staging:' &&
+      url.hostname === 'oauth' &&
+      url.pathname === '/callback';
+
+    const isWebCallback =
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      typeof window !== 'undefined' &&
+      url.origin === window.location.origin &&
+      url.pathname === '/login';
+
+    if (!isNativeCallback && !isWebCallback) {
+      throw new Error('Invalid Google login callback.');
+    }
+
+    const params = new URLSearchParams(url.search);
+    const hashParams = new URLSearchParams(url.hash.slice(1));
+
+    hashParams.forEach((value, key) => {
+      params.set(key, value);
+    });
+
+    if (params.has('error')) {
+      throw new Error('Google Sign-In was cancelled or unsuccessful.');
+    }
+
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const code = params.get('code');
+
+    const client = getSharedSupabaseClient();
+
+    try {
+      if (accessToken && refreshToken) {
+        const { error } = await client.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error) throw error;
+      } else if (code) {
+        const { error } =
+          await client.auth.exchangeCodeForSession(code);
+
+        if (error) throw error;
+      } else {
+        throw new Error('Google login session was not returned.');
+      }
+
+      const profile = await this.cloudAuth.readOwnProfile();
+
+      if (!dashboardAccessAllowed(profile)) {
+        throw new Error(
+          'Your CareRide account is not approved or has no linked profile.'
+        );
+      }
+
+      const role = this.cloudRole(profile!);
+
+      if (!role) {
+        throw new Error('Invalid CareRide account role.');
+      }
+
+      this.writeLocalSession(
+        role,
+        profile!.fullName,
+        profile!.email
+      );
+
+      return role;
+    } catch (error) {
+      await this.cloudAuth.signOut().catch(() => {});
+      throw error;
+    }
+  }
+  async startGoogleSignIn(): Promise<void> {
+    if (!this.cloudAuthEnabled) {
+      throw new Error('Google Sign-In requires cloud authentication.');
+    }
+
+    const redirectTo = Capacitor.isNativePlatform()
+      ? 'careride-staging://oauth/callback'
+      : `${window.location.origin}/login`;
+
+    const client = getSharedSupabaseClient();
+
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) throw new Error(error.message);
+    if (!data.url) throw new Error('Google login URL was not returned.');
+
+    if (Capacitor.isNativePlatform()) {
+      await Browser.open({ url: data.url });
+    } else {
+      window.location.assign(data.url);
+    }
+  }
   async signIn(email: string, password: string): Promise<AccountRole> {
     if (this.cloudAuthEnabled) {
       return this.signInWithCloudAuth(email, password);
@@ -733,3 +846,6 @@ export class AuthService {
     return this.supabase.client;
   }
 }
+
+
+
