@@ -572,10 +572,10 @@
             </div>
             <div>
               <span class="section-step">05 • DRIVER SELECTION</span>
-              <h2>Choose an Available Driver</h2>
-              <p>
-                Select a driver approved by CareRide.
-              </p>
+
+<h2>Choose an Available Driver</h2>
+<p>Select a CareRide-approved driver for this trip.</p>
+
             </div>
           </div>
 
@@ -592,15 +592,14 @@
             requested schedule.
           </p>
 
-          <p
-            class="form-error"
-            *ngIf="drivers.length === 0"
-          >
-            No eligible drivers are currently listed.
-            You may try another schedule or check again later.
-          </p>
+
+<p class="form-error" *ngIf="drivers.length === 0">
+  No eligible drivers are currently listed.
+  You may try another schedule or check again later.
+</p>
 
           <div class="driver-options">
+
             <button
               type="button"
               class="driver-option"
@@ -761,7 +760,7 @@
           type="button"
           class="review-button"
           (click)="goToReview()"
-          [disabled]="!selectedDriverId"
+         [disabled]="!selectedDriverId"
         >
           Continue to Review
           <ion-icon name="arrow-forward-outline"></ion-icon>
@@ -899,7 +898,7 @@
           type="button"
           class="review-button"
           (click)="submitRideRequest()"
-          [disabled]="submitting || !selectedDriverId"
+        [disabled]="submitting || !selectedDriverId"
         >
           {{ submitting ? 'Submitting…' : 'Submit Ride Request' }}
           <ion-icon name="checkmark-outline"></ion-icon>

@@ -79,6 +79,7 @@ export interface PendingRegistrationResult {
 
 /** A passenger or driver row an approved admin can review. Email confirmation is separate. */
 export interface CloudManagedAccount {
+  availability?: 'available' | 'busy' | 'offline';
   id: string;
   role: 'passenger' | 'driver';
   accountStatus: CloudAccountStatus;
@@ -820,7 +821,7 @@ export class SupabaseAuthAdapter {
 
     const { data, error } = await client
       .from('driver_details')
-      .select('user_id, license_number, vehicle_type, plate_number, wheelchair_accessible, senior_assistance')
+   .select('user_id, license_number, vehicle_type, plate_number, wheelchair_accessible, senior_assistance, availability')
       .in('user_id', driverIds);
 
     if (error) {
@@ -852,6 +853,7 @@ export class SupabaseAuthAdapter {
       account.plateNumber = this.text(row['plate_number']);
       account.wheelchairAccessible = row['wheelchair_accessible'] === true;
       account.seniorAssistance = row['senior_assistance'] === true;
+      account.availability = this.availability(row['availability']);
 
       Object.assign(account, mapDriverV3ReadOnlyFields(row));
     }

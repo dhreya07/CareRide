@@ -44,7 +44,10 @@ describe('Supabase booking foundation', () => {
     }));
     getUser = vi.fn(async () => ({ data: { user: { id: DRIVER_ID } }, error: null }));
     vi.mocked(createClient).mockReset();
-    vi.mocked(createClient).mockReturnValue({ rpc, from, auth: { getUser } } as never);
+    vi.mocked(createClient).mockImplementation((...args: unknown[]) => {
+  console.trace('UNEXPECTED SUPABASE CLIENT INITIALIZATION', args[0]);
+  return { rpc, from, auth: { getUser } } as never;
+});
     vi.stubGlobal('fetch', vi.fn(() => {
       throw new Error('Live network is not allowed in this test.');
     }));

@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
-import { normalizeAccountRole } from '../../core/models/care-ride.models';
+import { AccountRole, normalizeAccountRole } from '../../core/models/care-ride.models';
 import { AuthService } from '../../core/services/auth.service';
 import { InAppNotification, NotificationService } from '../../core/services/notification.service';
 import { AppNavigationComponent } from '../../shared/app-navigation.component';
@@ -21,6 +21,7 @@ export class NotificationsPage implements OnInit {
   filter: 'all' | 'unread' = 'all';
   items: InAppNotification[] = [];
   unreadCount = 0;
+  private cloudRole: AccountRole | null = null;
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
@@ -36,10 +37,13 @@ export class NotificationsPage implements OnInit {
   }
 
   ionViewWillEnter(): void {
-    void this.notifications.refreshCloud().finally(() => this.load());
+    void this.refreshCloudNotifications();
   }
 
   get isDriver(): boolean {
+    if (this.auth.cloudAuthEnabled) {
+      return this.cloudRole === 'driver';
+    }
     const account = this.auth.getLocalAccount();
     return Boolean(account && normalizeAccountRole(account.accountType) === 'driver');
   }
@@ -54,6 +58,10 @@ export class NotificationsPage implements OnInit {
   }
 
   markRead(item: InAppNotification): void {
+    if (this.auth.cloudAuthEnabled) {
+      void this.notifications.markRead(item.id, '').then(() => this.load()).catch(() => undefined);
+      return;
+    }
     const account = this.auth.getLocalAccount();
     if (!account) {
       return;
@@ -62,6 +70,10 @@ export class NotificationsPage implements OnInit {
   }
 
   markAllRead(): void {
+    if (this.auth.cloudAuthEnabled) {
+      void this.notifications.markAllRead('').then(() => this.load()).catch(() => undefined);
+      return;
+    }
     const account = this.auth.getLocalAccount();
     if (!account) {
       return;
@@ -96,9 +108,23 @@ export class NotificationsPage implements OnInit {
   }
 
   private load(): void {
+    if (this.auth.cloudAuthEnabled) {
+      const cloudItems = this.notifications.listFor('');
+      this.unreadCount = cloudItems.filter((item) => !item.read).length;
+      this.items = this.filter === 'unread' ? cloudItems.filter((item) => !item.read) : cloudItems;
+      return;
+    }
     const account = this.auth.getLocalAccount();
     const all = account ? this.notifications.listFor(account.id) : [];
     this.unreadCount = all.filter((item) => !item.read).length;
     this.items = this.filter === 'unread' ? all.filter((item) => !item.read) : all;
+  }
+
+  private async refreshCloudNotifications(): Promise<void> {
+    if (this.auth.cloudAuthEnabled) {
+      this.cloudRole = await this.auth.getCurrentRole().catch(() => null);
+    }
+    await this.notifications.refreshCloud().catch(() => undefined);
+    this.load();
   }
 }

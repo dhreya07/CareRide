@@ -1,8 +1,8 @@
-﻿import { Capacitor } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { getSharedSupabaseClient } from './supabase-client';
 import { DriverLocationPublisherService } from './driver-location-publisher.service';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, Injector } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import {
   AccountRole,
@@ -382,10 +382,10 @@ export class AuthService {
     });
   }
 
-  private readonly locationPublisher = inject(DriverLocationPublisherService);
+  private readonly injector = inject(Injector);
 
   async signOut(): Promise<void> {
-    await this.locationPublisher.disable();
+    await this.injector.get(DriverLocationPublisherService).disable();
     if (this.cloudAuthEnabled) {
       await this.cloudAuth.signOut();
       this.clearLocalSession();
@@ -846,6 +846,3 @@ export class AuthService {
     return this.supabase.client;
   }
 }
-
-
-

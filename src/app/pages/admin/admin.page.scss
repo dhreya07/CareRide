@@ -15,6 +15,14 @@ button {
   color: #06141B;
 }
 
+.monitor-note {
+  margin: 14px 0 0;
+  color: #31515b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .admin-shell {
   position: relative;
   background: #CCD0CF;
@@ -569,7 +577,7 @@ button {
 }
 
 .admin-insight > summary::after {
-  content: '⌄';
+  content: '';
   display: grid;
   place-items: center;
   width: 26px;
@@ -900,6 +908,95 @@ button {
   margin: 0;
   color: #06141B;
   font-size: 18px;
+}
+
+.compact-details {
+  margin-top: 10px;
+  border-top: 1px solid rgba(74, 92, 106, 0.18);
+}
+
+.compact-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  color: #0a5052;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  list-style: none;
+}
+
+.compact-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.compact-details > summary ion-icon {
+  flex: 0 0 auto;
+  font-size: 19px;
+  transition: transform 0.18s ease;
+}
+
+.compact-details[open] > summary ion-icon {
+  transform: rotate(90deg);
+}
+
+.rating-stars {
+  display: flex;
+  gap: 3px;
+  color: #b8c5c7;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.rating-stars .filled {
+  color: #e2a817;
+  text-shadow: 0 1px 0 rgba(115, 74, 0, 0.2);
+}
+
+.review-summary .rating-stars {
+  margin-top: 7px;
+}
+
+.driver-feedback {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(74, 92, 106, 0.18);
+}
+
+.driver-feedback h4,
+.driver-feedback p {
+  margin: 0;
+}
+
+.driver-feedback h4 {
+  color: #0b4f51;
+  font-size: 14px;
+}
+
+.driver-feedback-summary,
+.driver-feedback-empty {
+  margin-top: 5px !important;
+  color: #4a6870;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.driver-feedback-item {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.driver-feedback-item p {
+  color: #24474d;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .status-badge {
@@ -1464,7 +1561,7 @@ button {
   font-size: 23px;
 }
 .admin-insight > summary > span:nth-child(2) { display: grid; flex: 1; gap: 3px; min-width: 0; }
-.admin-insight > summary::after { content: '›'; font-size: 26px; line-height: 1; transform: none; }
+.admin-insight > summary::after { content: ''; font-size: 26px; line-height: 1; transform: none; }
 .admin-insight[open] > summary::after { transform: rotate(90deg); }
 
 /* Accounts dashboard presentation. */
@@ -1555,6 +1652,12 @@ button {
 .admin-page .referral-history .empty-card { min-height: 235px; display: grid; place-content: center; }
 .admin-page .referral-history .ride-card { margin-top: 10px; }
 
+/* The visible ion-icon is the only disclosure control. The old text-based
+   fallback rendered as corrupted characters on some Android webviews. */
+.admin-insight > summary::after {
+  display: none;
+}
+
 @media (max-width: 360px) {
   .history-stats { gap: 5px; }
   .history-stat-card { min-height: 84px; padding: 6px 3px; }
@@ -1585,3 +1688,79 @@ button {
 .driver-status-card.available { background: linear-gradient(145deg, #dbfff1, #8deed5); }.driver-status-card.available ion-icon { color: #006750; background: #a5f7db; }
 .driver-status-card.busy { background: linear-gradient(145deg, #fff5c9, #ffe294); }.driver-status-card.busy ion-icon { color: #714d00; background: #ffe88f; }
 .driver-status-card.offline { background: linear-gradient(145deg, #f1e9ff, #d4c0f4); }.driver-status-card.offline ion-icon { color: #56317b; background: #e4d4ff; }
+
+/* Admin driver directory */
+button.driver-status-card {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+  border: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  &:focus-visible {
+    outline: 3px solid #006e69;
+    outline-offset: 3px;
+  }
+
+  &[aria-pressed='true'] {
+    box-shadow: inset 0 0 0 3px #007e78;
+  }
+}
+
+.driver-directory {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.driver-directory-card {
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #073c42;
+}
+
+.driver-directory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    font-size: 16px;
+  }
+
+  span {
+    font-size: 13px;
+  }
+}
+
+.driver-directory-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #d1f8ed;
+  font-weight: 700;
+}
+
+.driver-directory-details {
+  margin-top: 12px;
+
+  p {
+    margin: 6px 0;
+    font-size: 13px;
+  }
+}

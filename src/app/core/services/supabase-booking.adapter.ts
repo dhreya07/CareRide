@@ -339,9 +339,13 @@ export class SupabaseBookingAdapter {
 
   private toLocalRide(value: unknown): LocalRide {
     const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
-    const status = row['ride_type'] === 'scheduled' && row['status'] === 'pending'
-      ? 'Scheduled' as LocalRideStatus
-      : this.status(row['status']);
+    const bookingKind = row['booking_kind'] ?? row['ride_type'];
+
+const status =
+  bookingKind === 'scheduled' &&
+  (row['status'] === 'pending' || row['status'] === 'Pending')
+    ? 'Scheduled' as LocalRideStatus
+    : this.status(row['status']);
     return {
       id: this.text(row['id']),
       passengerType: row['passenger_type'] === 'family' ? 'family' : 'self',

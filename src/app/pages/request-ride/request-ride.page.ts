@@ -455,11 +455,13 @@ export class RequestRidePage implements OnDestroy {
         destinationLongitude: this.destinationLongitude,
         pickupAccuracyMeters: this.pickupAccuracyMeters,
         destinationAccuracyMeters: this.destinationAccuracyMeters,
-        preferredDriverId: driver.id,
-        preferredDriverName: driver.name,
-        preferredDriverPhone: driver.phone,
-        preferredVehicleLabel: driver.vehicleLabel,
-        preferredDriverRating: driver.rating,
+        ...(driver ? {
+          preferredDriverId: driver.id,
+          preferredDriverName: driver.name,
+          preferredDriverPhone: driver.phone,
+          preferredVehicleLabel: driver.vehicleLabel,
+          preferredDriverRating: driver.rating,
+        } : {}),
         status: this.rideType === 'schedule' ? 'Scheduled' : 'Pending',
       });
       await this.router.navigate(['/scheduled-rides'], { replaceUrl: true });
@@ -826,20 +828,31 @@ export class RequestRidePage implements OnDestroy {
     if (this.passengerType === 'family' && !this.passengerName.trim()) {
       return 'Please enter the passenger name for this family booking.';
     }
-    if (this.auth.cloudAuthEnabled || this.rides.cloudBookings) {
+
+    if (this.rides.cloudBookings) {
       if (!this.selectedDriverId || !this.drivers.some((driver) => driver.id === this.selectedDriverId)) {
         return 'Please choose an available driver for this trip.';
       }
+    } else if (this.auth.cloudAuthEnabled) {
+      // Cloud authentication with local bookings still requires a driver.
+      if (
+        !this.selectedDriverId ||
+        !this.drivers.some((driver) => driver.id === this.selectedDriverId)
+      ) {
+        return 'Please choose an available driver for this trip.';
+      }
     } else {
-    const account = this.auth.listApprovedDrivers().find((item) => item.id === this.selectedDriverId);
-    if (!this.selectedDriverId || !account) {
-      return 'Please choose an available driver for this trip.';
-    }
-    if (!this.isEligibleAccount(account)) {
-      this.selectedDriverId = '';
-      this.drivers = this.eligibleBookingDrivers();
-      return 'That driver is no longer available. Please choose another driver.';
-    }
+      const account = this.auth.listApprovedDrivers().find(
+        (item) => item.id === this.selectedDriverId
+      );
+      if (!this.selectedDriverId || !account) {
+        return 'Please choose an available driver for this trip.';
+      }
+      if (!this.isEligibleAccount(account)) {
+        this.selectedDriverId = '';
+        this.drivers = this.eligibleBookingDrivers();
+        return 'That driver is no longer available. Please choose another driver.';
+      }
     }
     if (!this.rideDate || !this.rideTime) {
       return 'Please choose a date and time.';

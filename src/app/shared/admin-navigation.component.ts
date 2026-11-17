@@ -8,25 +8,25 @@ import { IonIcon } from '@ionic/angular';
   imports: [RouterLink, RouterLinkActive, IonIcon],
   template: `
     <nav class="bottom-nav" aria-label="Admin navigation">
-      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" aria-label="Operations">
-        <ion-icon name="home-outline"></ion-icon>
-        <small>Home</small>
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" aria-label="Booking monitor">
+        <ion-icon name="pulse-outline"></ion-icon>
+        <small>Monitor</small>
       </a>
-      <a routerLink="/admin/accounts" routerLinkActive="active" aria-label="Accounts waiting for approval">
+      <a routerLink="/admin/passengers" routerLinkActive="active" aria-label="Passenger account approvals">
         <ion-icon name="person-outline"></ion-icon>
-        <small>Accounts</small>
+        <small>Passengers</small>
       </a>
-      <a class="nav-primary" routerLink="/admin/accepted" routerLinkActive="active" aria-label="Accepted requests">
-        <ion-icon name="checkmark-outline"></ion-icon>
-        <small>Accepted</small>
+      <a routerLink="/admin/drivers" routerLinkActive="active" aria-label="Driver account approvals">
+        <ion-icon name="people-outline"></ion-icon>
+        <small>Drivers</small>
       </a>
-      <a routerLink="/admin/history" routerLinkActive="active" aria-label="History">
+      <a routerLink="/admin/history" routerLinkActive="active" aria-label="Booking history">
         <ion-icon name="time-outline"></ion-icon>
         <small>History</small>
       </a>
-      <a routerLink="/admin/drivers" routerLinkActive="active" aria-label="Available drivers">
-        <ion-icon name="people-outline"></ion-icon>
-        <small>Drivers</small>
+      <a routerLink="/admin/declined" routerLinkActive="active" aria-label="Declined bookings">
+        <ion-icon name="close-circle-outline"></ion-icon>
+        <small>Declined</small>
       </a>
     </nav>
   `,
@@ -66,6 +66,7 @@ import { IonIcon } from '@ionic/angular';
       padding: 5px 4px 6px;
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
+      justify-content: initial;
       justify-items: center;
       border: 1px solid #f8ffff;
       border-radius: 20px 20px 26px 26px;

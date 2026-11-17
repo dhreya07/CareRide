@@ -40,28 +40,28 @@
           <button type="button" [class.selected]="reportPeriod === 'month'" (click)="selectReportPeriod('month')">This Month</button>
         </div>
         <section class="priority-stats" aria-label="Priority operations">
-          <article class="priority-card pending">
+          <article class="priority-card pending" role="button" tabindex="0" (click)="openOperationsCard('active', 'pending')" (keydown.enter)="openOperationsCard('active', 'pending')" (keydown.space)="$event.preventDefault(); openOperationsCard('active', 'pending')">
             <span class="priority-icon"><ion-icon name="time-outline" aria-hidden="true"></ion-icon></span>
             <span>Waiting for action</span>
             <strong>{{ pendingCount }}</strong>
             <small>Pending bookings</small>
             <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
           </article>
-          <article class="priority-card confirmed">
+          <article class="priority-card confirmed" role="button" tabindex="0" (click)="openOperationsCard('active', 'confirmed')" (keydown.enter)="openOperationsCard('active', 'confirmed')" (keydown.space)="$event.preventDefault(); openOperationsCard('active', 'confirmed')">
             <span class="priority-icon"><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon></span>
             <span>Ready to serve</span>
             <strong>{{ confirmedCount }}</strong>
             <small>Confirmed bookings</small>
             <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
           </article>
-          <article class="priority-card ongoing">
+          <article class="priority-card ongoing" role="button" tabindex="0" (click)="openOperationsCard('active', 'ongoing')" (keydown.enter)="openOperationsCard('active', 'ongoing')" (keydown.space)="$event.preventDefault(); openOperationsCard('active', 'ongoing')">
             <span class="priority-icon"><ion-icon name="car-outline" aria-hidden="true"></ion-icon></span>
             <span>On the road</span>
             <strong>{{ ongoingCount }}</strong>
             <small>Ongoing rides</small>
             <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
           </article>
-          <article class="priority-card drivers">
+          <article class="priority-card drivers" role="button" tabindex="0" (click)="openOperationsCard('drivers', 'available')" (keydown.enter)="openOperationsCard('drivers', 'available')" (keydown.space)="$event.preventDefault(); openOperationsCard('drivers', 'available')">
             <span class="priority-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
             <span>Driver readiness</span>
             <strong>{{ availableDriverCount }}</strong>
@@ -77,8 +77,7 @@
           <summary>
             <span class="insight-icon"><ion-icon name="list-outline" aria-hidden="true"></ion-icon></span>
             <span><strong>Booking report</strong><small>All booking totals and statuses</small></span>
-            <span class="summary-count">{{ totalCount }}</span>
-          </summary>
+            <span class="summary-count">{{ totalCount }}</span> <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon> </summary>
           <section class="stats-grid report-grid" aria-label="All booking totals">
             <div class="stat-card">
               <span>Total bookings</span>
@@ -121,8 +120,7 @@
           <summary>
             <span class="insight-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
             <span><strong>Accounts</strong><small>Passengers, drivers, approvals, and availability</small></span>
-            <span class="summary-count">{{ registeredPassengerCount + registeredDriverCount }}</span>
-          </summary>
+            <span class="summary-count">{{ registeredPassengerCount + registeredDriverCount }}</span> <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon> </summary>
           <section class="stats-grid report-grid" aria-label="Current accounts">
             <div class="stat-card">
               <span>Registered passengers</span>
@@ -151,17 +149,16 @@
           </section>
         </details>
 
-        <details class="admin-insight">
+        <details class="admin-insight" *ngIf="false">
           <summary>
             <span class="insight-icon"><ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon></span>
             <span><strong>Referrals</strong><small>Replacement drivers</small></span>
-            <span class="summary-count">{{ referralAttemptCount }}</span>
-          </summary>
+            <span class="summary-count">{{ referralAttemptCount }}</span> <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon> </summary>
         <p class="referral-note" *ngIf="referralMetricsAvailable">
           Each booking keeps one current referral. These counts are bookings with a referral, not extra bookings. Referral times are not stored.
         </p>
         <p class="referral-note" *ngIf="!referralMetricsAvailable">
-          Referral times are not stored, so Today, This Week, and This Month cannot be calculated. Choose All Time to see each booking’s current referral.
+          Referral times are not stored, so Today, This Week, and This Month cannot be calculated. Choose All Time to see each booking's current referral.
         </p>
         <section class="stats-grid report-grid" *ngIf="referralMetricsAvailable" aria-label="Referral summary">
           <div class="stat-card">
@@ -192,8 +189,7 @@
           <summary>
             <span class="insight-icon"><ion-icon name="star-outline" aria-hidden="true"></ion-icon></span>
             <span><strong>Driver performance</strong><small>Completed rides and reviews</small></span>
-            <span class="summary-count">{{ driverPerformance.length }}</span>
-          </summary>
+            <span class="summary-count">{{ driverPerformance.length }}</span> <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon> </summary>
         <p class="referral-note" *ngIf="performanceMetricsAvailable">
           Completed rides are counted for the final assigned driver. Ratings come from passenger reviews on those rides. Completion time is not stored, so this list is All Time.
         </p>
@@ -247,13 +243,13 @@
         </div>
         <h2>{{ emptyTitle }}</h2>
         <p *ngIf="listTab === 'active'">
-          Bookings saved in this browser appear here. This view does not accept, decline, or reassign them.
+          New and active cloud bookings appear here. This view is read-only.
         </p>
         <p *ngIf="listTab === 'accepted'">
           Accepted trips stay here while a driver is assigned or the ride is underway.
         </p>
         <p *ngIf="listTab === 'history'">
-          Completed, cancelled, and rejected trips will show in this list.
+          Accepted, completed, cancelled, and declined bookings will show here.
         </p>
       </section>
 
@@ -261,12 +257,14 @@
       <article class="ride-card" *ngFor="let ride of visibleRides; trackBy: trackRide">
         <div class="ride-card-header">
           <div>
-            <span class="ride-id">{{ ride.id }}</span>
+          <span class="ride-id">Booking update</span>
             <h3 class="person-name">{{ ride.passengerName || 'Passenger' }}</h3>
           </div>
           <span class="status-badge" [ngClass]="statusTone(ride)">{{ ride.status }}</span>
         </div>
 
+        <details class="compact-details">
+          <summary>View booking details <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon></summary>
         <div class="passenger-info">
           <span>Booking</span>
           <strong>{{ bookingTypeLabel(ride) }}</strong>
@@ -313,25 +311,6 @@
               <strong>{{ assignedDriverName(ride) }}</strong>
               <p>{{ ride.vehicleLabel || 'Not provided' }}</p>
             </div>
-          </div>
-          <div class="driver-location">
-            <span>Current location</span>
-            <strong>{{ driverLocationTitle(ride) }}</strong>
-            <p>{{ driverLocationDetail(ride) }}</p>
-            <small *ngIf="driverCoordinates(ride)">{{ driverCoordinates(ride) }}</small>
-          </div>
-          <div class="driver-panel-actions">
-            <button type="button" class="view-button" (click)="openDriverLocation(ride)">
-              Open map
-            </button>
-            <button
-              type="button"
-              class="view-button"
-              *ngIf="ride.driverPhone"
-              (click)="callDriver(ride)"
-            >
-              Call driver
-            </button>
           </div>
         </section>
 
@@ -380,21 +359,26 @@
           <p>{{ ride.notes }}</p>
         </section>
 
+        <section class="info-box review-summary" *ngIf="ride.clientRating">
+          <span>Passenger rating</span>
+          <div class="rating-stars" [attr.aria-label]="ride.clientRating + ' of 5 stars'">
+            <span *ngFor="let star of [1, 2, 3, 4, 5]" [class.filled]="star <= ratingStarCount(ride.clientRating)">&#9733;</span>
+          </div>
+          <p *ngIf="ride.clientComment">{{ ride.clientComment }}</p>
+        </section>
+
         <section class="emergency-box">
           <span>Emergency contact</span>
           <strong>{{ ride.emergencyContactName || 'Not provided' }}</strong>
           <p>{{ ride.emergencyContactNumber || 'No number provided' }}</p>
         </section>
+        </details>
 
-        <div class="admin-actions">
-          <button type="button" class="view-button" (click)="viewRide(ride)">
-            View ride details
-          </button>
-        </div>
+        <p class="monitor-note">Read-only booking status for operations monitoring.</p>
       </article>
       </ng-container>
 
-      <section class="referral-history" *ngIf="listTab === 'history'" aria-labelledby="referral-history-title">
+      <section class="referral-history" *ngIf="false && listTab === 'history'" aria-labelledby="referral-history-title">
         <div class="section-heading history-heading">
           <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
           <h2 id="referral-history-title">Referral history</h2>
@@ -595,6 +579,8 @@
             </div>
             <span class="status-badge" [ngClass]="accountStatusClass(account)">{{ accountStatusLabel(account) }}</span>
           </div>
+          <details class="compact-details">
+            <summary>View account details <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon></summary>
           <div class="passenger-info" *ngIf="account.accountType !== 'driver'">
             <span>Email</span>
             <strong>{{ account.email }}</strong>
@@ -620,6 +606,17 @@
                 <strong>{{ line.value }}</strong>
               </div>
             </section>
+            <section class="driver-feedback" *ngIf="auth.accountStatusOf(account) === 'approved'">
+              <h4>Passenger feedback</h4>
+              <p class="driver-feedback-summary">{{ driverReviewAverage(account) }} - {{ driverReviews(account).length }} rating{{ driverReviews(account).length === 1 ? '' : 's' }}</p>
+              <p class="driver-feedback-empty" *ngIf="driverReviews(account).length === 0">No passenger ratings yet.</p>
+              <article class="driver-feedback-item" *ngFor="let review of driverReviews(account)">
+                <div class="rating-stars" [attr.aria-label]="review.clientRating + ' of 5 stars'">
+                  <span *ngFor="let star of [1, 2, 3, 4, 5]" [class.filled]="star <= ratingStarCount(review.clientRating)">&#9733;</span>
+                </div>
+                <p *ngIf="review.clientComment">{{ review.clientComment }}</p>
+              </article>
+            </section>
           </ng-container>
           <ng-container *ngIf="account.accountType !== 'driver'">
             <div class="passenger-info" *ngFor="let line of vehicleLines(account)">
@@ -627,6 +624,7 @@
               <strong>{{ line.value }}</strong>
             </div>
           </ng-container>
+          </details>
           <div class="admin-actions account-actions" *ngIf="canReviewAccount(account)">
             <button
               type="button"
@@ -649,35 +647,89 @@
       </ng-container>
 
       <ng-container *ngIf="listTab === 'drivers'">
-        <section class="driver-overview" aria-label="Driver account overview">
-          <div class="driver-overview-heading">
-            <span class="driver-overview-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
-            <div><span>Driver accounts</span><h2>Availability overview</h2></div>
+  <section class="driver-overview" aria-label="Driver account overview">
+    <div class="driver-overview-heading">
+      <span class="driver-overview-icon">
+        <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+      </span>
+      <div>
+        <span>Driver accounts</span>
+        <h2>Availability overview</h2>
+      </div>
+    </div>
+
+    <section class="driver-status-cards" aria-label="Approved driver totals">
+      <button type="button" class="driver-status-card approved"
+        [attr.aria-pressed]="driverAvailabilityFilter === 'all'"
+        (click)="selectDriverFilter('all')">
+        <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+        <span class="driver-status-label">Approved</span>
+        <strong>{{ driverCount('all') }}</strong>
+      </button>
+
+      <button type="button" class="driver-status-card available"
+        [attr.aria-pressed]="driverAvailabilityFilter === 'available'"
+        (click)="selectDriverFilter('available')">
+        <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+        <span class="driver-status-label">Available</span>
+        <strong>{{ driverCount('available') }}</strong>
+      </button>
+
+      <button type="button" class="driver-status-card busy"
+        [attr.aria-pressed]="driverAvailabilityFilter === 'busy'"
+        (click)="selectDriverFilter('busy')">
+        <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+        <span class="driver-status-label">Busy</span>
+        <strong>{{ driverCount('busy') }}</strong>
+      </button>
+
+      <button type="button" class="driver-status-card offline"
+        [attr.aria-pressed]="driverAvailabilityFilter === 'offline'"
+        (click)="selectDriverFilter('offline')">
+        <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+        <span class="driver-status-label">Offline</span>
+        <strong>{{ driverCount('offline') }}</strong>
+      </button>
+    </section>
+  </section>
+
+  <section class="driver-overview" aria-label="Approved driver list">
+    <div class="driver-overview-heading">
+      <span class="driver-overview-icon">
+        <ion-icon name="list-outline" aria-hidden="true"></ion-icon>
+      </span>
+      <div>
+        <span>Driver directory</span>
+        <h2>{{ driverAvailabilityFilter === "all" ? "Approved drivers" : driverAvailabilityFilter === "available" ? "Available drivers" : driverAvailabilityFilter === "busy" ? "Busy drivers" : "Offline drivers" }}</h2>
+      </div>
+    </div>
+
+    <p class="empty-note" *ngIf="visibleApprovedDrivers.length === 0">
+      {{ driverEmptyTitle }}. {{ driverEmptyCopy }}
+    </p>
+
+    <div class="driver-directory">
+      <article class="driver-directory-card"
+        *ngFor="let driver of visibleApprovedDrivers">
+        <div class="driver-directory-header">
+          <div>
+            <strong>{{ driver.fullName }}</strong>
+            <span>{{ driver.email }}</span>
           </div>
-          <section class="driver-status-cards" aria-label="Approved driver totals">
-            <article class="driver-status-card approved">
-              <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
-              <span class="driver-status-label">Approved</span>
-              <strong>{{ driverCount('all') }}</strong>
-            </article>
-            <article class="driver-status-card available">
-              <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
-              <span class="driver-status-label">Available</span>
-              <strong>{{ driverCount('available') }}</strong>
-            </article>
-            <article class="driver-status-card busy">
-              <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
-              <span class="driver-status-label">Busy</span>
-              <strong>{{ driverCount('busy') }}</strong>
-            </article>
-            <article class="driver-status-card offline">
-              <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
-              <span class="driver-status-label">Offline</span>
-              <strong>{{ driverCount('offline') }}</strong>
-            </article>
-          </section>
-        </section>
-      </ng-container>
+          <span class="driver-directory-status">
+            {{ driverAvailabilityLabel(driver) }}
+          </span>
+        </div>
+
+        <div class="driver-directory-details">
+          <p><strong>Vehicle:</strong> {{ driver.vehicleType || 'Not provided' }}</p>
+          <p><strong>Plate number:</strong> {{ driverPlate(driver) }}</p>
+          <p><strong>Phone:</strong> {{ driver.phone || 'Not provided' }}</p>
+        </div>
+      </article>
+    </div>
+  </section>
+</ng-container>
 
     </div>
 
@@ -723,7 +775,7 @@
             >
               <strong>{{ driver.driverName }}</strong>
               <span>{{ driver.vehicleLabel }}</span>
-              <span>Available · {{ ratingLabel(driver.rating, driver.ratingCount) }}</span>
+              <span>Available - {{ ratingLabel(driver.rating, driver.ratingCount) }}</span>
             </button>
           </div>
           <p class="dialog-copy" *ngIf="!dialog.cloudChoices">
@@ -750,14 +802,14 @@
             </div>
             <div>
               <span>Schedule</span>
-              <strong>{{ formatDate(dialog.ride.date) }} · {{ formatTime(dialog.ride.time) }}</strong>
+              <strong>{{ formatDate(dialog.ride.date) }} - {{ formatTime(dialog.ride.time) }}</strong>
             </div>
           </div>
         </ng-container>
 
         <ng-container *ngIf="(dialog.kind === 'reject' || dialog.kind === 'cancel') && dialog.ride">
           <p class="dialog-copy">
-            {{ dialog.ride.passengerName }} · {{ dialog.ride.pickupLocation }} → {{ dialog.ride.destination }}
+            {{ dialog.ride.passengerName }} - {{ dialog.ride.pickupLocation }} to {{ dialog.ride.destination }}
           </p>
         </ng-container>
 
@@ -777,16 +829,16 @@
             </div>
             <div>
               <span>Location</span>
-              <strong>{{ driverLocationTitle(dialog.ride) }} · {{ driverLocationDetail(dialog.ride) }}</strong>
+              <strong>{{ driverLocationTitle(dialog.ride) }} - {{ driverLocationDetail(dialog.ride) }}</strong>
             </div>
             <div>
               <span>Route</span>
-              <strong>{{ dialog.ride.pickupLocation }} → {{ dialog.ride.destination }}</strong>
+              <strong>{{ dialog.ride.pickupLocation }} to {{ dialog.ride.destination }}</strong>
             </div>
           </div>
           <p class="dialog-copy" *ngIf="!dialog.reviews?.length">No passenger ratings yet.</p>
           <div class="review-card" *ngFor="let review of dialog.reviews">
-            <strong>{{ review.passengerName }} · {{ review.clientRating }} / 5</strong>
+            <strong>{{ review.passengerName }} - {{ review.clientRating }} / 5</strong>
             <p>{{ review.clientComment || 'No comment' }}</p>
           </div>
         </ng-container>
@@ -808,7 +860,7 @@
             [disabled]="dialog.busy"
             (click)="confirmDialog()"
           >
-            {{ dialog.busy ? 'Please wait…' : (dialog.confirmLabel || 'OK') }}
+            {{ dialog.busy ? 'Please wait...' : (dialog.confirmLabel || 'OK') }}
           </button>
         </div>
       </div>

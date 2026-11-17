@@ -35,6 +35,7 @@ export class RideHistoryPage implements OnInit {
   selectedFilter: HistoryFilter = 'all';
   readonly dropoffProofUrls = new Map<string, string>();
   proofLoadError = '';
+  historyLoadError = '';
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private refreshInFlight = false;
   private readonly destroyRef = inject(DestroyRef);
@@ -85,10 +86,15 @@ export class RideHistoryPage implements OnInit {
     this.refreshInFlight = true;
     void this.ridesApi.hydrateFromCloud()
       .then(() => {
+        this.historyLoadError = '';
         this.loadRides();
         return this.loadDropoffProofs();
       })
-      .catch(() => undefined)
+      .catch(() => {
+        // Do not replace a real empty history with a silent failure. Existing
+        // cached cloud rides remain visible while the next automatic refresh retries.
+        this.historyLoadError = 'Ride history could not be refreshed right now. Please check your connection and try again.';
+      })
       .finally(() => { this.refreshInFlight = false; });
   }
 
@@ -140,17 +146,21 @@ export class RideHistoryPage implements OnInit {
   }
 
   private loadRides(): void {
-    const account = this.auth.getLocalAccount();
-    if (!account || account.accountType !== 'passenger') {
-      this.rides = [];
-      return;
-    }
-    const name = account.fullName.trim().toLowerCase();
     const allRides = this.localRides.getRides();
-    this.rides = this.ridesApi.cloudBookings
-      // Cloud RLS has already limited this cache to the signed-in participant.
-      ? allRides.filter((ride) => isProfileUuid(ride.id))
-      : allRides.filter((ride) => ride.passengerName.trim().toLowerCase() === name);
+    if (this.ridesApi.cloudBookings) {
+      // Cloud authentication does not create a local careride_users entry.
+      // The authenticated query is already limited by booking RLS, so filtering
+      // UUID rows keeps preserved device-only rides out without hiding cloud rides.
+      this.rides = allRides.filter((ride) => isProfileUuid(ride.id));
+    } else {
+      const account = this.auth.getLocalAccount();
+      if (!account || account.accountType !== 'passenger') {
+        this.rides = [];
+        return;
+      }
+      const name = account.fullName.trim().toLowerCase();
+      this.rides = allRides.filter((ride) => ride.passengerName.trim().toLowerCase() === name);
+    }
     this.rides.sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
     void this.loadDropoffProofs();
   }
@@ -219,6 +229,10 @@ export class RideHistoryPage implements OnInit {
     return ride.status === 'Completed' && !ride.clientRating && Boolean(ride.driverId);
   }
 
+  ratingStarCount(rating: number | null | undefined): number {
+    return Math.max(0, Math.min(5, Math.round(rating ?? 0)));
+  }
+
   viewDetails(
     ride: LocalRide
   ): void {
@@ -233,7 +247,10 @@ export class RideHistoryPage implements OnInit {
 
     }
 
-    this.router.navigate(['/ride-details', ride.id], { state: { ride } });
+    this.router.navigate(['/ride-details', ride.id], {
+      queryParams: { from: 'history', ...(this.needsRating(ride) ? { focus: 'rating' } : {}) },
+      state: { ride },
+    });
 
   }
 

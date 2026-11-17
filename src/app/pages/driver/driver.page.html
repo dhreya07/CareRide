@@ -362,10 +362,63 @@
             [compact]="true"
           ></app-location-map>
           <p *ngIf="nearbyBookings.length === 0">No nearby requests.</p>
-          <div *ngFor="let nearby of nearbyBookings">
-            <p><strong>{{ nearby.ride.pickupLocation || 'Pickup' }}</strong> · {{ nearby.distanceKm | number:'1.1-1' }} km away</p>
-            <button type="button" class="schedule-view-details" (click)="viewRide(nearby.ride)">View request</button>
-          </div>
+
+<div
+  *ngFor="let nearby of nearbyBookings"
+  class="nearby-request-card"
+>
+  <div class="nearby-request-header">
+    <strong>
+      {{ nearby.ride.status === 'Scheduled' ? 'Scheduled Ride' : 'Ride Now' }}
+    </strong>
+
+    <span>
+      {{ nearby.distanceKm | number:'1.1-1' }} km away
+    </span>
+  </div>
+
+  <p>
+    <strong>Pickup:</strong>
+    {{ nearby.ride.pickupLocation || 'Not specified' }}
+  </p>
+
+  <p>
+    <strong>Destination:</strong>
+  {{ nearby.ride.destination || 'Not specified' }}
+  </p>
+
+
+<div class="ride-actions">
+  <button
+    type="button"
+    class="primary-button"
+    (click)="acceptRequest(nearby.ride)"
+  >
+    Accept
+  </button>
+
+
+<button
+  *ngIf="nearby.ride.preferredDriverId || nearby.ride.driverId"
+  type="button"
+  class="secondary-button"
+  (click)="declineRequest(nearby.ride)"
+>
+  Decline
+</button>
+
+
+  <button
+    type="button"
+    class="schedule-view-details"
+    (click)="viewRide(nearby.ride)"
+  >
+    View Details
+  </button>
+</div>
+
+</div>
+
         </ng-container>
         <p *ngIf="!nearbyLocationEnabled && !nearbyLocationError">Turn on location to view nearby requests.</p>
       </section>
@@ -431,6 +484,13 @@
             </div>
           </section>
 
+          <p class="history-rating-summary" *ngIf="listTab === 'history' && ride.clientRating">
+            Passenger rating: <strong>{{ stars(ride.clientRating) }}</strong>
+          </p>
+
+          <details class="trip-extra-details" [attr.open]="listTab === 'history' ? null : ''">
+            <summary *ngIf="listTab === 'history'">Show trip details</summary>
+
           <section class="details-grid">
             <div class="detail-box">
               <span>Date</span>
@@ -475,6 +535,7 @@
             <strong>{{ ride.emergencyContactName || 'Not provided' }}</strong>
             <p>{{ ride.emergencyContactNumber || 'No number provided' }}</p>
           </section>
+          </details>
 
           <p class="referral-note" *ngIf="hasPendingReferral(ride)">
             Pending referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
@@ -496,7 +557,14 @@
             <button type="button" class="primary-button" (click)="acceptRequest(ride)">
               Accept
             </button>
-            <button type="button" class="secondary-button" (click)="declineRequest(ride)">
+
+<button
+  *ngIf="ride.preferredDriverId || ride.driverId"
+  type="button"
+  class="secondary-button"
+  (click)="declineRequest(ride)"
+>
+
               Decline
             </button>
           </div>

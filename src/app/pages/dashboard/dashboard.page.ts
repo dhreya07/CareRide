@@ -85,6 +85,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   private clockTimer: ReturnType<typeof setInterval> | null = null;
   private clockStamp = '';
+  private cloudRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
 
   // =========================
@@ -165,19 +166,37 @@ export class DashboardPage implements OnInit, OnDestroy {
     void this.refreshProfilePhoto();
     this.refreshNotificationCount();
     void this.refreshDashboard();
+    this.startCloudRefresh();
     this.startClock();
   }
 
   ionViewDidLeave(): void {
     ++this.avatarLoad;
     this.profilePhoto.set(null);
+    this.stopCloudRefresh();
     this.stopClock();
   }
 
   ngOnDestroy(): void {
     ++this.avatarLoad;
     this.profilePhoto.set(null);
+    this.stopCloudRefresh();
     this.stopClock();
+  }
+
+  private startCloudRefresh(): void {
+    this.stopCloudRefresh();
+    if (!this.ridesApi.cloudBookings) {
+      return;
+    }
+    this.cloudRefreshTimer = setInterval(() => void this.refreshDashboard(), 5_000);
+  }
+
+  private stopCloudRefresh(): void {
+    if (this.cloudRefreshTimer) {
+      clearInterval(this.cloudRefreshTimer);
+      this.cloudRefreshTimer = null;
+    }
   }
 
   private startClock(): void {
@@ -617,6 +636,10 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   private refreshNotificationCount(): void {
+    if (this.ridesApi.cloudBookings) {
+      this.notificationCount = this.notifications.unreadCount('');
+      return;
+    }
     const account = this.auth.getLocalAccount();
     this.notificationCount = account ? this.notifications.unreadCount(account.id) : 0;
   }

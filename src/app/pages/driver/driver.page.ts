@@ -577,7 +577,7 @@ disableNearbyLocation(clearError = true): void {
 
   get ratingBars(): Array<{ label: string; value: number; pct: number }> {
     const counts = [1, 2, 3, 4, 5].map((star) => ({
-      label: `${star}â˜…`,
+      label: `${star}${String.fromCharCode(9733)}`,
       value: this.clientReviews.filter((ride) => ride.clientRating === star).length,
     }));
     const max = Math.max(...counts.map((item) => item.value), 1);
@@ -593,7 +593,7 @@ disableNearbyLocation(clearError = true): void {
     if (value < 1) {
       return 'Not rated yet';
     }
-    return `${'â˜…'.repeat(value)}${'â˜†'.repeat(5 - value)} ${value}.0`;
+    return `${String.fromCharCode(9733).repeat(value)}${String.fromCharCode(9734).repeat(5 - value)} ${value}.0`;
   }
 
   get calendarTitle(): string {
@@ -1036,6 +1036,18 @@ disableNearbyLocation(clearError = true): void {
   }
 
   declineRequest(ride: LocalRide): void {
+
+if (
+  this.ridesApi.cloudBookings &&
+  !ride.preferredDriverId &&
+  !ride.driverId
+) {
+  this.showNotice(
+    'Open booking requests cannot be declined. You may accept the request or leave it available for other drivers.'
+  );
+  return;
+}
+
     if (this.ridesApi.cloudBookings) {
       void this.declineCloudRequest(ride);
       return;
@@ -1118,16 +1130,41 @@ disableNearbyLocation(clearError = true): void {
   }
 
   private refreshNotificationCount(): void {
+    if (this.ridesApi.cloudBookings) {
+      this.notificationCount = this.notifications.unreadCount('');
+      return;
+    }
     const account = this.auth.getLocalAccount();
     this.notificationCount = account ? this.notifications.unreadCount(account.id) : 0;
   }
 
-  signOut(): void {
-    void this.locationPublisher.disable();
+
+async signOut(): Promise<void> {
+  try {
     this.disableNearbyLocation();
     this.driverGps.stop();
-    void this.auth.signOut().then(() => this.router.navigate(['/login']));
+
+    try {
+      await this.locationPublisher.disable();
+    } catch (error) {
+      console.warn('Driver location cleanup failed:', error);
+    }
+
+    await this.auth.signOut();
+
+    await this.router.navigate(['/login'], {
+      replaceUrl: true
+    });
+  } catch (error) {
+    console.error('Driver sign out failed:', error);
+
+    this.showNotice(
+      'Unable to sign out. Please try again.',
+      'Sign Out Failed'
+    );
   }
+}
+
 
   canShareLocation(ride: LocalRide): boolean {
     const driverId = this.sessionDriverId();
@@ -1360,7 +1397,7 @@ disableNearbyLocation(clearError = true): void {
         return;
       }
       await this.fetchRides();
-      this.showNotice(`Ride status updated to â€œ${nextStatus}â€.`, 'Updated');
+      this.showNotice(`Ride status updated to ${nextStatus}.`, 'Updated');
     } catch (error: unknown) {
       this.showNotice(error instanceof Error ? error.message : 'Unable to update the ride.');
     }
@@ -1468,35 +1505,58 @@ disableNearbyLocation(clearError = true): void {
     }
   }
 
-  private async fetchRides(): Promise<void> {
-    this.fetching = true;
-    this.homeLoadError = '';
+
+private async fetchRides(): Promise<void> {
+  if (this.fetching) {
+    return;
+  }
+
+  this.fetching = true;
+  this.homeLoadError = '';
+
+  try {
+    this.localRides.reloadFromStorage();
+
+    await this.ridesApi.hydrateFromCloud();
+
+    if (this.ridesApi.cloudBookings) {
+      // Read open and preferred-driver requests from the
+      // restricted driver-only Supabase RPC.
+      const available = await this.ridesApi.listAvailableBookings();
+
+      this.cloudAvailableRides = available.filter(
+        (ride) =>
+          isProfileUuid(ride.id) &&
+          (ride.status === 'Pending' || ride.status === 'Scheduled')
+      );
+    } else {
+      // Preserve existing local-only booking behavior.
+      this.cloudAvailableRides = [];
+    }
+
+    this.applyRides();
+    this.homeLoaded = true;
+  } catch (error: unknown) {
+    this.cloudAvailableRides = [];
+
+    this.homeLoadError =
+      error instanceof Error
+        ? error.message
+        : 'Trip activity could not be refreshed. Try again shortly.';
+
     try {
       this.localRides.reloadFromStorage();
-      await this.ridesApi.hydrateFromCloud();
-      // The booking RLS policy returns only trips visible to this Driver,
-      // including a Passenger's selected pending request. Keep that cache as
-      // the source of driver requests until broad booking dispatch exists.
-      this.cloudAvailableRides = this.ridesApi.cloudBookings
-        ? this.localRides.getRides().filter((ride) => isProfileUuid(ride.id) && this.canRespond(ride))
-        : [];
       this.applyRides();
       this.homeLoaded = true;
     } catch {
-      this.cloudAvailableRides = [];
-      this.homeLoadError = 'Trip activity could not be refreshed. Try again shortly.';
-      try {
-        this.localRides.reloadFromStorage();
-        this.applyRides();
-        this.homeLoaded = true;
-      } catch {
-        this.homeLoaded = false;
-      }
-    } finally {
-      this.fetching = false;
-      this.changes.markForCheck();
+      this.homeLoaded = false;
     }
+  } finally {
+    this.fetching = false;
+    this.changes.markForCheck();
   }
+}
+
 
   private actingDriver() {
     const driverId = this.sessionDriverId();
@@ -1559,7 +1619,7 @@ disableNearbyLocation(clearError = true): void {
           plateNumber: driver.plateNumber,
           availability: 'Available',
           ratingText: driver.ratingCount
-            ? `${driver.rating?.toFixed(1) ?? '0.0'} â˜… Â· ${driver.ratingCount} reviews`
+            ? `${driver.rating?.toFixed(1) ?? '0.0'} ${String.fromCharCode(9733)} - ${driver.ratingCount} reviews`
             : 'Not yet rated',
         }));
       if (!drivers.length) {

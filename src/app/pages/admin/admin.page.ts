@@ -48,6 +48,7 @@ interface AdminDialog {
 })
 export class AdminPage implements OnInit, OnDestroy {
   rides: LocalRide[] = [];
+  // Admins can monitor booking statuses but booking decisions remain Driver-only.
   listTab: 'active' | 'accounts' | 'accepted' | 'history' | 'drivers' = 'active';
   managedAccounts: LocalCareRideUser[] = [];
   accountGroup: 'passenger' | 'driver' = 'passenger';
@@ -71,7 +72,7 @@ export class AdminPage implements OnInit, OnDestroy {
   constructor(
     private localRides: LocalRideService,
     private ridesApi: RideService,
-    private auth: AuthService,
+    public auth: AuthService,
     private router: Router,
     private alerts: AlertController,
     private changes: ChangeDetectorRef,
@@ -89,7 +90,6 @@ export class AdminPage implements OnInit, OnDestroy {
       .subscribe(() => this.syncViewFromUrl());
     this.syncViewFromUrl();
     window.addEventListener('storage', this.onStorage);
-    void this.fetchRides();
     this.startAutoFetch();
     this.startClock();
     if (this.auth.cloudAuthEnabled) {
@@ -98,7 +98,7 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   ionViewWillEnter(): void {
-    void this.fetchRides();
+    this.syncViewFromUrl();
     this.startAutoFetch();
     this.startClock();
   }
@@ -204,7 +204,7 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   get availableDriverCount(): number {
-    return this.auth.listApprovedDrivers().filter((driver) => this.auth.readAvailability(driver) === 'available').length;
+    return this.approvedDrivers.filter((driver) => this.driverAvailability(driver) === 'available').length;
   }
 
   get referralMetricsAvailable(): boolean {
@@ -234,7 +234,7 @@ export class AdminPage implements OnInit, OnDestroy {
     if (!this.performanceMetricsAvailable) {
       return [];
     }
-    return this.auth.listApprovedDrivers()
+    return this.approvedDrivers
       .map((driver) => {
         const completedRides = this.rides.filter(
           (ride) => ride.status === 'Completed' && ride.driverId === driver.id,
@@ -246,7 +246,7 @@ export class AdminPage implements OnInit, OnDestroy {
             (ride.clientRating ?? 0) <= 5,
         );
         const averageLabel = reviews.length
-          ? `${(Math.round((reviews.reduce((sum, ride) => sum + (ride.clientRating ?? 0), 0) / reviews.length) * 10) / 10).toFixed(1)} ★`
+          ? `${(Math.round((reviews.reduce((sum, ride) => sum + (ride.clientRating ?? 0), 0) / reviews.length) * 10) / 10).toFixed(1)} ${String.fromCharCode(9733)}`
           : 'Not yet rated';
         const reviewLabel = reviews.length === 1 ? '1 review' : `${reviews.length} reviews`;
         return {
@@ -265,7 +265,7 @@ export class AdminPage implements OnInit, OnDestroy {
     if (!this.performanceMetricsAvailable) {
       return 0;
     }
-    const approvedIds = new Set(this.auth.listApprovedDrivers().map((driver) => driver.id));
+    const approvedIds = new Set(this.approvedDrivers.map((driver) => driver.id));
     return this.rides.filter(
       (ride) => ride.status === 'Completed' && (!ride.driverId || !approvedIds.has(ride.driverId)),
     ).length;
@@ -279,8 +279,43 @@ export class AdminPage implements OnInit, OnDestroy {
 
   get historyRides(): LocalRide[] {
     return this.rides.filter((ride) =>
-      ['Completed', 'Cancelled', 'Rejected', 'Reported'].includes(ride.status),
+      [
+        'Driver Assigned',
+        'Driver On The Way',
+        'Arrived',
+        'Picked Up',
+        'In Progress',
+        'Completed',
+        'Cancelled',
+        'Rejected',
+        'Reported',
+      ].includes(ride.status),
     );
+  }
+
+  driverReviews(driver: LocalCareRideUser): LocalRide[] {
+    return this.rides
+      .filter((ride) =>
+        ride.status === 'Completed'
+        && ride.driverId === driver.id
+        && Number.isInteger(ride.clientRating)
+        && (ride.clientRating ?? 0) >= 1
+        && (ride.clientRating ?? 0) <= 5,
+      )
+      .sort((left, right) => Date.parse(right.ratedAt ?? right.updatedAt) - Date.parse(left.ratedAt ?? left.updatedAt));
+  }
+
+  driverReviewAverage(driver: LocalCareRideUser): string {
+    const reviews = this.driverReviews(driver);
+    if (!reviews.length) {
+      return 'No ratings yet';
+    }
+    const total = reviews.reduce((sum, ride) => sum + (ride.clientRating ?? 0), 0);
+    return `${(Math.round((total / reviews.length) * 10) / 10).toFixed(1)} / 5`;
+  }
+
+  ratingStarCount(rating: number | null | undefined): number {
+    return Math.max(0, Math.min(5, Math.round(rating ?? 0)));
   }
 
   get pendingRides(): LocalRide[] {
@@ -317,6 +352,11 @@ export class AdminPage implements OnInit, OnDestroy {
   driverAvailabilityFilter: 'all' | 'available' | 'busy' | 'offline' = 'all';
 
   get approvedDrivers(): LocalCareRideUser[] {
+    if (this.auth.cloudAuthEnabled) {
+      return this.accountsByRole('driver').filter(
+        (driver) => this.auth.accountStatusOf(driver) === 'approved',
+      );
+    }
     return this.auth.listApprovedDrivers();
   }
 
@@ -630,7 +670,7 @@ export class AdminPage implements OnInit, OnDestroy {
 
   get pageTitle(): string {
     if (this.listTab === 'history') {
-      return 'History';
+      return 'Booking history';
     }
     if (this.listTab === 'accounts') {
       return 'Accounts';
@@ -641,7 +681,7 @@ export class AdminPage implements OnInit, OnDestroy {
     if (this.listTab === 'accepted') {
       return 'Accepted';
     }
-    return 'Bookings';
+    return this.bookingFilter === 'declined' ? 'Declined bookings' : 'Booking monitor';
   }
 
   get emptyTitle(): string {
@@ -652,31 +692,47 @@ export class AdminPage implements OnInit, OnDestroy {
       return 'No accepted requests yet';
     }
     if (this.listTab === 'history') {
-      return 'No completed rides yet';
+      return 'No booking activity yet';
     }
     return 'No bookings yet';
   }
 
   private syncViewFromUrl(): void {
-    const path = this.router.url.split('?')[0];
-    if (path.endsWith('/history')) {
-      this.listTab = 'history';
-      return;
-    }
-    if (path.endsWith('/accounts')) {
+    const [path, query] = this.router.url.split('?');
+    if (path.endsWith('/passengers')) {
       this.listTab = 'accounts';
+      this.accountGroup = 'passenger';
       this.refreshAccounts();
       return;
     }
     if (path.endsWith('/drivers')) {
-      this.listTab = 'drivers';
+      this.listTab = 'accounts';
+      this.accountGroup = 'driver';
+      this.refreshAccounts();
       return;
     }
-    if (path.endsWith('/accepted')) {
-      this.listTab = 'accepted';
+    if (path.endsWith('/history')) {
+      this.listTab = 'history';
+      void this.fetchRides();
+      return;
+    }
+    if (path.endsWith('/declined')) {
+      this.listTab = 'active';
+      this.bookingFilter = 'declined';
+      void this.fetchRides();
       return;
     }
     this.listTab = 'active';
+    const filter = new URLSearchParams(query ?? '').get('filter');
+    this.bookingFilter = filter === 'pending'
+      || filter === 'confirmed'
+      || filter === 'ongoing'
+      || filter === 'completed'
+      || filter === 'cancelled'
+      || filter === 'declined'
+      ? filter
+      : 'all';
+    void this.fetchRides();
   }
 
   canAssign(ride: LocalRide): boolean {
@@ -724,6 +780,22 @@ export class AdminPage implements OnInit, OnDestroy {
     return this.localRides.statusTone(ride.status);
   }
 
+  openOperationsCard(
+    destination: 'active' | 'drivers',
+    filter: 'pending' | 'confirmed' | 'ongoing' | 'available',
+  ): void {
+    if (destination === 'drivers') {
+      this.selectDriverFilter('available');
+      this.showTab('drivers');
+      void this.router.navigateByUrl('/admin/drivers');
+      return;
+    }
+
+    if (filter === 'pending' || filter === 'confirmed' || filter === 'ongoing') {
+      void this.router.navigate(['/admin'], { queryParams: { filter } });
+      return;
+    }
+  }
   showTab(tab: 'active' | 'accounts' | 'accepted' | 'history' | 'drivers'): void {
     this.listTab = tab;
     if (tab === 'accounts') {
@@ -1066,6 +1138,7 @@ export class AdminPage implements OnInit, OnDestroy {
       password: '',
       createdAt: account.createdAt,
       approvalStatus: account.accountStatus,
+      availability: account.availability,
       licenseNumber: account.licenseNumber,
       vehicleType: account.vehicleType,
       plateNumber: account.plateNumber,

@@ -668,6 +668,32 @@ button {
   background: #fff9f7;
 }
 
+.trip-extra-details { margin-top: 12px; }
+
+.trip-extra-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(17, 92, 82, .18);
+  border-radius: 13px;
+  background: rgba(242, 255, 251, .72);
+  color: #0a5c50;
+  font-size: .86rem;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trip-extra-details > summary::-webkit-details-marker { display: none; }
+.trip-extra-details > summary::after { content: '+'; font-size: 1.25rem; line-height: 1; }
+.trip-extra-details[open] > summary { margin-bottom: 12px; }
+.trip-extra-details[open] > summary::after { content: '−'; }
+
+.history-rating-summary { margin: 12px 0 0; color: #45665d; font-size: .84rem; }
+.history-rating-summary strong { color: #ae7812; letter-spacing: .06em; }
+
 .driver-share-map {
   margin-top: 12px;
 }
@@ -3554,3 +3580,36 @@ button {
 .driver-page.schedule-mode .calendar-weekdays span,
 .driver-page.schedule-mode .calendar-day { color: #174f56; }
 .driver-page.schedule-mode .schedule-ride-time { color: #075d58; }
+
+.nearby-request-card {
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 14px;
+  background: var(--ion-card-background, #fff);
+
+  p {
+    margin: 8px 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.nearby-request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+
+  strong {
+    font-size: 14px;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+  }
+}

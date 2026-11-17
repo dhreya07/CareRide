@@ -182,7 +182,13 @@ export class NotificationService {
   }
 
   rideCompleted(ride: LocalRide): void {
-    this.record(this.passengerIdFor(ride.passengerName), 'ride_completed', 'Ride completed', `Booking ${ride.id} is completed.`, ride.id);
+    this.record(
+      this.passengerIdFor(ride.passengerName),
+      'ride_completed',
+      'Rate your driver',
+      'Your ride is complete. Open the trip to leave a 1 to 5 star rating; feedback is optional.',
+      ride.id,
+    );
   }
 
   bookingCancelled(ride: LocalRide): void {

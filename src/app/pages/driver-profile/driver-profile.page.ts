@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
@@ -37,6 +38,7 @@ type DriverProfileData = Pick<
   LocalCareRideUser,
   'id' | 'accountType' | 'fullName' | 'email' | 'phone' | 'address'
 > & {
+  availability?: 'available' | 'busy' | 'offline';
   licenseNumber?: string;
   licenseExpirationDate?: string;
   emergencyContactName?: string;
@@ -72,6 +74,28 @@ type DriverProfileData = Pick<
   styleUrls: ['./driver-profile.page.scss'],
 })
 export class DriverProfilePage implements OnInit {
+  signingOut = false;
+  signOutError = '';
+
+  async signOut(): Promise<void> {
+    if (this.signingOut) return;
+
+    this.signingOut = true;
+    this.signOutError = '';
+
+    try {
+      await this.auth.signOut();
+      this.account = null;
+      this.profilePhoto = '';
+      await this.router.navigate(['/login'], { replaceUrl: true });
+    } catch {
+      this.signOutError = 'Unable to sign out. Please try again.';
+    } finally {
+      this.signingOut = false;
+      this.changes.markForCheck();
+    }
+  }
+
   account: DriverProfileData | null = null;
 
   loading = true;
@@ -114,6 +138,7 @@ export class DriverProfilePage implements OnInit {
 
   constructor(
     private auth: AuthService,
+    private router: Router,
     private cloudAuth: SupabaseAuthAdapter,
     private photos: DriverProfilePhotoService,
     private changes: ChangeDetectorRef,
@@ -627,6 +652,7 @@ export class DriverProfilePage implements OnInit {
       email: profile.email,
       phone: profile.phone,
       address: profile.address,
+      availability: profile.availability,
       licenseNumber: profile.licenseNumber,
       vehicleType: profile.vehicleType,
       plateNumber: profile.plateNumber,

@@ -32,7 +32,7 @@ import { LocationMapComponent } from '../../shared/location-map.component';
           </header>
 
           <ng-container *ngIf="ride; else missing">
-            <p class="eyebrow">RIDE {{ ride.id }}</p>
+            <p class="eyebrow">{{ ride.status === 'Completed' ? 'COMPLETED TRIP' : 'YOUR RIDE' }}</p>
             <h1 class="page-title">Ride details</h1>
             <p class="page-subtitle">Full information for this transportation request.</p>
 
@@ -166,7 +166,8 @@ import { LocationMapComponent } from '../../shared/location-map.component';
               </button>
             </section>
 
-            <section class="detail-card" *ngIf="ride.status === 'Completed' && isPassenger">
+            <section id="rate-driver" class="detail-card rating-card" *ngIf="ride.status === 'Completed' && isPassenger">
+              <span class="rating-kicker">YOUR FEEDBACK</span>
               <h2>Rate your driver</h2>
               <div class="detail-row"><small>Driver</small><strong>{{ assignedDriverLabel }}</strong></div>
               <div class="detail-row"><small>Vehicle</small><strong>{{ vehicleText }}</strong></div>
@@ -277,6 +278,41 @@ import { LocationMapComponent } from '../../shared/location-map.component';
     .progress-timeline strong, .progress-timeline small { display:block; }
     .progress-timeline strong { font-size:16px; }
     .progress-timeline small { color:#253745; font-size:15px; }
+
+    /* Passenger aqua-glass theme for the trip and rating view. */
+    .details-page {
+      background:
+        radial-gradient(circle at 100% 7%, rgba(118, 255, 228, .72), transparent 29%),
+        radial-gradient(circle at 0% 54%, rgba(178, 230, 255, .62), transparent 36%),
+        linear-gradient(145deg, #dffcff 0%, #92eee4 53%, #49cfc4 100%);
+      color: #063f43;
+    }
+    .details-shell { background: transparent; }
+    .app-topbar { margin-bottom:18px; padding:14px 15px; border:1px solid rgba(255,255,255,.86); border-radius:21px; background:rgba(244,255,255,.62); box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 9px 24px rgba(0,91,90,.13); backdrop-filter:blur(14px) saturate(135%); -webkit-backdrop-filter:blur(14px) saturate(135%); }
+    .app-brand { color:#064c4b; font-weight:900; letter-spacing:-.045em; }
+    .app-brand span { color:#0a9e87; }
+    .profile-chip { background:rgba(255,255,255,.74); color:#075b57; box-shadow:0 5px 13px rgba(0,84,81,.14); }
+    .eyebrow { color:#087b70; }
+    .page-title { color:#063f43; font-weight:900; }
+    .page-subtitle { color:#386d70; }
+    .status-pill { background:#087967; color:#fff; box-shadow:0 6px 13px rgba(0,99,83,.2); }
+    .detail-card { border:1px solid rgba(255,255,255,.88); background:linear-gradient(140deg,rgba(255,255,255,.78),rgba(217,255,251,.5)); box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 9px 24px rgba(0,94,92,.13); backdrop-filter:blur(15px) saturate(135%); -webkit-backdrop-filter:blur(15px) saturate(135%); }
+    .detail-card h2, .detail-row strong { color:#073f43; }
+    .detail-row { border-color:rgba(4,96,94,.13); }
+    .detail-row small { color:#477477; }
+    .progress-mark { border-color:#9ccfc9; background:rgba(255,255,255,.72); }
+    .progress-timeline .done .progress-mark { border-color:#0a8b75; background:#0a8b75; }
+    .progress-timeline .current .progress-mark { border-color:#0b8e7a; background:#c7fff4; box-shadow:0 0 0 3px rgba(34,203,174,.22); }
+    .progress-timeline small { color:#517579; }
+    .rating-card { border-color:rgba(255,255,255,.94); background:linear-gradient(140deg,rgba(255,253,241,.86),rgba(222,255,244,.65)); }
+    .rating-kicker { display:block; margin-bottom:7px; color:#0b806f; font-size:.72rem; font-weight:900; letter-spacing:.09em; }
+    .star-row { justify-content:space-between; gap:9px; }
+    .star-button { flex:1 1 0; max-width:64px; border:1px solid rgba(211,162,19,.2); background:rgba(255,255,255,.72); color:#c7d3cc; box-shadow:0 4px 10px rgba(109,83,6,.08); }
+    .star-button.on { border-color:#e3ae1d; background:linear-gradient(145deg,#fff6bd,#ffd768); color:#8d5b00; }
+    .comment-field span { color:#124c4e; }
+    .comment-field textarea { box-sizing:border-box; border:1px solid rgba(8,117,108,.2); background:rgba(255,255,255,.72); color:#123f43; }
+    .primary-button { background:linear-gradient(135deg,#006c5d,#0a9b82); color:#fff; box-shadow:0 8px 16px rgba(0,102,84,.22); }
+    .text-action { color:#087c70; }
   `],
 })
 export class RideDetailsPage implements OnInit {
@@ -288,6 +324,8 @@ export class RideDetailsPage implements OnInit {
   ratingError = '';
   ratingThanks = false;
   ratingBusy = false;
+  openedFromHistory = false;
+  focusRating = false;
   driverMapUrl: SafeResourceUrl | null = null;
   pickupPlaceLabel = '';
   destinationPlaceLabel = '';
@@ -297,6 +335,9 @@ export class RideDetailsPage implements OnInit {
   private cloudTripRefreshInFlight = false;
   private cloudTripRefreshToken = 0;
   private placeLabelToken = 0;
+  private rideLoadToken = 0;
+  private authorizedOpenRideId: string | null = null;
+  private ratingScrollDone = false;
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
@@ -313,10 +354,19 @@ export class RideDetailsPage implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(() => this.showRide());
+    this.route.queryParamMap.subscribe((params) => {
+      this.openedFromHistory = params.get('from') === 'history';
+      this.focusRating = params.get('focus') === 'rating';
+      this.ratingScrollDone = false;
+      this.scrollToRatingIfRequested();
+    });
     this.localRides.rides$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         const id = this.readRideId();
+        if (this.ridesApi.cloudBookings) {
+          return; // Cloud records require a fresh authorized server read.
+        }
         this.applyRide(this.localRides.getRideById(id));
       });
     this.driverGps.changes$
@@ -341,7 +391,7 @@ export class RideDetailsPage implements OnInit {
     if (this.role === 'admin') {
       return '/admin';
     }
-    return '/scheduled-rides';
+    return this.openedFromHistory ? '/ride-history' : '/scheduled-rides';
   }
 
   get backLabel(): string {
@@ -351,10 +401,13 @@ export class RideDetailsPage implements OnInit {
     if (this.role === 'admin') {
       return 'Back to operations';
     }
-    return 'Back to scheduled rides';
+    return this.openedFromHistory ? 'Back to ride history' : 'Back to scheduled rides';
   }
 
   get isPassenger(): boolean {
+    if (this.ridesApi.cloudBookings) {
+      return this.role === 'passenger';
+    }
     const account = this.auth.getLocalAccount();
     return Boolean(account && normalizeAccountRole(account.accountType) === 'passenger');
   }
@@ -478,6 +531,20 @@ export class RideDetailsPage implements OnInit {
     void this.router.navigateByUrl(this.homePath);
   }
 
+  private scrollToRatingIfRequested(): void {
+    if (
+      !this.focusRating || this.ratingScrollDone || !this.ride ||
+      this.ride.status !== 'Completed' || this.ride.clientRating || !this.isPassenger ||
+      typeof document === 'undefined'
+    ) {
+      return;
+    }
+    this.ratingScrollDone = true;
+    requestAnimationFrame(() => {
+      document.getElementById('rate-driver')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   openDriverMap(): void {
     if (!this.ride) {
       return;
@@ -531,11 +598,6 @@ export class RideDetailsPage implements OnInit {
     if (this.ratingBusy || !this.ride || !this.isPassenger) {
       return;
     }
-    const account = this.auth.getLocalAccount();
-    if (!account || this.ride.passengerName.trim().toLowerCase() !== account.fullName.trim().toLowerCase()) {
-      this.ratingError = 'You can rate only your own completed trip.';
-      return;
-    }
     if (this.ride.status !== 'Completed' || !this.ride.driverId) {
       this.ratingError = 'Only a completed trip with an assigned driver can be rated.';
       return;
@@ -550,6 +612,11 @@ export class RideDetailsPage implements OnInit {
     }
     if (this.ridesApi.cloudBookings) {
       void this.rateCloudRide();
+      return;
+    }
+    const account = this.auth.getLocalAccount();
+    if (!account || this.ride.passengerName.trim().toLowerCase() !== account.fullName.trim().toLowerCase()) {
+      this.ratingError = 'You can rate only your own completed trip.';
       return;
     }
     this.ratingBusy = true;
@@ -598,54 +665,102 @@ export class RideDetailsPage implements OnInit {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallback)}`;
   }
 
-  private showRide(): void {
+
+private showRide(): void {
     const id = this.readRideId();
+    const token = ++this.rideLoadToken;
+    this.authorizedOpenRideId = null;
     this.localRides.reloadFromStorage();
-    const fromState = this.rideFromHistory();
-    this.applyRide(
-      this.localRides.getRideById(id) ??
-      (fromState && (!id || fromState.id === id) ? fromState : null),
-    );
+
+    // Local bookings retain their existing navigation/cache behavior.
+    // Cloud bookings must not render untrusted history.state or localStorage.
+    if (this.ridesApi.cloudBookings) {
+      this.applyRide(null);
+    } else {
+      const fromState = this.rideFromHistory();
+      this.applyRide(
+        this.localRides.getRideById(id) ??
+        (fromState && (!id || fromState.id === id) ? fromState : null),
+      );
+    }
 
     void this.auth.getCurrentRole().then((role) => {
+      if (token !== this.rideLoadToken) return;
       this.role = role;
       this.changes.markForCheck();
     });
 
-    if (!id) {
-      return;
+    if (id) void this.loadAuthorizedRide(id, token);
+  }
+
+  private async loadAuthorizedRide(id: string, token: number): Promise<void> {
+    try {
+      if (this.ridesApi.cloudBookings) {
+        const role = await this.auth.getCurrentRole();
+        if (token !== this.rideLoadToken || id !== this.readRideId()) return;
+
+        if (role === 'driver') {
+          // The server-side driver-only RPC decides which pending requests
+          // this driver may see. Never authorize an open request by URL/state.
+          const available = await this.ridesApi.listAvailableBookings();
+          if (token !== this.rideLoadToken || id !== this.readRideId()) return;
+          const listed = available.find((ride) => ride.id === id);
+          if (listed) {
+            if (!listed.driverId && !listed.preferredDriverId) {
+              this.authorizedOpenRideId = id;
+            }
+            this.applyRide(listed);
+            return;
+          }
+        }
+      }
+
+      const ride = await this.ridesApi.getLocalRide(id);
+      if (token !== this.rideLoadToken || id !== this.readRideId()) return;
+      // A direct booking lookup cannot grant access to an unassigned
+      // cloud request that was absent from the restricted driver RPC.
+      if (this.ridesApi.cloudBookings &&
+          (await this.auth.getCurrentRole()) === 'driver' &&
+          ride && !ride.driverId && !ride.preferredDriverId) {
+        this.applyRide(null);
+        return;
+      }
+      this.applyRide(ride);
+    } catch {
+      if (token === this.rideLoadToken && id === this.readRideId()) {
+        this.applyRide(null);
+      }
     }
-    void this.ridesApi
-      .getLocalRide(id)
-      .then((ride) => {
-        if (ride) {
-          this.applyRide(ride);
-        }
-      })
-      .catch(() => {
-        if (!this.ride) {
-          this.applyRide(this.localRides.getRideById(id));
-        }
-      });
   }
 
   private applyRide(ride: LocalRide | null): void {
     const account = this.auth.getLocalAccount();
-    const role = account ? normalizeAccountRole(account.accountType) : null;
+    const localRole = account ? normalizeAccountRole(account.accountType) : null;
+    const role = this.ridesApi.cloudBookings ? this.role : localRole;
     const passengerBlocked = Boolean(
-      ride &&
-      role === 'passenger' &&
+      !this.ridesApi.cloudBookings && ride && role === 'passenger' && account &&
       ride.passengerName.trim().toLowerCase() !== account!.fullName.trim().toLowerCase(),
     );
+    const openCloudRide = Boolean(
+      ride && this.ridesApi.cloudBookings &&
+      !ride.driverId && !ride.preferredDriverId,
+    );
+    const authorizedOpenRide = Boolean(
+      openCloudRide && role === 'driver' &&
+      ride?.id === this.authorizedOpenRideId &&
+      (ride?.status === 'Pending' || ride?.status === 'Scheduled'),
+    );
     const driverBlocked = Boolean(
-      ride &&
-      role === 'driver' &&
+      !this.ridesApi.cloudBookings && ride && role === 'driver' && account && !authorizedOpenRide &&
       ride.driverId !== account!.id &&
       ride.preferredDriverId !== account!.id &&
       ride.referralOriginalDriverId !== account!.id &&
       ride.referralProposedDriverId !== account!.id,
     );
-    if (passengerBlocked || driverBlocked) {
+    // Never render a cloud open request without RPC authorization,
+    // even when the local account is not hydrated from cloud auth.
+    const unverifiedOpenRide = Boolean(openCloudRide && !authorizedOpenRide);
+    if (passengerBlocked || driverBlocked || unverifiedOpenRide) {
       this.ride = null;
       this.hiddenFromPassenger = true;
       this.driverMapUrl = null;
@@ -665,6 +780,7 @@ export class RideDetailsPage implements OnInit {
       this.destinationPlaceLabel = '';
     }
     this.changes.detectChanges();
+    this.scrollToRatingIfRequested();
   }
 
   private startCloudTripRefresh(): void {

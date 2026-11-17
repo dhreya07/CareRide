@@ -41,13 +41,15 @@
       <button type="button" [class.active]="selectedFilter === 'all'" (click)="selectFilter('all')">View all</button>
     </section>
 
+    <p class="history-load-error" *ngIf="historyLoadError" role="status">{{ historyLoadError }}</p>
+
     <!-- =========================
          EMPTY HISTORY
     ========================== -->
 
     <section
       class="empty-state"
-      *ngIf="rides.length === 0"
+      *ngIf="rides.length === 0 && !historyLoadError"
     >
 
       <span class="empty-icon" aria-hidden="true">
@@ -117,15 +119,18 @@
         </div>
       </div>
 
-      <section class="arrival-proof" *ngIf="proofUrl(ride) as photoUrl">
-        <div>
-          <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
-          <div>
-            <strong>Safe arrival confirmed</strong>
-            <p>Your driver shared a private arrival photo for this completed trip.</p>
+      <section class="passenger-rating" *ngIf="ride.status === 'Completed'">
+        <ng-container *ngIf="ride.clientRating; else ratingNeeded">
+          <span>Your rating</span>
+          <div class="passenger-rating-stars" [attr.aria-label]="ride.clientRating + ' of 5 stars'">
+            <span *ngFor="let star of [1, 2, 3, 4, 5]" [class.filled]="star <= ratingStarCount(ride.clientRating)">&#9733;</span>
           </div>
-        </div>
-        <img [src]="photoUrl" alt="Safe-arrival confirmation for this completed ride">
+          <p *ngIf="ride.clientComment">{{ ride.clientComment }}</p>
+        </ng-container>
+        <ng-template #ratingNeeded>
+          <span>Driver rating</span>
+          <p>Rate this completed trip when you are ready.</p>
+        </ng-template>
       </section>
 
 
@@ -184,6 +189,17 @@
         <!-- REQUEST AGAIN -->
 
       </div>
+
+      <section class="arrival-proof" *ngIf="proofUrl(ride) as photoUrl">
+        <div>
+          <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+          <div>
+            <strong>Safe arrival photo</strong>
+            <p>Your driver shared a private, verified arrival photo for this completed trip.</p>
+          </div>
+        </div>
+        <img [src]="photoUrl" alt="Safe-arrival confirmation for this completed ride">
+      </section>
 
     </article>
 

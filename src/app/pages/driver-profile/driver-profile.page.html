@@ -29,7 +29,7 @@
               <span class="profile-account-status"><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon> Driver Account</span>
             </div>
           </div>
-          <button type="button" class="profile-edit-shortcut" (click)="toggleSection('personal')" [disabled]="!account">Personal Information <span aria-hidden="true">›</span></button>
+          <button type="button" class="profile-edit-shortcut" (click)="toggleSection('personal')" [disabled]="!account">Personal Information <span aria-hidden="true">&rsaquo;</span></button>
         </section>
       </header>
 
@@ -41,7 +41,7 @@
       </section>
 
       <main class="profile-content" *ngIf="loading">
-        <section class="profile-card state-card"><p>Loading your driver profile…</p></section>
+        <section class="profile-card state-card"><p>Loading your driver profile...</p></section>
       </main>
       <main class="profile-content" *ngIf="!loading && loadError">
         <section class="profile-card state-card"><p role="alert">{{ loadError }}</p></section>
@@ -60,14 +60,17 @@
           <button type="button" class="profile-menu-trigger" (click)="toggleSection('personal')" [attr.aria-expanded]="activeSection === 'personal'" aria-controls="driver-personal-panel">
             <span class="profile-menu-icon"><ion-icon name="person-outline" aria-hidden="true"></ion-icon></span>
             <span class="profile-menu-copy"><strong>Personal Information</strong><small>Name, email, phone and address</small></span>
-            <span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'personal' ? '⌄' : '›' }}</span>
+            <span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span>
           </button>
           <div id="driver-personal-panel" class="profile-menu-panel" *ngIf="activeSection === 'personal'">
             <p *ngIf="saveSuccess" role="status" class="profile-success">{{ saveSuccess }}</p>
             <p *ngIf="saveError" role="alert" class="profile-error">{{ saveError }}</p>
             <ng-container *ngIf="!editing">
               <dl>
-                <div><dt>Full name</dt><dd>{{ value(driver.fullName) }}</dd></div>
+                <div><dt>Full name</dt><dd>{{ value(driver.fullName) }}</dd></div><div *ngIf="driver.availability">
+  <dt>Availability</dt>
+  <dd>{{ driver.availability | titlecase }}</dd>
+</div>
                 <div><dt>Email</dt><dd>{{ value(driver.email) }}</dd></div>
                 <div><dt>Phone</dt><dd>{{ value(driver.phone) }}</dd></div>
                 <div><dt>Address</dt><dd>{{ value(driver.address) }}</dd></div>
@@ -79,7 +82,7 @@
               <div class="profile-form-field"><label for="driver-phone">Phone number</label><input id="driver-phone" name="phone" type="tel" [(ngModel)]="editPhone" autocomplete="tel" maxlength="20" required [disabled]="saving" /></div>
               <div class="profile-form-field"><label>Email</label><p class="profile-readonly-value">{{ value(driver.email) }}</p><small>Email cannot be changed here.</small></div>
               <div class="profile-form-field"><label>Address</label><p class="profile-readonly-value">{{ value(driver.address) }}</p><small>Address editing is not available yet.</small></div>
-              <div class="profile-edit-actions"><button type="submit" class="profile-action-button" [disabled]="saving">{{ saving ? 'Saving…' : 'Save Changes' }}</button><button type="button" class="profile-cancel-button" (click)="cancelEditing()" [disabled]="saving">Cancel</button></div>
+              <div class="profile-edit-actions"><button type="submit" class="profile-action-button" [disabled]="saving">{{ saving ? 'Saving...' : 'Save Changes' }}</button><button type="button" class="profile-cancel-button" (click)="cancelEditing()" [disabled]="saving">Cancel</button></div>
             </form>
           </div>
         </section>
@@ -88,11 +91,11 @@
         <section class="profile-card profile-menu-card">
           <button type="button" class="profile-menu-trigger" (click)="toggleSection('security')" [attr.aria-expanded]="activeSection === 'security'" aria-controls="driver-security-panel">
             <span class="profile-menu-icon"><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon></span>
-            <span class="profile-menu-copy"><strong>Password &amp; Security</strong><small>Password reset and account security</small></span><span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'security' ? '⌄' : '›' }}</span>
+            <span class="profile-menu-copy"><strong>Password &amp; Security</strong><small>Password reset and account security</small></span><span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span>
           </button>
           <div id="driver-security-panel" class="profile-menu-panel" *ngIf="activeSection === 'security'">
             <p>Keep your account secure by updating your password when necessary.</p>
-            <button *ngIf="canEditProfile" type="button" class="profile-action-button" (click)="sendResetPassword()" [disabled]="resettingPassword">{{ resettingPassword ? 'Sending…' : 'Reset Password' }}</button>
+            <button *ngIf="canEditProfile" type="button" class="profile-action-button" (click)="sendResetPassword()" [disabled]="resettingPassword">{{ resettingPassword ? 'Sending...' : 'Reset Password' }}</button>
             <p *ngIf="resetMessage" role="status" class="profile-success">{{ resetMessage }}</p><p *ngIf="resetError" role="alert" class="profile-error">{{ resetError }}</p>
           </div>
         </section>
@@ -101,31 +104,31 @@
 
         <!-- LICENSE -->
         <section class="profile-card profile-menu-card">
-          <button type="button" class="profile-menu-trigger" (click)="toggleSection('license')" [attr.aria-expanded]="activeSection === 'license'" aria-controls="driver-license-panel"><span class="profile-menu-icon"><ion-icon name="document-text-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Driver's License</strong><small>License number and expiration</small></span><span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'license' ? '⌄' : '›' }}</span></button>
+          <button type="button" class="profile-menu-trigger" (click)="toggleSection('license')" [attr.aria-expanded]="activeSection === 'license'" aria-controls="driver-license-panel"><span class="profile-menu-icon"><ion-icon name="document-text-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Driver's License</strong><small>License number and expiration</small></span><span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span></button>
           <div id="driver-license-panel" class="profile-menu-panel" *ngIf="activeSection === 'license'"><dl><div><dt>License number</dt><dd>{{ value(driver.licenseNumber) }}</dd></div><div><dt>Expiration date</dt><dd>{{ value(driver.licenseExpirationDate) }}</dd></div></dl></div>
         </section>
 
         <!-- EMERGENCY CONTACT -->
         <section class="profile-card profile-menu-card">
-          <button type="button" class="profile-menu-trigger" (click)="toggleSection('emergency')" [attr.aria-expanded]="activeSection === 'emergency'" aria-controls="driver-emergency-panel"><span class="profile-menu-icon"><ion-icon name="call-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Emergency Contact</strong><small>Emergency contact details</small></span><span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'emergency' ? '⌄' : '›' }}</span></button>
+          <button type="button" class="profile-menu-trigger" (click)="toggleSection('emergency')" [attr.aria-expanded]="activeSection === 'emergency'" aria-controls="driver-emergency-panel"><span class="profile-menu-icon"><ion-icon name="call-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Emergency Contact</strong><small>Emergency contact details</small></span><span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span></button>
           <div id="driver-emergency-panel" class="profile-menu-panel" *ngIf="activeSection === 'emergency'"><dl><div><dt>Contact name</dt><dd>{{ value(driver.emergencyContactName) }}</dd></div><div><dt>Contact phone</dt><dd>{{ value(driver.emergencyContactPhone) }}</dd></div></dl></div>
         </section>
 
         <!-- VEHICLE -->
         <section class="profile-card profile-menu-card">
-          <button type="button" class="profile-menu-trigger" (click)="toggleSection('vehicle')" [attr.aria-expanded]="activeSection === 'vehicle'" aria-controls="driver-vehicle-panel"><span class="profile-menu-icon"><ion-icon name="car-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Vehicle Information</strong><small>Vehicle details and plate number</small></span><span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'vehicle' ? '⌄' : '›' }}</span></button>
+          <button type="button" class="profile-menu-trigger" (click)="toggleSection('vehicle')" [attr.aria-expanded]="activeSection === 'vehicle'" aria-controls="driver-vehicle-panel"><span class="profile-menu-icon"><ion-icon name="car-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Vehicle Information</strong><small>Vehicle details and plate number</small></span><span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span></button>
           <div id="driver-vehicle-panel" class="profile-menu-panel" *ngIf="activeSection === 'vehicle'"><dl><div><dt>Vehicle type</dt><dd>{{ value(driver.vehicleType) }}</dd></div><div><dt>Body type</dt><dd>{{ value(driver.vehicleBodyType) }}</dd></div><div><dt>Brand</dt><dd>{{ value(driver.vehicleBrand) }}</dd></div><div><dt>Model</dt><dd>{{ value(driver.vehicleModel) }}</dd></div><div><dt>Variant</dt><dd>{{ value(driver.vehicleVariant) }}</dd></div><div><dt>Model year</dt><dd>{{ value(driver.vehicleModelYear) }}</dd></div><div><dt>Color</dt><dd>{{ value(driver.vehicleColor) }}</dd></div><div><dt>Plate number</dt><dd>{{ value(driver.plateNumber) }}</dd></div></dl></div>
         </section>
 
         <!-- CAPACITY -->
         <section class="profile-card profile-menu-card">
-          <button type="button" class="profile-menu-trigger" (click)="toggleSection('capacity')" [attr.aria-expanded]="activeSection === 'capacity'" aria-controls="driver-capacity-panel"><span class="profile-menu-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Passenger Capacity</strong><small>Declared and admin-verified seating</small></span><span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'capacity' ? '⌄' : '›' }}</span></button>
+          <button type="button" class="profile-menu-trigger" (click)="toggleSection('capacity')" [attr.aria-expanded]="activeSection === 'capacity'" aria-controls="driver-capacity-panel"><span class="profile-menu-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Passenger Capacity</strong><small>Declared and admin-verified seating</small></span><span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span></button>
           <div id="driver-capacity-panel" class="profile-menu-panel" *ngIf="activeSection === 'capacity'"><p class="field-label">Driver-declared capacity <span class="tag declared">Declared</span></p><p class="field-value">{{ value(driver.passengerSeatingCapacity) }}<span *ngIf="driver.passengerSeatingCapacity !== undefined"> passenger seats</span></p><div class="verified-block"><p class="field-label">Admin-verified capacity <span class="tag verified">Admin verified</span></p><p class="field-value">{{ value(driver.verifiedPassengerSeatingCapacity) }}<span *ngIf="driver.verifiedPassengerSeatingCapacity !== undefined"> passenger seats</span></p><p class="status-line">Verification: {{ verificationStatus(driver.capacityVerificationStatus) }}</p></div></div>
         </section>
 
         <!-- ACCESSIBILITY -->
         <section class="profile-card profile-menu-card">
-          <button type="button" class="profile-menu-trigger" (click)="toggleSection('accessibility')" [attr.aria-expanded]="activeSection === 'accessibility'" aria-controls="driver-accessibility-panel"><span class="profile-menu-icon"><ion-icon name="accessibility-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Accessibility &amp; Assistance</strong><small>Driver capabilities and verification</small></span><span class="profile-menu-chevron" aria-hidden="true">{{ activeSection === 'accessibility' ? '⌄' : '›' }}</span></button>
+          <button type="button" class="profile-menu-trigger" (click)="toggleSection('accessibility')" [attr.aria-expanded]="activeSection === 'accessibility'" aria-controls="driver-accessibility-panel"><span class="profile-menu-icon"><ion-icon name="accessibility-outline" aria-hidden="true"></ion-icon></span><span class="profile-menu-copy"><strong>Accessibility &amp; Assistance</strong><small>Driver capabilities and verification</small></span><span class="profile-menu-chevron" aria-hidden="true">&rsaquo;</span></button>
           <div id="driver-accessibility-panel" class="profile-menu-panel" *ngIf="activeSection === 'accessibility'"><p class="field-label">Driver-declared capabilities <span class="tag declared">Declared</span></p><p class="field-value">{{ capabilityList(driver.driverDeclaredAccessibility) }}</p><div class="verified-block"><p class="field-label">Admin-verified capabilities <span class="tag verified">Admin verified</span></p><p class="field-value">{{ capabilityList(driver.adminVerifiedAccessibility) }}</p><p class="status-line">Verification: {{ verificationStatus(driver.accessibilityVerificationStatus) }}</p></div><dl class="legacy-fields"><div><dt>Legacy wheelchair-accessible flag</dt><dd>{{ value(driver.wheelchairAccessible) }}</dd></div><div><dt>Senior assistance</dt><dd>{{ value(driver.seniorAssistance) }}</dd></div></dl></div>
         </section>
       </main>
@@ -133,22 +136,29 @@
       <main class="profile-content" *ngIf="!loading && !loadError && !account"><section class="profile-card state-card"><p>Driver account information is unavailable.</p></section></main>
     </div>
 
+      <section class="profile-content">
+        <p *ngIf="signOutError" role="alert" class="profile-error">{{ signOutError }}</p>
+        <button type="button" class="profile-action-button"
+          (click)="signOut()" [disabled]="signingOut">
+          {{ signingOut ? 'Signing out...' : 'Sign Out' }}
+        </button>
+      </section>
     <app-driver-navigation></app-driver-navigation>
 
     <!-- AVATAR STYLE BOTTOM SHEET -->
     <div class="avatar-modal-backdrop" *ngIf="avatarModalOpen" (click)="closeAvatarModal()">
       <section class="avatar-modal" role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title" (click)="$event.stopPropagation()">
-        <div class="avatar-modal-heading"><div><p class="eyebrow">CARERIDE</p><h2 id="avatar-modal-title">Avatar Style</h2><p>Choose your profile look</p></div><button type="button" class="avatar-modal-close" (click)="closeAvatarModal()" [disabled]="photoSaving" aria-label="Close avatar settings">×</button></div>
+        <div class="avatar-modal-heading"><div><p class="eyebrow">CARERIDE</p><h2 id="avatar-modal-title">Avatar Style</h2><p>Choose your profile look</p></div><button type="button" class="avatar-modal-close" (click)="closeAvatarModal()" [disabled]="photoSaving" aria-label="Close avatar settings">&times;</button></div>
         <div class="avatar-modal-body">
           <div class="avatar-modal-preview"><div class="avatar" [style.background]="selectedAvatarColor.background" [style.color]="selectedAvatarColor.foreground"><img *ngIf="profilePhoto; else modalAvatarInitials" [src]="profilePhoto" alt="Current driver profile picture" /><ng-template #modalAvatarInitials>{{ initials }}</ng-template></div></div>
           <p class="avatar-modal-hint">Your picture and avatar color are saved only on this device.</p>
           <input #galleryInput type="file" accept="image/*" hidden aria-label="Choose photo from gallery" (change)="onPhotoSelected($event)" />
           <input #cameraInput type="file" accept="image/*" capture="environment" hidden aria-label="Take a photo" (change)="onPhotoSelected($event)" />
-          <button type="button" class="profile-action-button avatar-change-button" (click)="togglePhotoSources()" [disabled]="!canEditPhoto"><ion-icon name="camera-outline" aria-hidden="true"></ion-icon> {{ photoSaving ? 'Saving photo…' : 'Change Photo' }}</button>
+          <button type="button" class="profile-action-button avatar-change-button" (click)="togglePhotoSources()" [disabled]="!canEditPhoto"><ion-icon name="camera-outline" aria-hidden="true"></ion-icon> {{ photoSaving ? 'Saving photo...' : 'Change Photo' }}</button>
           <div class="avatar-photo-sources" *ngIf="photoSourceOpen"><button type="button" class="profile-cancel-button" (click)="openGallery(galleryInput)" [disabled]="!canEditPhoto"><ion-icon name="images-outline" aria-hidden="true"></ion-icon> Gallery</button><button type="button" class="profile-cancel-button" (click)="openCamera(cameraInput)" [disabled]="!canEditPhoto"><ion-icon name="camera-outline" aria-hidden="true"></ion-icon> Camera</button></div>
           <button type="button" class="profile-cancel-button avatar-remove-button" (click)="removeProfilePhoto()" [disabled]="!canEditPhoto || !profilePhoto"><ion-icon name="trash-outline" aria-hidden="true"></ion-icon> Remove Photo</button>
           <h3>Or choose an avatar color</h3>
-          <div class="avatar-color-grid"><button *ngFor="let color of avatarColors" type="button" class="avatar-color-choice" [class.selected]="avatarColor === color.id && !profilePhoto" [style.background]="color.background" [style.color]="color.foreground" [attr.aria-label]="'Choose ' + color.label + ' avatar'" [attr.aria-pressed]="avatarColor === color.id && !profilePhoto" (click)="selectAvatarColor(color.id)" [disabled]="!canEditPhoto"><ion-icon name="person-outline" aria-hidden="true"></ion-icon><span *ngIf="avatarColor === color.id && !profilePhoto" class="avatar-color-check">✓</span></button></div>
+          <div class="avatar-color-grid"><button *ngFor="let color of avatarColors" type="button" class="avatar-color-choice" [class.selected]="avatarColor === color.id && !profilePhoto" [style.background]="color.background" [style.color]="color.foreground" [attr.aria-label]="'Choose ' + color.label + ' avatar'" [attr.aria-pressed]="avatarColor === color.id && !profilePhoto" (click)="selectAvatarColor(color.id)" [disabled]="!canEditPhoto"><ion-icon name="person-outline" aria-hidden="true"></ion-icon><span *ngIf="avatarColor === color.id && !profilePhoto" class="avatar-color-check">&#10003;</span></button></div>
           <p *ngIf="photoSuccess" class="profile-success" role="status">{{ photoSuccess }}</p><p *ngIf="photoError" class="profile-error" role="alert">{{ photoError }}</p>
           <p class="avatar-storage-note">Local-only profile picture. No cloud upload or Supabase Storage is used.</p>
         </div>

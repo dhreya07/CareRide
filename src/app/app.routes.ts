@@ -92,7 +92,7 @@ export const routes: Routes = [
   {
     path: 'ride-details/:id',
     canActivate: [authGuard],
-    data: { roles: ['passenger', 'driver', 'admin'] },
+    data: { roles: ['passenger', 'driver'] },
     loadComponent: () =>
       import('./pages/ride-details/ride-details.page')
         .then(m => m.RideDetailsPage)
@@ -204,6 +204,11 @@ export const routes: Routes = [
   },
   {
     path: 'admin/accounts',
+    redirectTo: 'admin/passengers',
+    pathMatch: 'full',
+  },
+  {
+    path: 'admin/passengers',
     canActivate: [authGuard],
     data: { roles: ['admin'] },
     loadComponent: () =>
@@ -211,7 +216,7 @@ export const routes: Routes = [
         .then(m => m.AdminPage)
   },
   {
-    path: 'admin/accepted',
+    path: 'admin/drivers',
     canActivate: [authGuard],
     data: { roles: ['admin'] },
     loadComponent: () =>
@@ -227,12 +232,17 @@ export const routes: Routes = [
         .then(m => m.AdminPage)
   },
   {
-    path: 'admin/drivers',
+    path: 'admin/declined',
     canActivate: [authGuard],
     data: { roles: ['admin'] },
     loadComponent: () =>
       import('./pages/admin/admin.page')
         .then(m => m.AdminPage)
+  },
+  {
+    path: 'admin/accepted',
+    redirectTo: 'admin/history',
+    pathMatch: 'full',
   },
 
 

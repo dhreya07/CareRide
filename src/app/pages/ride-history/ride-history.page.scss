@@ -405,6 +405,54 @@
 .empty-filter-state strong { color: #123947; font-size: 18px; }
 .empty-filter-state span { font-size: 14px; line-height: 1.45; }
 
+.history-load-error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(153, 57, 57, .28);
+  border-radius: 14px;
+  background: rgba(255, 239, 239, .9);
+  color: #7a2828;
+  font-size: .9rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.passenger-rating {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding: 13px;
+  border: 1px solid rgba(255, 208, 91, .58);
+  border-radius: 15px;
+  background: rgba(255, 248, 219, .72);
+}
+
+.passenger-rating > span {
+  color: #765409;
+  font-size: .73rem;
+  font-weight: 850;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.passenger-rating-stars {
+  display: flex;
+  gap: 3px;
+  color: #bac2bf;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.passenger-rating-stars .filled { color: #e0a20d; }
+
+.passenger-rating p {
+  margin: 0;
+  color: #506359;
+  font-size: .86rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 360px) {
   .overview-card { min-height: 84px; padding: 10px; }
   .overview-card span { font-size: 10px; }
