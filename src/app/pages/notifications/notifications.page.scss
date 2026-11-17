@@ -1,3 +1,5 @@
+@use '../../shared/passenger-glass' as glass;
+
 :host {
   display: block;
   width: 100%;
@@ -156,3 +158,52 @@ h1 {
   font-weight: 800;
   cursor: pointer;
 }
+
+.care-notices, .care-notices .notes-shell {
+  background: radial-gradient(ellipse at 95% 14%, #8ceee8 0, transparent 52%),
+    linear-gradient(150deg, #e6fbff, #b4f0ef 58%, #a0e5e8);
+  color: #073f43;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.care-notices .brand { display: flex; align-items: center; gap: 8px; }
+.care-notices .brand img { width: 52px; height: auto; border-radius: 10px; }
+.care-notices .brand span, .care-notices .back-link { color: #073f43; }
+.care-notices .page-subtitle { color: #315d66; }
+.care-notices .empty-state, .care-notices .note-card {
+  color: #20394b;
+  border: 1px solid #a1bdcb;
+  border-radius: 23px;
+  background: linear-gradient(135deg, #f0f6f9, #dae8ee);
+  box-shadow: 0 7px 16px #0a223b44;
+}
+.care-notices .empty-state { padding: 22px 16px; }
+.care-notices .empty-state ion-icon {
+  box-sizing: content-box;
+  padding: 11px;
+  border-radius: 16px;
+  background: #e9ddfa;
+  color: #4e406b;
+}
+.care-notices .note-card.unread { border-left: 4px solid #78bda9; }
+.care-notices .note-filters button, .care-notices .mark-read {
+  border-color: #91afbd;
+  background: #deebfd;
+  color: #294e70;
+  font-size: 13px;
+}
+.care-notices .note-filters button.selected { background: #bcebd9; color: #214e49; }
+.care-notices .note-filters button:disabled { opacity: 1; background: #374f60; color: #d1e2eb; border-color: #6a8597; }
+.care-notices :is(a, button):focus-visible { outline: 2px solid #84c5d8; outline-offset: 3px; }
+
+/* Frosted surfaces over the aqua Passenger theme. */
+.care-notices .empty-state, .care-notices .note-card {
+  background: linear-gradient(142deg, rgba(255, 255, 255, .83), rgba(218, 249, 250, .55));
+  border-color: rgba(249, 255, 255, .92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .86), 0 8px 23px rgba(0, 88, 88, .14);
+  -webkit-backdrop-filter: blur(13px) saturate(135%);
+  backdrop-filter: blur(13px) saturate(135%);
+}
+
+
+.care-notices .notes-shell { @include glass.aqua-backdrop; }
+.care-notices .empty-state, .care-notices .note-card { @include glass.frosted-card; }

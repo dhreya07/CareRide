@@ -1,192 +1,368 @@
+
 <main class="dashboard-page care-frame">
-
   <div class="dashboard-shell care-shell">
-
     <div class="shell-scroll">
 
+      <div class="dashboard-brand">
+        <img class="brand-mark" src="assets/careride-healthcare-mark.png" alt="" width="288" height="192">
+        <div class="brand-wordmark">
+          <strong class="brand-name">Care<span>Ride</span></strong>
+          <span class="brand-tagline">Your healthcare transportation</span>
+        </div>
+      </div>
+
+      <!-- HEADER -->
       <header class="topbar">
-        <div class="greeting-avatar" aria-hidden="true">
-          <ion-icon name="person-outline"></ion-icon>
+        <div class="brand-avatar" aria-hidden="true">
+          <img *ngIf="profilePhoto(); else dashboardAvatarInitials" [src]="profilePhoto()" alt="">
+          <ng-template #dashboardAvatarInitials>{{ profileInitials }}</ng-template>
         </div>
 
         <div class="greeting-copy">
-          <p class="greet-kicker">{{ greeting }}</p>
+          <p class="greet-kicker">{{ greeting }}, welcome back!</p>
           <h1>{{ userName }}</h1>
+          <span class="passenger-label">CareRide Passenger</span>
         </div>
 
         <button
           type="button"
           class="notification-button"
           (click)="openNotifications()"
-          aria-label="Notifications"
+          aria-label="Open notifications"
         >
           <ion-icon name="notifications-outline"></ion-icon>
-          <span class="notification-count" *ngIf="notificationCount > 0">{{ notificationCount > 9 ? '9+' : notificationCount }}</span>
+          <span
+            class="notification-count"
+            *ngIf="notificationCount > 0"
+          >
+            {{ notificationCount > 9 ? '9+' : notificationCount }}
+          </span>
         </button>
       </header>
 
-      <section class="live-clock" aria-live="polite" aria-atomic="true">
-        <div class="analog-clock" aria-hidden="true">
-          <span
-            class="clock-tick"
-            *ngFor="let mark of clockMarks"
-            [class.hour-tick]="mark % 3 === 0"
-            [style.transform]="'rotate(' + (mark * 30) + 'deg)'"
-          ></span>
-          <span class="clock-num n12">12</span>
-          <span class="clock-num n3">3</span>
-          <span class="clock-num n6">6</span>
-          <span class="clock-num n9">9</span>
-          <span class="clock-hand hour-hand" [style.transform]="'rotate(' + hourDeg + 'deg)'"></span>
-          <span class="clock-hand minute-hand" [style.transform]="'rotate(' + minuteDeg + 'deg)'"></span>
-          <span class="clock-cap"></span>
+      <!-- WELCOME / BOOKING HERO -->
+      <section class="booking-hero" aria-labelledby="hero-title">
+        <div class="hero-decoration" aria-hidden="true">
+          <ion-icon name="car-outline"></ion-icon>
+          <span class="hero-shield"><ion-icon name="shield-checkmark-outline"></ion-icon></span>
         </div>
 
-        <div class="clock-copy">
-          <span class="clock-label">{{ clockWeekday }}</span>
-          <strong>{{ clockDate }}</strong>
-          <time class="clock-digital" [attr.datetime]="clockTime">
-            {{ clockTime }}
-            <span>{{ clockAmpm }}</span>
-          </time>
-        </div>
-      </section>
+        <div class="hero-content">
+          <span class="hero-eyebrow">
+            <ion-icon name="heart-outline" aria-hidden="true"></ion-icon> Your journey, our care
+          </span>
 
-      <section class="request-card" aria-labelledby="request-title">
-        <div class="request-copy">
-          <span class="card-kicker">Community transport</span>
-          <h2 id="request-title">Need a ride today?</h2>
-          <p>Book safe transportation for hospital, errands, or appointments.</p>
-          <button type="button" class="request-button" (click)="requestRide()">
+          <h2 id="hero-title">
+            Where can we take you today?
+          </h2>
+
+          <p>
+            Safe, convenient, and accessible transportation
+            for every journey.
+          </p>
+
+          <button
+            type="button"
+            class="hero-button"
+            (click)="requestRide()"
+          >
+            <ion-icon name="car-outline"></ion-icon>
             Request a Ride
             <ion-icon name="arrow-forward-outline"></ion-icon>
           </button>
         </div>
+      </section>
 
-        <div class="request-visual" aria-hidden="true">
-          <ion-icon name="car-outline"></ion-icon>
+      <!-- BOOKING GUIDANCE -->
+      <section class="booking-guide" aria-label="How CareRide works">
+        <div class="guide-step">
+          <span class="step-icon">
+            <ion-icon name="navigate-outline"></ion-icon>
+          </span>
+          <span>Choose locations</span>
+        </div>
+
+        <span class="guide-line" aria-hidden="true"></span>
+
+        <div class="guide-step">
+          <span class="step-icon">
+            <ion-icon name="car-outline"></ion-icon>
+          </span>
+          <span>Request a ride</span>
+        </div>
+
+        <span class="guide-line" aria-hidden="true"></span>
+
+        <div class="guide-step">
+          <span class="step-icon">
+            <ion-icon name="shield-checkmark-outline"></ion-icon>
+          </span>
+          <span>Travel safely</span>
         </div>
       </section>
 
+      <!-- UPCOMING RIDE -->
+      <section
+        class="upcoming-section"
+        *ngIf="hasUpcomingRide"
+        aria-labelledby="upcoming-title"
+      >
+        <div class="section-heading">
+          <div>
+            <span class="section-eyebrow">YOUR BOOKING</span>
+            <h2 id="upcoming-title">Upcoming Ride</h2>
+          </div>
+
+          <button type="button" (click)="scheduledRides()">
+            View all
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="upcoming-card"
+          (click)="viewUpcomingRide()"
+        >
+          <div class="upcoming-top">
+            <span class="upcoming-icon">
+              <ion-icon name="car-outline"></ion-icon>
+            </span>
+
+            <span
+              class="status-badge"
+              [ngClass]="statusTone(upcomingRide.status)"
+            >
+              {{ upcomingRide.status }}
+            </span>
+          </div>
+
+          <div class="ride-route">
+            <div class="route-point">
+              <span class="route-dot pickup-dot"></span>
+              <div>
+                <small>PICKUP</small>
+                <strong>{{ upcomingRide.pickup }}</strong>
+              </div>
+            </div>
+
+            <div class="route-point">
+              <span class="route-dot destination-dot"></span>
+              <div>
+                <small>DESTINATION</small>
+                <strong>{{ upcomingRide.destination }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="upcoming-footer">
+            <span>
+              <ion-icon name="calendar-outline"></ion-icon>
+              {{ upcomingRide.date }} · {{ upcomingRide.time }}
+            </span>
+
+            <span *ngIf="upcomingRide.hasDriver">
+              Driver: {{ upcomingRide.driverName || 'Assigned' }}
+            </span>
+          </div>
+
+          <p
+            class="driver-location"
+            *ngIf="upcomingRide.hasDriver && upcomingRide.location"
+          >
+            {{ upcomingRide.location }}
+          </p>
+        </button>
+      </section>
+
+      <!-- QUICK ACTIONS -->
+      <section class="quick-section" aria-labelledby="quick-title">
+        <div class="section-heading">
+          <div>
+            <span class="section-eyebrow">EXPLORE CARERIDE</span>
+            <h2 id="quick-title">Quick Actions</h2>
+          </div>
+        </div>
+
+        <div class="quick-grid">
+          <button
+            type="button"
+            class="quick-card"
+            (click)="scheduledRides()"
+          >
+            <span class="quick-icon">
+              <ion-icon name="calendar-outline"></ion-icon>
+            </span>
+
+            <strong>Scheduled Rides</strong>
+            <small>Plan ahead</small>
+          </button>
+
+          <button
+            type="button"
+            class="quick-card"
+            (click)="rideHistory()"
+          >
+            <span class="quick-icon">
+              <ion-icon name="time-outline"></ion-icon>
+            </span>
+
+            <strong>Ride History</strong>
+            <small>View past trips</small>
+          </button>
+
+          <button
+            type="button"
+            class="quick-card"
+            (click)="safety()"
+          >
+            <span class="quick-icon">
+              <ion-icon name="shield-checkmark-outline"></ion-icon>
+            </span>
+
+            <strong>Safety Center</strong>
+            <small>Travel with care</small>
+          </button>
+
+          <button
+            type="button"
+            class="quick-card"
+            (click)="profile()"
+          >
+            <span class="quick-icon">
+              <ion-icon name="person-circle-outline"></ion-icon>
+            </span>
+
+            <strong>My Profile</strong>
+            <small>Manage account</small>
+          </button>
+        </div>
+      </section>
+
+      <!-- RATE DRIVER -->
       <section
         class="rate-banner"
         *ngIf="unratedRide"
         aria-labelledby="rate-title"
       >
         <div class="section-heading">
-          <h2 id="rate-title">Rate your driver</h2>
+          <div>
+            <span class="section-eyebrow">YOUR FEEDBACK</span>
+            <h2 id="rate-title">Rate Your Driver</h2>
+          </div>
         </div>
-        <button type="button" class="activity-card rate-card" (click)="rateUnratedRide()">
+
+        <button
+          type="button"
+          class="activity-card rate-card"
+          (click)="rateUnratedRide()"
+        >
           <span class="activity-symbol">
             <ion-icon name="star-outline"></ion-icon>
           </span>
+
           <span class="activity-details">
-            <strong>Please rate this completed trip</strong>
-            <span>{{ unratedRide.driverName || 'CareRide driver' }} · {{ unratedRide.pickupLocation }} → {{ unratedRide.destination }}</span>
+            <strong>How was your ride?</strong>
+            <span>
+              {{ unratedRide.driverName || 'CareRide driver' }}
+              · {{ unratedRide.pickupLocation }}
+              → {{ unratedRide.destination }}
+            </span>
           </span>
+
+          <ion-icon name="arrow-forward-outline"></ion-icon>
         </button>
       </section>
 
+      <!-- DRIVER CHANGE -->
       <section
         class="driver-change"
         *ngIf="driverChangeNotices.length"
         aria-labelledby="driver-change-title"
       >
         <div class="section-heading">
-          <h2 id="driver-change-title">Driver change</h2>
+          <div>
+            <span class="section-eyebrow">ACTION REQUIRED</span>
+            <h2 id="driver-change-title">Driver Change</h2>
+          </div>
         </div>
-        <article class="driver-change-card" *ngFor="let ride of driverChangeNotices">
-          <p>A replacement driver accepted a referral for your booking.</p>
-          <p><span>Current driver</span> <strong>{{ referralOriginalName(ride) }}</strong></p>
-          <p><span>Replacement</span> <strong>{{ referralReplacementName(ride) }}</strong></p>
-          <p><span>Vehicle</span> <strong>{{ referralVehicle(ride) }}</strong></p>
-          <p><span>Plate</span> <strong>{{ referralPlate(ride) }}</strong></p>
-          <p><span>Rating</span> <strong>{{ referralRating(ride) }}</strong></p>
-          <p><span>Pickup</span> <strong>{{ ride.pickupLocation }}</strong></p>
-          <p><span>Destination</span> <strong>{{ ride.destination }}</strong></p>
-          <p *ngIf="ride.date || ride.time"><span>Pickup time</span> <strong>{{ ride.date }} {{ ride.time }}</strong></p>
+
+        <article
+          class="driver-change-card"
+          *ngFor="let ride of driverChangeNotices"
+        >
+          <p class="change-description">
+            A replacement driver accepted a referral for your booking.
+            Please review the details.
+          </p>
+
+          <div class="change-detail">
+            <span>Current driver</span>
+            <strong>{{ referralOriginalName(ride) }}</strong>
+          </div>
+
+          <div class="change-detail">
+            <span>Replacement driver</span>
+            <strong>{{ referralReplacementName(ride) }}</strong>
+          </div>
+
+          <div class="change-detail">
+            <span>Vehicle</span>
+            <strong>{{ referralVehicle(ride) }}</strong>
+          </div>
+
+          <div class="change-detail">
+            <span>Plate number</span>
+            <strong>{{ referralPlate(ride) }}</strong>
+          </div>
+
+          <div class="change-detail">
+            <span>Driver rating</span>
+            <strong>{{ referralRating(ride) }}</strong>
+          </div>
+
+          <div class="change-detail">
+            <span>Pickup</span>
+            <strong>{{ ride.pickupLocation }}</strong>
+          </div>
+
+          <div class="change-detail">
+            <span>Destination</span>
+            <strong>{{ ride.destination }}</strong>
+          </div>
+
+          <div class="change-detail" *ngIf="ride.date || ride.time">
+            <span>Pickup time</span>
+            <strong>{{ ride.date }} {{ ride.time }}</strong>
+          </div>
+
           <div class="driver-change-actions">
-            <button type="button" (click)="confirmDriverChange(ride)" [disabled]="respondingReferralId !== null">
-              Confirm
+            <button
+              type="button"
+              (click)="confirmDriverChange(ride)"
+              [disabled]="respondingReferralId !== null"
+            >
+              Confirm Driver
             </button>
-            <button type="button" (click)="declineDriverChange(ride)" [disabled]="respondingReferralId !== null">
+
+            <button
+              type="button"
+              (click)="declineDriverChange(ride)"
+              [disabled]="respondingReferralId !== null"
+            >
               Decline
             </button>
           </div>
         </article>
       </section>
 
-      <section class="quick-section" aria-labelledby="quick-title">
-        <div class="section-heading">
-          <h2 id="quick-title">Quick access</h2>
-        </div>
-
-        <div class="quick-grid" role="navigation" aria-label="Quick access">
-          <button type="button" class="quick-card" (click)="scheduledRides()">
-            <span class="quick-icon">
-              <ion-icon name="calendar-outline"></ion-icon>
-            </span>
-            <span>Scheduled</span>
-          </button>
-
-          <button type="button" class="quick-card" (click)="rideHistory()">
-            <span class="quick-icon">
-              <ion-icon name="time-outline"></ion-icon>
-            </span>
-            <span>History</span>
-          </button>
-
-          <button type="button" class="quick-card" (click)="safety()">
-            <span class="quick-icon">
-              <ion-icon name="shield-checkmark-outline"></ion-icon>
-            </span>
-            <span>Safety</span>
-          </button>
-
-          <button type="button" class="quick-card" (click)="profile()">
-            <span class="quick-icon">
-              <ion-icon name="person-circle-outline"></ion-icon>
-            </span>
-            <span>Profile</span>
-          </button>
-        </div>
-      </section>
-
-      <section
-        class="activity-section"
-        *ngIf="hasUpcomingRide"
-        aria-labelledby="activity-title"
-      >
-        <div class="section-heading">
-          <h2 id="activity-title">Upcoming ride</h2>
-          <button type="button" (click)="scheduledRides()">View all</button>
-        </div>
-
-        <button
-          type="button"
-          class="activity-card upcoming-activity"
-          (click)="viewUpcomingRide()"
-        >
-          <span class="activity-symbol">
-            <ion-icon name="navigate-outline"></ion-icon>
-          </span>
-
-          <span class="activity-details">
-            <strong>{{ upcomingRide.pickup }} → {{ upcomingRide.destination }}</strong>
-            <span>{{ upcomingRide.date }} · {{ upcomingRide.time }}</span>
-            <span *ngIf="upcomingRide.hasDriver">Driver {{ upcomingRide.driverName || 'assigned' }} · {{ upcomingRide.location }}</span>
-          </span>
-
-          <span class="status-badge" [ngClass]="statusTone(upcomingRide.status)">
-            {{ upcomingRide.status }}
-          </span>
-        </button>
-      </section>
+      <!-- FOOTER -->
+      <footer class="dashboard-footer">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <span>CareRide — Every journey matters.</span>
+      </footer>
 
     </div>
 
-    <app-navigation></app-navigation>
-
+    <app-navigation class="dashboard-nav"></app-navigation>
   </div>
-
 </main>

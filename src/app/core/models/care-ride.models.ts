@@ -1,6 +1,10 @@
+import type { DriverAccessibilityCapability } from './driver-accessibility-capabilities';
+
 export type AccountRole = 'passenger' | 'driver' | 'admin';
 export type PassengerType = 'elderly' | 'pwd' | 'other';
 export type AssistanceNeed = 'wheelchair' | 'walking' | 'visual' | 'hearing' | 'companion' | 'other';
+/** Driver-declared IDs are distinct from Admin-verified capabilities. */
+export type { DriverAccessibilityCapability } from './driver-accessibility-capabilities';
 export type RideStatus =
   | 'pending'
   | 'assigned'
@@ -84,6 +88,13 @@ export interface Vehicle {
   model: string;
   plateNumber: string;
   accessibilityNotes: string | null;
+  bodyType?: string | null;
+  variant?: string | null;
+  modelYear?: number | null;
+  color?: string | null;
+  /** Passenger seats only; excludes the driver. Null means not supplied. */
+  passengerSeatingCapacity?: number | null;
+  driverDeclaredAccessibility?: DriverAccessibilityCapability[];
 }
 export interface Incident {
   id: string;

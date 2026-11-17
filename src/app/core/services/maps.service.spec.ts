@@ -32,7 +32,7 @@ describe('MapsService location helpers', () => {
     await expect(maps.currentPosition()).rejects.toThrow('Location permission was denied');
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
     const options = (getCurrentPosition.mock.calls[0] as unknown as unknown[])[2] as PositionOptions;
-    expect(options).toMatchObject({ enableHighAccuracy: true, maximumAge: 0 });
+    expect(options).toMatchObject({ enableHighAccuracy: false, maximumAge: 0 });
   });
 
   it('keeps the device GPS accuracy and does not invent a position', async () => {
@@ -153,6 +153,19 @@ describe('MapsService location helpers', () => {
 
     await expect(maps.reverseGeocode(14.6, 120.9842)).resolves.toBe('14.60000, 120.98420');
   });
+
+  it.each([1_780_000_000_123, undefined, Infinity, Number.MAX_VALUE])(
+    'converts browser epoch milliseconds safely (%s)',
+    async (timestamp) => {
+      const position = { coords: { latitude: 14.5995, longitude: 120.9842, accuracy: 10 }, timestamp };
+      vi.stubGlobal('navigator', { geolocation: {
+        getCurrentPosition: (success: PositionCallback) => success(position as GeolocationPosition),
+      } });
+      const fix = await maps.currentPosition();
+      expect(fix.accuracyMeters).toBe(10);
+      expect(fix.capturedAt).toBe(timestamp === 1_780_000_000_123 ? new Date(timestamp).toISOString() : undefined);
+    },
+  );
 
   it('watches the device with high accuracy and can be stopped', () => {
     const clearWatch = vi.fn();

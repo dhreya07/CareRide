@@ -274,6 +274,17 @@ input {
   line-height: 1.4;
 }
 
+.success-message {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid #a8d8b8;
+  border-radius: 14px;
+  background: #edf8f0;
+  color: #174c2b;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .primary-button {
   display: inline-flex;
   align-items: center;
@@ -472,3 +483,79 @@ input {
     width: min(100%, 720px);
   }
 }
+
+/* Passenger aqua/glass sign-in treatment. The hero image remains unchanged. */
+.login-page {
+  color: #073f43;
+  background: radial-gradient(ellipse at 92% 14%, #83e9df 0, transparent 48%), #b9f0ed;
+}
+
+.login-shell {
+  background: linear-gradient(150deg, #e8ffff, #b7f1ee 62%, #9bdfdf);
+  box-shadow: 0 0 42px rgba(0, 76, 77, .22);
+}
+
+.background-art::after {
+  background: linear-gradient(180deg, rgba(0, 87, 80, .08), rgba(227, 255, 253, .15) 45%, rgba(185, 240, 237, .78) 82%, #b9f0ed 100%);
+}
+
+.brand-area {
+  padding-top: max(12px, env(safe-area-inset-top));
+  pointer-events: none;
+}
+.brand-logo {
+  display: block;
+  width: min(112px, 31vw);
+  max-height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 9px rgba(0, 80, 75, .2));
+}
+
+.login-panel {
+  border: 2px solid rgba(255, 255, 255, .9);
+  background: linear-gradient(142deg, rgba(255, 255, 255, .88), rgba(213, 249, 248, .68));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .92), 0 16px 34px rgba(0, 86, 82, .2);
+  -webkit-backdrop-filter: blur(15px) saturate(135%);
+  backdrop-filter: blur(15px) saturate(135%);
+}
+
+.welcome-copy h2, .field-label { color: #063f43; }
+.welcome-copy p, .remember-option, .register-area > span { color: #416c70; }
+
+.input-field {
+  border-color: rgba(5, 137, 128, .32);
+  background: rgba(247, 255, 255, .75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .76);
+}
+.input-field:focus-within {
+  border-color: #098a7d;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 0 0 3px rgba(55, 219, 203, .27);
+}
+.input-field > ion-icon, .eye-button { color: #087e74; }
+.input-field input { color: #123c43; }
+.input-field input::placeholder { color: #77959a; }
+
+.login-options { justify-content: flex-start; margin-bottom: 14px; }
+.remember-option input { accent-color: #078979; }
+
+.primary-button {
+  border: 1px solid rgba(231, 255, 251, .88);
+  background: linear-gradient(135deg, #075e59, #008e7b);
+  box-shadow: 0 9px 19px rgba(0, 92, 82, .26), inset 0 1px 0 rgba(255, 255, 255, .24);
+}
+
+.divider span { background: rgba(5, 121, 114, .2); }
+.divider small { color: #4c7377; }
+.social-buttons { grid-template-columns: 1fr; }
+.social-buttons button {
+  border-color: rgba(7, 139, 125, .35);
+  background: rgba(255, 255, 255, .77);
+  color: #17494e;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .84), 0 5px 11px rgba(0, 101, 96, .1);
+}
+.social-buttons ion-icon { color: #0b766f; }
+.register-area button { color: #08776e; }
+.trust-row { border-color: rgba(6, 126, 119, .17); }
+.trust-icon { background: linear-gradient(145deg, #d8fff8, #a5eee3); color: #08776e; }
+.trust-item span { color: #416c70; }

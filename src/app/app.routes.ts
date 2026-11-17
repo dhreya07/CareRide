@@ -181,6 +181,14 @@ export const routes: Routes = [
       import('./pages/driver/driver.page')
         .then(m => m.DriverPage)
   },
+  {
+    path: 'driver/profile',
+    canActivate: [authGuard],
+    data: { roles: ['driver'] },
+    loadComponent: () =>
+      import('./pages/driver-profile/driver-profile.page')
+        .then(m => m.DriverProfilePage)
+  },
 
 
   // =========================

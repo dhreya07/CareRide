@@ -1,4 +1,5 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { DriverProfilePhotoService } from '../../core/services/driver-profile-photo.service';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -44,6 +45,32 @@ export class DashboardPage implements OnInit, OnDestroy {
   // =========================
   // USER
   // =========================
+
+  private readonly photos = inject(DriverProfilePhotoService);
+  private avatarLoad = 0;
+  readonly profilePhoto = signal<string | null>(null);
+
+  get profileInitials(): string {
+    return this.userName.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+      .map((part) => part[0].toUpperCase()).join('') || 'P';
+  }
+
+  private async refreshProfilePhoto(): Promise<void> {
+    const request = ++this.avatarLoad;
+    this.profilePhoto.set(null);
+    try {
+      const account = this.auth.cloudAuthEnabled
+        ? await this.auth.currentCloudProfile()
+        : this.auth.getLocalAccount();
+      if (request !== this.avatarLoad || !account) return;
+      const passenger = 'role' in account
+        ? account.role === 'passenger' && account.accountStatus === 'approved'
+        : account.accountType === 'passenger';
+      if (passenger) this.profilePhoto.set(this.photos.getPhoto(account.id, 'passenger'));
+    } catch {
+      // Keep the initials when the account cannot be verified.
+    }
+  }
 
   userName = 'Andrea';
   greeting = 'Good day';
@@ -118,6 +145,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.userName = this.formatPersonName(this.auth.getLocalDisplayName());
+    void this.refreshProfilePhoto();
     this.startClock();
     this.localRides.rides$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -134,16 +162,21 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   ionViewWillEnter(): void {
     this.userName = this.formatPersonName(this.auth.getLocalDisplayName());
+    void this.refreshProfilePhoto();
     this.refreshNotificationCount();
     void this.refreshDashboard();
     this.startClock();
   }
 
   ionViewDidLeave(): void {
+    ++this.avatarLoad;
+    this.profilePhoto.set(null);
     this.stopClock();
   }
 
   ngOnDestroy(): void {
+    ++this.avatarLoad;
+    this.profilePhoto.set(null);
     this.stopClock();
   }
 

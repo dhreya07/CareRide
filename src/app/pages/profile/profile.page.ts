@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { DriverProfilePhotoService } from '../../core/services/driver-profile-photo.service';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,6 +8,7 @@ import { addIcons } from 'ionicons';
 import {
   accessibilityOutline,
   callOutline,
+  cameraOutline,
   earOutline,
   eyeOutline,
   informationCircleOutline,
@@ -94,6 +96,7 @@ export class ProfilePage implements OnInit {
     addIcons({
       accessibilityOutline,
       callOutline,
+  cameraOutline,
       earOutline,
       eyeOutline,
       informationCircleOutline,
@@ -104,6 +107,80 @@ export class ProfilePage implements OnInit {
       saveOutline,
       walkOutline,
     });
+  }
+
+  private readonly photos = inject(DriverProfilePhotoService);
+  private readonly photoChanges = inject(ChangeDetectorRef);
+  private photoOwner?: string;
+  private photoLoad = 0;
+  profilePhoto: string | null = null;
+  photoFeedback = '';
+  photoBusy = false;
+
+  get canEditPhoto(): boolean {
+    return Boolean(this.photoOwner) && !this.photoBusy;
+  }
+
+  private async loadPhoto(): Promise<void> {
+    const request = ++this.photoLoad;
+    this.photoOwner = undefined;
+    this.profilePhoto = null;
+    this.photoFeedback = '';
+    try {
+      const cloud = this.auth.cloudAuthEnabled;
+      const account = cloud ? await this.auth.currentCloudProfile() : this.auth.getLocalAccount();
+      if (request !== this.photoLoad) return;
+      if (account && ('role' in account
+        ? account.role === 'passenger' && account.accountStatus === 'approved'
+        : account.accountType === 'passenger')) {
+        this.photoOwner = account.id;
+        this.profilePhoto = this.photos.getPhoto(account.id, 'passenger');
+      }
+    } catch {
+      if (request === this.photoLoad) this.photoFeedback = 'Profile photo is unavailable. Try signing in again.';
+    } finally {
+      this.photoChanges.markForCheck();
+    }
+  }
+
+  async choosePhoto(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+    input.value = '';
+    const owner = this.photoOwner;
+    if (!file || !owner || this.photoBusy) return;
+    const request = this.photoLoad;
+    this.photoBusy = true;
+    this.photoFeedback = '';
+    try {
+      const image = await this.photos.savePhoto(owner, file, 'passenger');
+      if (request === this.photoLoad) {
+        this.profilePhoto = image;
+        this.photoFeedback = 'Profile photo saved on this device.';
+      }
+    } catch (error) {
+      if (request === this.photoLoad) this.photoFeedback = error instanceof Error ? error.message : 'Unable to save your photo.';
+    } finally {
+      this.photoBusy = false;
+      this.photoChanges.markForCheck();
+    }
+  }
+
+  removePhoto(): void {
+    if (!this.photoOwner || this.photoBusy) return;
+    try {
+      this.photos.removePhoto(this.photoOwner, 'passenger');
+      this.profilePhoto = null;
+      this.photoFeedback = 'Profile photo removed from this device.';
+    } catch {
+      this.photoFeedback = 'Unable to remove your profile photo.';
+    }
+  }
+
+  ionViewDidLeave(): void {
+    ++this.photoLoad;
+    this.photoOwner = undefined;
+    this.profilePhoto = null;
+    this.photoFeedback = '';
   }
 
   get initials(): string {
@@ -134,6 +211,7 @@ export class ProfilePage implements OnInit {
 
 
   private loadProfile(): void {
+    void this.loadPhoto();
     const account = this.auth.getLocalAccount();
     if (account) {
       this.profiles.hydrateFromAccount({

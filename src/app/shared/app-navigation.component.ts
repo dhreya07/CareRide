@@ -238,6 +238,61 @@ import {
 
     }
 
+    :host(.dashboard-nav) {
+      position: relative;
+      z-index: 20;
+      padding-top: 13px;
+    }
+
+    :host(.dashboard-nav) .bottom-nav {
+      box-sizing: border-box;
+      width: min(calc(100% - 12px), 760px);
+      min-height: 64px;
+      margin: 0 auto max(5px, env(safe-area-inset-bottom));
+      padding: 5px 4px 6px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      justify-items: center;
+      border: 1px solid #f8ffff;
+      border-radius: 18px 18px 27px 27px;
+      background: linear-gradient(145deg, rgba(248, 255, 255, .78), rgba(201, 240, 243, .54));
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
+      backdrop-filter: blur(12px) saturate(150%);
+      box-shadow: 0 5px 16px #09140e3d;
+    }
+
+    :host(.dashboard-nav) .bottom-nav a {
+      width: 100%;
+      min-width: 0;
+      min-height: 48px;
+      gap: 4px;
+      color: #184a53;
+    }
+
+    :host(.dashboard-nav) .bottom-nav small { font-size: clamp(9px, 2.65vw, 12px); }
+    :host(.dashboard-nav) .bottom-nav a.active { color: #043e42; border-radius: 17px; background: linear-gradient(145deg, #c5fff2, #78e9dc); box-shadow: inset 0 0 0 1px #eafffc, 0 4px 9px #16847830; }
+    :host(.dashboard-nav) .bottom-nav a.active ion-icon { color: inherit; }
+
+    :host(.dashboard-nav) .bottom-nav .nav-request {
+      align-self: start;
+      width: 51px;
+      height: 51px;
+      min-width: 51px;
+      min-height: 51px;
+      margin-top: -18px;
+      box-sizing: border-box;
+      border: 5px solid #bdfbf1;
+      border-radius: 50%;
+      color: #f9fff0;
+      background: linear-gradient(145deg, #006c64, #04383d);
+      box-shadow: 0 4px 11px #08756b60;
+    }
+
+    :host(.dashboard-nav) .bottom-nav .nav-request ion-icon { font-size: 25px; }
+    :host(.dashboard-nav) .bottom-nav .nav-request.request-active { box-shadow: 0 0 0 2px #e0f6fb, 0 4px 11px #080c0673; }
+    :host(.dashboard-nav) .bottom-nav a:focus-visible { outline: 2px solid #d8f6fc; outline-offset: 2px; border-radius: 12px; }
+    :host(.dashboard-nav) .bottom-nav .nav-request:focus-visible { border-radius: 50%; }
+
   `]
 })
 

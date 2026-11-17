@@ -1,8 +1,11 @@
-<div class="notes-page care-frame">
+<div class="notes-page care-frame care-notices">
   <div class="notes-shell care-shell">
     <div class="shell-scroll">
       <header class="page-header">
-        <a [routerLink]="homePath" class="brand">Care<span>Ride</span></a>
+        <a [routerLink]="homePath" class="brand">
+          <img src="assets/careride-healthcare-mark.png" alt="" width="288" height="192">
+          <span>CareRide</span>
+        </a>
         <a [routerLink]="homePath" class="back-link">Back</a>
       </header>
       <h1>Notifications</h1>
@@ -33,7 +36,7 @@
         <button type="button" class="mark-read" *ngIf="!item.read" (click)="markRead(item)">Mark as read</button>
       </article>
     </div>
-    <app-navigation *ngIf="!isDriver"></app-navigation>
+    <app-navigation *ngIf="!isDriver" class="dashboard-nav"></app-navigation>
     <app-driver-navigation *ngIf="isDriver"></app-driver-navigation>
   </div>
 </div>

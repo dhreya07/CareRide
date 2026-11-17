@@ -246,6 +246,7 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnChanges
   }
 
   visibleFacilities(): HealthcareFacility[] {
+    if (this.role === 'pickup') return [];
     const origin = this.role === 'destination' && this.otherLatitude !== null && this.otherLongitude !== null
       && isUsableCoordinate(this.otherLatitude, this.otherLongitude)
       ? { latitude: this.otherLatitude, longitude: this.otherLongitude }
@@ -298,6 +299,7 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnChanges
   }
 
   setFilter(filter: FacilityFilter): void {
+    if (this.role === 'pickup') return;
     this.facilityFilter = filter;
     this.drawFacilities();
     if (!this.facilities.length && !this.facilitiesLoading) void this.searchThisArea();
@@ -314,6 +316,7 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnChanges
   }
 
   async runSearch(): Promise<void> {
+    if (this.role === 'pickup') return;
     const text = this.searchQuery.trim();
     if (text.length < 3 || (text === this.lastSearchQuery && this.searchResults.length > 0)) {
       if (text.length < 3) {
@@ -611,6 +614,7 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnChanges
   }
 
   async searchThisArea(): Promise<void> {
+    if (this.role === 'pickup') return;
     // Facility discovery must use the visible map area, not a stale confirmed
     // stop. The latter made Search This Area appear to do nothing.
     const center = this.map?.getCenter();
@@ -918,7 +922,7 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnChanges
       this.map.invalidateSize();
       this.drawGps();
     });
-    void this.searchThisArea();
+    if (this.role === 'destination') void this.searchThisArea();
   }
 
   private drawGps(): void {
@@ -971,6 +975,11 @@ export class LocationPickerComponent implements OnInit, AfterViewInit, OnChanges
   }
 
   private drawFacilities(): void {
+    if (this.role === 'pickup') {
+      this.facilityLayer?.remove();
+      this.facilityLayer = null;
+      return;
+    }
     const map = this.map;
     if (!map) {
       return;

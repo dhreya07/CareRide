@@ -131,7 +131,7 @@ import { LocationMapComponent } from '../../shared/location-map.component';
                 <p class="page-subtitle" *ngIf="driverFixOffline">The sharing device is offline.</p>
               </ng-container>
               <ng-template #waitingForDriver>
-                <p class="page-subtitle">Waiting for driver location</p>
+                <p class="page-subtitle">{{ cloudDriverLocationError || 'Waiting for driver location' }}</p>
               </ng-template>
             </section>
 
@@ -291,6 +291,11 @@ export class RideDetailsPage implements OnInit {
   driverMapUrl: SafeResourceUrl | null = null;
   pickupPlaceLabel = '';
   destinationPlaceLabel = '';
+  cloudDriverFix: DriverGpsFix | null = null;
+  cloudDriverLocationError = '';
+  private cloudTripRefreshTimer: ReturnType<typeof setInterval> | null = null;
+  private cloudTripRefreshInFlight = false;
+  private cloudTripRefreshToken = 0;
   private placeLabelToken = 0;
   private readonly destroyRef = inject(DestroyRef);
 
@@ -317,10 +322,16 @@ export class RideDetailsPage implements OnInit {
     this.driverGps.changes$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.changes.markForCheck());
+    this.destroyRef.onDestroy(() => this.stopCloudTripRefresh());
   }
 
   ionViewWillEnter(): void {
     this.showRide();
+    this.startCloudTripRefresh();
+  }
+
+  ionViewDidLeave(): void {
+    this.stopCloudTripRefresh();
   }
 
   get homePath(): string {
@@ -422,10 +433,16 @@ export class RideDetailsPage implements OnInit {
   }
 
   get canSeeDriverGps(): boolean {
+    if (this.isPassenger && this.ridesApi.cloudBookings) {
+      return this.ride?.status === 'In Progress';
+    }
     return this.isPassenger || this.role === 'driver';
   }
 
   get liveDriverFix(): DriverGpsFix | null {
+    if (this.isPassenger && this.ridesApi.cloudBookings) {
+      return this.cloudDriverFix;
+    }
     return this.ride && this.canSeeDriverGps ? this.driverGps.fixForRide(this.ride.id) : null;
   }
 
@@ -435,7 +452,7 @@ export class RideDetailsPage implements OnInit {
   }
 
   get driverFixOffline(): boolean {
-    return this.driverGps.snapshot.offline && Boolean(this.liveDriverFix);
+    return !this.ridesApi.cloudBookings && this.driverGps.snapshot.offline && Boolean(this.liveDriverFix);
   }
 
   poorAccuracy(fix: DriverGpsFix): string | null {
@@ -637,6 +654,9 @@ export class RideDetailsPage implements OnInit {
     }
     this.hiddenFromPassenger = false;
     this.ride = ride;
+    if (!this.shouldLoadCloudDriverLocation()) {
+      this.clearCloudDriverLocation();
+    }
     this.bindDriverMap();
     if (ride) {
       this.restorePlaceLabels(ride);
@@ -645,6 +665,89 @@ export class RideDetailsPage implements OnInit {
       this.destinationPlaceLabel = '';
     }
     this.changes.detectChanges();
+  }
+
+  private startCloudTripRefresh(): void {
+    this.stopCloudTripRefresh();
+    if (!this.isPassenger || !this.ridesApi.cloudBookings) {
+      return;
+    }
+    void this.refreshCloudTrip();
+    this.cloudTripRefreshTimer = setInterval(() => {
+      void this.refreshCloudTrip();
+    }, 5_000);
+  }
+
+  private stopCloudTripRefresh(): void {
+    ++this.cloudTripRefreshToken;
+    if (this.cloudTripRefreshTimer) {
+      clearInterval(this.cloudTripRefreshTimer);
+      this.cloudTripRefreshTimer = null;
+    }
+    this.cloudTripRefreshInFlight = false;
+  }
+
+  private async refreshCloudTrip(): Promise<void> {
+    if (this.cloudTripRefreshInFlight || !this.isPassenger || !this.ridesApi.cloudBookings) {
+      return;
+    }
+    const id = this.readRideId();
+    if (!id) {
+      return;
+    }
+    const token = this.cloudTripRefreshToken;
+    this.cloudTripRefreshInFlight = true;
+    try {
+      const ride = await this.ridesApi.getLocalRide(id);
+      if (token !== this.cloudTripRefreshToken) {
+        return;
+      }
+      if (ride) {
+        this.applyRide(ride);
+      }
+      if (!this.shouldLoadCloudDriverLocation()) {
+        return;
+      }
+      const location = await this.ridesApi.getActiveBookingDriverLocation(id);
+      if (token !== this.cloudTripRefreshToken || !this.shouldLoadCloudDriverLocation()) {
+        return;
+      }
+      this.cloudDriverFix = location
+        ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracyMeters: location.accuracyMeters,
+            capturedAt: location.capturedAt,
+            source: 'device-gps',
+          }
+        : null;
+      this.cloudDriverLocationError = '';
+    } catch {
+      if (token === this.cloudTripRefreshToken) {
+        this.cloudDriverFix = null;
+        this.cloudDriverLocationError = 'Live driver location is temporarily unavailable.';
+      }
+    } finally {
+      if (token === this.cloudTripRefreshToken) {
+        this.cloudTripRefreshInFlight = false;
+        this.changes.markForCheck();
+      }
+    }
+  }
+
+  private shouldLoadCloudDriverLocation(): boolean {
+    return Boolean(
+      this.isPassenger &&
+      this.ridesApi.cloudBookings &&
+      this.ride &&
+      this.hasAssignedDriver &&
+      this.ride.status === 'In Progress',
+    );
+  }
+
+  private clearCloudDriverLocation(): void {
+    this.cloudDriverFix = null;
+    this.cloudDriverLocationError = '';
   }
 
   private restorePlaceLabels(ride: LocalRide): void {

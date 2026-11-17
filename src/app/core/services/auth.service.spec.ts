@@ -1,3 +1,4 @@
+import { DriverLocationPublisherService } from './driver-location-publisher.service';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
@@ -97,6 +98,17 @@ describe('AuthService cloud auth switch', () => {
         plateNumber: 'ABC 123',
         wheelchairAccessible: true,
         seniorAssistance: false,
+        licenseExpirationDate: '2030-12-31',
+        emergencyContactName: 'Kim Driver',
+        emergencyContactPhone: '09170000003',
+        vehicleBodyType: 'Passenger van',
+        vehicleBrand: 'Toyota',
+        vehicleModel: 'HiAce',
+        vehicleVariant: 'Commuter',
+        vehicleModelYear: 2024,
+        vehicleColor: 'White',
+        passengerSeatingCapacity: 10,
+        driverDeclaredAccessibility: ['wheelchair_ramp'],
       },
     )).resolves.toEqual({ accountStatus: 'pending', emailConfirmationRequired: false });
     expect(adapter.registerDriver).toHaveBeenCalledWith(expect.objectContaining({
@@ -105,6 +117,17 @@ describe('AuthService cloud auth switch', () => {
       plateNumber: 'ABC 123',
       wheelchairAccessible: true,
       seniorAssistance: false,
+      licenseExpirationDate: '2030-12-31',
+      emergencyContactName: 'Kim Driver',
+      emergencyContactPhone: '09170000003',
+      vehicleBodyType: 'Passenger van',
+      vehicleBrand: 'Toyota',
+      vehicleModel: 'HiAce',
+      vehicleVariant: 'Commuter',
+      vehicleModelYear: 2024,
+      vehicleColor: 'White',
+      passengerSeatingCapacity: 10,
+      driverDeclaredAccessibility: ['wheelchair_ramp'],
     }));
 
     await auth.reviewCloudAccount('11111111-1111-4111-8111-111111111111', 'approved');
@@ -113,7 +136,9 @@ describe('AuthService cloud auth switch', () => {
       'approved',
     );
 
+    const stopLocation = vi.spyOn(TestBed.inject(DriverLocationPublisherService), 'disable');
     await auth.signOut();
+    expect(stopLocation).toHaveBeenCalledBefore(vi.mocked(adapter.signOut));
     expect(adapter.signOut).toHaveBeenCalled();
     expect(localStorage.getItem('careride_logged_in')).toBeNull();
     expect(JSON.stringify(localStorage)).not.toContain('secret-pass');

@@ -1,6 +1,12 @@
-import { Injectable } from '@angular/core';
+import { DriverLocationPublisherService } from './driver-location-publisher.service';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { AccountRole, homePathForRole, normalizeAccountRole } from '../models/care-ride.models';
+import {
+  AccountRole,
+  homePathForRole,
+  normalizeAccountRole,
+} from '../models/care-ride.models';
+import type { DriverAccessibilityCapability } from '../models/care-ride.models';
 import { ProfileService } from './profile.service';
 import { SupabaseService } from './supabase.service';
 import {
@@ -34,6 +40,18 @@ export interface DriverRegistrationDetails {
   plateNumber: string;
   wheelchairAccessible: boolean;
   seniorAssistance: boolean;
+  licenseExpirationDate?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  vehicleBodyType?: string;
+  vehicleBrand?: string;
+  vehicleModel?: string;
+  vehicleVariant?: string;
+  vehicleModelYear?: number;
+  vehicleColor?: string;
+  /** Passenger seats only; excludes the driver. */
+  passengerSeatingCapacity?: number;
+  driverDeclaredAccessibility?: DriverAccessibilityCapability[];
 }
 
 export interface LocalCareRideUser {
@@ -53,6 +71,21 @@ export interface LocalCareRideUser {
   plateNumber?: string;
   wheelchairAccessible?: boolean;
   seniorAssistance?: boolean;
+  licenseExpirationDate?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  vehicleBodyType?: string;
+  vehicleBrand?: string;
+  vehicleModel?: string;
+  vehicleVariant?: string;
+  vehicleModelYear?: number;
+  vehicleColor?: string;
+  passengerSeatingCapacity?: number;
+  driverDeclaredAccessibility?: DriverAccessibilityCapability[];
+  verifiedPassengerSeatingCapacity?: number;
+  capacityVerificationStatus?: 'unverified' | 'in_review' | 'verified' | 'rejected';
+  adminVerifiedAccessibility?: DriverAccessibilityCapability[];
+  accessibilityVerificationStatus?: 'unverified' | 'in_review' | 'verified' | 'rejected';
   availability?: DriverAvailability;
 }
 
@@ -199,6 +232,27 @@ export class AuthService {
             plateNumber: driverDetails.plateNumber.trim().toUpperCase(),
             wheelchairAccessible: driverDetails.wheelchairAccessible,
             seniorAssistance: driverDetails.seniorAssistance,
+            ...(driverDetails.licenseExpirationDate !== undefined
+              ? { licenseExpirationDate: driverDetails.licenseExpirationDate }
+              : {}),
+            ...(driverDetails.emergencyContactName !== undefined
+              ? { emergencyContactName: driverDetails.emergencyContactName }
+              : {}),
+            ...(driverDetails.emergencyContactPhone !== undefined
+              ? { emergencyContactPhone: driverDetails.emergencyContactPhone }
+              : {}),
+            ...(driverDetails.vehicleBodyType !== undefined ? { vehicleBodyType: driverDetails.vehicleBodyType } : {}),
+            ...(driverDetails.vehicleBrand !== undefined ? { vehicleBrand: driverDetails.vehicleBrand } : {}),
+            ...(driverDetails.vehicleModel !== undefined ? { vehicleModel: driverDetails.vehicleModel } : {}),
+            ...(driverDetails.vehicleVariant !== undefined ? { vehicleVariant: driverDetails.vehicleVariant } : {}),
+            ...(driverDetails.vehicleModelYear !== undefined ? { vehicleModelYear: driverDetails.vehicleModelYear } : {}),
+            ...(driverDetails.vehicleColor !== undefined ? { vehicleColor: driverDetails.vehicleColor } : {}),
+            ...(driverDetails.passengerSeatingCapacity !== undefined
+              ? { passengerSeatingCapacity: driverDetails.passengerSeatingCapacity }
+              : {}),
+            ...(driverDetails.driverDeclaredAccessibility !== undefined
+              ? { driverDeclaredAccessibility: [...driverDetails.driverDeclaredAccessibility] }
+              : {}),
           }
         : {}),
     });
@@ -215,7 +269,10 @@ export class AuthService {
     });
   }
 
+  private readonly locationPublisher = inject(DriverLocationPublisherService);
+
   async signOut(): Promise<void> {
+    await this.locationPublisher.disable();
     if (this.cloudAuthEnabled) {
       await this.cloudAuth.signOut();
       this.clearLocalSession();
@@ -414,6 +471,13 @@ export class AuthService {
     return this.cloudAuth.readOwnProfile();
   }
 
+  async setCloudDriverAvailability(status: 'available' | 'offline'): Promise<void> {
+    if (!this.cloudAuthEnabled) {
+      throw new Error('Cloud driver availability is not enabled.');
+    }
+    await this.cloudAuth.setOwnDriverAvailability(status);
+  }
+
   /** Admin review through public.review_account. Local approval is unchanged while cloud auth is off. */
   async reviewCloudAccount(userId: string, decision: 'approved' | 'rejected'): Promise<void> {
     if (!this.cloudAuthEnabled) {
@@ -477,6 +541,17 @@ export class AuthService {
         plateNumber: driverDetails?.plateNumber ?? '',
         wheelchairAccessible: driverDetails?.wheelchairAccessible,
         seniorAssistance: driverDetails?.seniorAssistance,
+        licenseExpirationDate: driverDetails?.licenseExpirationDate,
+        emergencyContactName: driverDetails?.emergencyContactName,
+        emergencyContactPhone: driverDetails?.emergencyContactPhone,
+        vehicleBodyType: driverDetails?.vehicleBodyType,
+        vehicleBrand: driverDetails?.vehicleBrand,
+        vehicleModel: driverDetails?.vehicleModel,
+        vehicleVariant: driverDetails?.vehicleVariant,
+        vehicleModelYear: driverDetails?.vehicleModelYear,
+        vehicleColor: driverDetails?.vehicleColor,
+        passengerSeatingCapacity: driverDetails?.passengerSeatingCapacity,
+        driverDeclaredAccessibility: driverDetails?.driverDeclaredAccessibility,
       });
     }
     return this.cloudAuth.registerPassenger({

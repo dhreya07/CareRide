@@ -1,3 +1,4 @@
+
 <section class="location-picker" role="dialog" aria-modal="true" [attr.aria-label]="role === 'pickup' ? 'Find pickup on the map' : 'Choose destination'">
   <header class="picker-bar">
     <button type="button" class="text-button" (click)="cancel()">Cancel</button>
@@ -5,7 +6,7 @@
     <button type="button" class="text-button" (click)="useMyLocation()">Current location</button>
   </header>
 
-  <form class="search-bar" (ngSubmit)="runSearch()">
+  <form class="search-bar" *ngIf="role === 'destination'" (ngSubmit)="runSearch()">
     <input
       name="pickerSearch"
       type="search"
@@ -16,7 +17,8 @@
     />
     <button type="submit" [disabled]="searching">{{ searching ? 'Searching…' : 'Search' }}</button>
   </form>
-  <ul class="search-results" *ngIf="searchResults.length">
+
+  <ul class="search-results" *ngIf="role === 'destination' && searchResults.length">
     <li *ngFor="let place of searchResults">
       <button
         type="button"
@@ -28,11 +30,12 @@
       </button>
     </li>
   </ul>
+
   <p class="status" *ngIf="gpsMessage">{{ gpsMessage }}</p>
   <p class="status" *ngIf="selectionMessage">{{ selectionMessage }}</p>
-  <p class="status" *ngIf="searchMessage">{{ searchMessage }}</p>
+  <p class="status" *ngIf="role === 'destination' && searchMessage">{{ searchMessage }}</p>
 
-  <div class="filters" role="tablist" aria-label="Healthcare facilities">
+  <div class="filters" *ngIf="role === 'destination'" role="tablist" aria-label="Healthcare facilities">
     <button
       *ngFor="let filter of filters"
       type="button"
@@ -45,22 +48,53 @@
 
   <div class="map-stage">
     <div #mapHost class="picker-map" role="application" aria-label="Location picker map"></div>
-    <div class="center-pin" *ngIf="adjustingLocation" [class.destination]="role === 'destination'" aria-hidden="true">
+
+    <div
+      class="center-pin"
+      *ngIf="adjustingLocation"
+      [class.destination]="role === 'destination'"
+      aria-hidden="true"
+    >
       <span>{{ adjustingLocation ? 'Adjust' : (role === 'pickup' ? 'Pickup' : 'Destination') }}</span>
     </div>
-    <button type="button" class="area-search" *ngIf="showSearchArea && !facilitiesLoading" (click)="searchThisArea()">
+
+    <button
+      type="button"
+      class="area-search"
+      *ngIf="role === 'destination' && showSearchArea && !facilitiesLoading"
+      (click)="searchThisArea()"
+    >
       Search this area
     </button>
-    <button type="button" class="adjust-toggle" *ngIf="!adjustingLocation" (click)="beginAdjusting()">
+
+    <button
+      type="button"
+      class="adjust-toggle"
+      *ngIf="!adjustingLocation"
+      (click)="beginAdjusting()"
+    >
       Adjust on map
     </button>
-    <button type="button" class="adjust-toggle accept" *ngIf="adjustingLocation" (click)="useAdjustedPoint()">
+
+    <button
+      type="button"
+      class="adjust-toggle accept"
+      *ngIf="adjustingLocation"
+      (click)="useAdjustedPoint()"
+    >
       Use This Location
     </button>
-    <p class="tile-note" *ngIf="tilesFailed">Map tiles could not be loaded. You can still search for a place or confirm the selected location.</p>
+
+    <p class="tile-note" *ngIf="tilesFailed">
+      Map tiles could not be loaded. You can still search for a place or confirm the selected location.
+    </p>
   </div>
 
-  <section class="sheet">
+  <section class="sheet" [class.pickup-sheet]="role === 'pickup'">
+    <p class="pickup-hint" *ngIf="role === 'pickup'">
+      Your current GPS position is the default pickup. Check the pin and tap Confirm Pickup. If the GPS is inaccurate, use Adjust on map.
+    </p>
+
     <article class="selected-hospital" *ngIf="selectionReady && draftTitle">
       <p class="eyebrow">{{ selectionHeading() }}</p>
       <strong>{{ draftTitle }}</strong>
@@ -69,19 +103,64 @@
       <p *ngIf="roadUnavailable">{{ roadUnavailable }}</p>
     </article>
 
-    <p class="status" *ngIf="facilitiesLoading">Looking for nearby hospitals…</p>
-    <p class="status" *ngIf="!facilitiesLoading && facilitiesMessage">{{ facilitiesMessage }}</p>
-    <button type="button" class="retry" *ngIf="facilitiesFailed && !facilitiesLoading" (click)="searchThisArea()">Try again</button>
+    <!-- CareRide STEP 57D.19A: Pickup availability placeholder -->
+    <!-- UI only. No Supabase RPC or driver GPS access. -->
+    <section
+      *ngIf="role === 'pickup' && selectionReady"
+      class="driver-availability"
+      role="status"
+      aria-label="Driver availability"
+    >
+      <div class="driver-availability-heading">
+        <span
+          class="driver-availability-indicator"
+          aria-hidden="true"
+        ></span>
+        <strong>Driver Availability</strong>
+      </div>
 
-    <ul class="facilities">
+      <p>Availability has not been checked yet.</p>
+    </section>
+
+    <p class="status" *ngIf="role === 'destination' && facilitiesLoading">
+      Looking for nearby hospitals…
+    </p>
+
+    <p
+      class="status"
+      *ngIf="role === 'destination' && !facilitiesLoading && facilitiesMessage"
+    >
+      {{ facilitiesMessage }}
+    </p>
+
+    <button
+      type="button"
+      class="retry"
+      *ngIf="role === 'destination' && facilitiesFailed && !facilitiesLoading"
+      (click)="searchThisArea()"
+    >
+      Try again
+    </button>
+
+    <ul class="facilities" *ngIf="role === 'destination'">
       <li *ngFor="let facility of visibleFacilities()">
-        <button type="button" [class.selected]="selectedFacilityId === facility.id" (click)="chooseFacility(facility); $event.stopPropagation()">
+        <button
+          type="button"
+          [class.selected]="selectedFacilityId === facility.id"
+          (click)="chooseFacility(facility); $event.stopPropagation()"
+        >
           <strong>{{ facilityTitle(facility) }}</strong>
           <span>{{ facilityMeta(facility) }}</span>
         </button>
       </li>
     </ul>
-    <button type="button" class="confirm" (click)="confirmSelection()">
+
+    <button
+      type="button"
+      class="confirm"
+      [disabled]="!selectionReady || adjustingLocation"
+      (click)="confirmSelection()"
+    >
       {{ role === 'pickup' ? 'Confirm Pickup' : 'Confirm Destination' }}
     </button>
   </section>

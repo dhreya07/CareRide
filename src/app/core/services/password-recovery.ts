@@ -15,6 +15,12 @@ export function passwordRecoveryRedirectUrl(origin: string): string {
 export function readRecoveryLink(href: string): RecoveryLink {
   const url = new URL(href, 'http://localhost');
   const hash = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash);
+  const type = (hash.get('type') || url.searchParams.get('type') || '').toLowerCase();
+  // Signup confirmation errors may also use otp_expired; leave those to the
+  // signup callback handler instead of misrouting them to password reset.
+  if (type === 'signup') {
+    return { kind: 'missing' };
+  }
   const errorCode = (hash.get('error_code') || url.searchParams.get('error_code') || '').toLowerCase();
   const error = (hash.get('error') || url.searchParams.get('error') || '').toLowerCase();
   if (errorCode === 'otp_expired' || errorCode === 'otp_disabled' || error === 'access_denied') {
@@ -26,7 +32,6 @@ export function readRecoveryLink(href: string): RecoveryLink {
     return { kind: 'code', code };
   }
 
-  const type = (hash.get('type') || url.searchParams.get('type') || '').toLowerCase();
   const accessToken = hash.get('access_token') || '';
   const refreshToken = hash.get('refresh_token') || '';
   if (type === 'recovery' && accessToken && refreshToken) {

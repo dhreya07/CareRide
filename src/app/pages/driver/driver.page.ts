@@ -1,19 +1,25 @@
-import { ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { DriverLocationPublisherService } from '../../core/services/driver-location-publisher.service';
+import { ChangeDetectorRef, Component, DestroyRef, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AlertController, IonIcon } from '@ionic/angular';
+import { AlertController, IonIcon, IonSpinner } from '@ionic/angular';
 
 import { LocalDriverOption, LocalRide, LocalRideStatus } from '../../core/models/local-ride.model';
+import { isProfileUuid } from '../../core/models/profile-id';
 import { LocalRideService } from '../../core/services/local-ride.service';
 import { AuthService, LocalCareRideUser } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { DriverAvatarColor, DriverProfilePhotoService } from '../../core/services/driver-profile-photo.service';
 import { RideService } from '../../core/services/ride.service';
 import { DriverGpsFix, DriverGpsService, isDriverFixStale, poorAccuracyNote } from '../../core/services/driver-gps.service';
 import { DriverNavigationComponent } from '../../shared/driver-navigation.component';
-import { LocationMapComponent } from '../../shared/location-map.component';
+import { LocationMapComponent, MapCoordinate, NearbyMapMarker } from '../../shared/location-map.component';
+import { MapsService } from '../../core/services/maps.service';
+import { NearbyBookingsService, NearbyBooking, NEARBY_BOOKING_RADIUS_KM } from '../../core/services/nearby-bookings.service';
+import { DropoffProofService } from '../../core/services/dropoff-proof.service';
 
 interface DriverDialog {
   kind: 'advance' | 'cancel' | 'report' | 'notice' | 'refer';
@@ -41,13 +47,191 @@ interface ReferralDriverOption {
   selector: 'app-driver',
   standalone: true,
   host: { class: 'ion-page' },
-  imports: [CommonModule, FormsModule, IonIcon, DriverNavigationComponent, LocationMapComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonIcon,
+    IonSpinner,
+    DriverNavigationComponent,
+    LocationMapComponent,
+    RouterLink,
+  ],
   templateUrl: './driver.page.html',
   styleUrls: ['./driver.page.scss'],
 })
 export class DriverPage implements OnInit, OnDestroy {
+readonly nearbyRadiusKm = NEARBY_BOOKING_RADIUS_KM;
+
+nearbyLocationEnabled = false;
+nearbyLocationStarting = false;
+nearbyLocationError = '';
+
+nearbyDriverPoint: MapCoordinate | null = null;
+nearbyAccuracyMeters: number | null = null;
+
+private stopNearbyWatch: (() => void) | null = null;
+private nearbyStartToken = 0;
+
+get nearbyBookings(): NearbyBooking[] {
+  return this.nearbyLocationEnabled
+    ? this.nearbyService.findNearby(
+        this.nearbyDriverPoint,
+        this.requestRides,
+      )
+    : [];
+}
+
+get nearbyMapMarkers(): NearbyMapMarker[] {
+  return this.nearbyBookings.map(({ ride, pickup }) => ({
+    ...pickup,
+    id: ride.id,
+    label: `Pickup: ${ride.pickupLocation || 'Passenger'}`,
+  }));
+}
+
+async enableNearbyLocation(): Promise<void> {
+  if (
+    this.nearbyLocationEnabled ||
+    this.nearbyLocationStarting
+  ) {
+    return;
+  }
+
+  const token = ++this.nearbyStartToken;
+
+  this.nearbyLocationStarting = true;
+  this.nearbyLocationError = '';
+
+  try {
+    // Verify cloud drivers through their cloud profile.
+    // Do not depend on local careride_users for cloud login.
+    if (this.auth.cloudAuthEnabled) {
+      const profile = await this.auth.currentCloudProfile();
+
+      if (token !== this.nearbyStartToken) {
+        return;
+      }
+
+      if (
+        !profile ||
+        profile.role !== 'driver' ||
+        profile.accountStatus !== 'approved' ||
+        profile.availability !== 'available'
+      ) {
+        this.nearbyLocationError =
+          'Go Online with an approved Driver account before viewing nearby requests.';
+        return;
+      }
+    } else {
+      // Preserve existing local driver verification.
+      if (!this.sessionDriverId()) {
+        this.nearbyLocationError =
+          'An approved signed-in driver is required.';
+        return;
+      }
+    }
+
+    if (token !== this.nearbyStartToken) {
+      return;
+    }
+
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.geolocation
+    ) {
+      this.nearbyLocationError =
+        'Device location is unavailable.';
+      return;
+    }
+
+    this.nearbyLocationEnabled = true;
+
+    this.stopNearbyWatch = this.maps.watchDeviceGps(
+      (fix) => {
+        this.zone.run(() => {
+          if (
+            !this.nearbyLocationEnabled ||
+            token !== this.nearbyStartToken
+          ) {
+            return;
+          }
+
+          if (
+            !Number.isFinite(fix.latitude) ||
+            !Number.isFinite(fix.longitude) ||
+            fix.latitude < -90 ||
+            fix.latitude > 90 ||
+            fix.longitude < -180 ||
+            fix.longitude > 180
+          ) {
+            return;
+          }
+
+          this.nearbyDriverPoint = {
+            latitude: fix.latitude,
+            longitude: fix.longitude,
+          };
+
+          this.nearbyAccuracyMeters = fix.accuracyMeters;
+          this.nearbyLocationError = '';
+
+          this.changes.markForCheck();
+        });
+      },
+
+      (message, denied) => {
+        this.zone.run(() => {
+          if (token !== this.nearbyStartToken) {
+            return;
+          }
+
+          this.nearbyLocationError = message;
+
+          if (denied) {
+            this.disableNearbyLocation(false);
+          }
+
+          this.changes.markForCheck();
+        });
+      },
+    );
+  } catch (error: unknown) {
+    if (token === this.nearbyStartToken) {
+      this.nearbyLocationError =
+        error instanceof Error
+          ? error.message
+          : 'Unable to verify your driver account or start location.';
+
+      this.disableNearbyLocation(false);
+    }
+  } finally {
+    if (token === this.nearbyStartToken) {
+      this.nearbyLocationStarting = false;
+      this.changes.markForCheck();
+    }
+  }
+}
+
+disableNearbyLocation(clearError = true): void {
+  ++this.nearbyStartToken;
+
+  this.nearbyLocationStarting = false;
+  this.nearbyLocationEnabled = false;
+
+  this.stopNearbyWatch?.();
+  this.stopNearbyWatch = null;
+
+  this.nearbyDriverPoint = null;
+  this.nearbyAccuracyMeters = null;
+
+  if (clearError) {
+    this.nearbyLocationError = '';
+  }
+}
+
   rides: LocalRide[] = [];
   requestRides: LocalRide[] = [];
+  private cloudAvailableRides: LocalRide[] = [];
   scheduleRides: LocalRide[] = [];
   historyRides: LocalRide[] = [];
   clientReviews: LocalRide[] = [];
@@ -57,7 +241,70 @@ export class DriverPage implements OnInit, OnDestroy {
   clockWeekday = '';
   clockDate = '';
   clockTime = '';
+  clockFullDate = '';
+  timeGreeting = 'Good Day';
+  readonly dashboardQuote = 'Drive safely, every journey matters.';
   dialog: DriverDialog | null = null;
+  availabilityUpdating = false;
+  get cloudLocationEnabled(): boolean { return this.auth.cloudAuthEnabled === true; }
+  readonly locationPublisher = inject(DriverLocationPublisherService);
+  locationShareBusy = false;
+  dropoffProofRide: LocalRide | null = null;
+  dropoffProofUploading = false;
+  readonly uploadedProofIds = new Set<string>();
+
+  get locationShareActive(): boolean {
+    return this.locationPublisher.message() === 'Location sharing active.';
+  }
+
+  async shareLiveLocation(): Promise<void> {
+    if (this.locationShareBusy || this.availabilityUpdating) return;
+
+    if (!this.auth.cloudAuthEnabled || this.myAvailability !== 'available') {
+      this.showNotice('Go Online with an approved cloud Driver account before sharing GPS.', 'Location sharing');
+      return;
+    }
+
+    const alert = await this.alerts.create({
+      header: 'Share your exact live location?',
+      message: 'Approved passengers nearby may see your exact GPS location before booking. Sharing stops when you leave the Driver Dashboard, go offline, or tap Stop Sharing. Do you agree?',
+      backdropDismiss: false,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        { text: 'Agree & Share', role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    if (role !== 'confirm' || this.myAvailability !== 'available') return;
+
+    this.locationShareBusy = true;
+    try {
+      const profile = await this.auth.currentCloudProfile();
+      if (!profile || profile.role !== 'driver' || profile.accountStatus !== 'approved' || profile.availability !== 'available') {
+        this.showNotice('An approved, available Driver account is required.', 'Location sharing');
+        return;
+      }
+      await this.locationPublisher.optIn(this.locationPublisher.onlineIntent());
+    } catch (error: unknown) {
+      this.showNotice(error instanceof Error ? error.message : 'Unable to start location sharing.', 'Location sharing');
+    } finally {
+      this.locationShareBusy = false;
+      this.changes.markForCheck();
+    }
+  }
+
+  async stopLiveLocation(): Promise<void> {
+    if (this.locationShareBusy) return;
+    this.locationShareBusy = true;
+    try {
+      await this.locationPublisher.disable();
+    } finally {
+      this.locationShareBusy = false;
+      this.changes.markForCheck();
+    }
+  }
+  availabilityError = '';
   notificationCount = 0;
   calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
   selectedDay = this.toDayKey(new Date());
@@ -79,6 +326,7 @@ export class DriverPage implements OnInit, OnDestroy {
 
   private readonly onVisibility = () => {
     if (document.visibilityState === 'visible') {
+      this.tickClock(true);
       void this.fetchRides();
     }
   };
@@ -91,10 +339,26 @@ export class DriverPage implements OnInit, OnDestroy {
     private alerts: AlertController,
     private notifications: NotificationService,
     private driverGps: DriverGpsService,
+    private profilePhotos: DriverProfilePhotoService,
     private changes: ChangeDetectorRef,
+    private maps: MapsService,
+    private nearbyService: NearbyBookingsService,
+    private zone: NgZone,
+    private dropoffProofs: DropoffProofService,
   ) {}
 
   ngOnInit(): void {
+    this.profilePhotos.photoChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((changedDriverId) => {
+        if (changedDriverId && changedDriverId === this.profileDriverId) {
+          this.refreshDriverAvatar(changedDriverId);
+        }
+      });
+    if (!this.auth.cloudAuthEnabled) {
+      const local = this.auth.getLocalAccount();
+      this.refreshDriverAvatar(local?.accountType === 'driver' ? local.id : null);
+    }
     this.localRides.rides$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyRides());
@@ -120,11 +384,27 @@ export class DriverPage implements OnInit, OnDestroy {
   }
 
   ionViewWillEnter(): void {
+    if (this.auth.cloudAuthEnabled) {
+      this.refreshDriverAvatar(null);
+    } else {
+      const local = this.auth.getLocalAccount();
+      this.refreshDriverAvatar(local?.accountType === 'driver' ? local.id : null);
+    }
+    this.locationPublisher.setDashboardVisible(true);
     this.refreshNotificationCount();
     this.syncViewFromUrl();
+    if (this.auth.cloudAuthEnabled) {
+      void this.refreshCloudAvailability();
+    }
     void this.fetchRides();
     this.startAutoFetch();
     this.startClock();
+  }
+
+  ionViewWillLeave(): void {
+    this.disableNearbyLocation();
+    void this.locationPublisher.disable();
+    this.locationPublisher.setDashboardVisible(false);
   }
 
   ionViewDidLeave(): void {
@@ -135,6 +415,9 @@ export class DriverPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.disableNearbyLocation();
+    void this.locationPublisher.disable();
+    this.locationPublisher.setDashboardVisible(false);
     this.stopAutoFetch();
     this.stopClock();
     window.removeEventListener('storage', this.onStorage);
@@ -157,6 +440,73 @@ export class DriverPage implements OnInit, OnDestroy {
 
   get isHome(): boolean {
     return this.listTab === 'home';
+  }
+
+  homeLoaded = false;
+  homeLoadError = '';
+  private cloudDriverName = '';
+  private profileDriverId: string | null = null;
+  driverProfilePhoto: string | null = null;
+  driverAvatarColor: DriverAvatarColor = 'teal';
+
+  get driverAvatarBackground(): string {
+    const backgrounds: Record<DriverAvatarColor, string> = {
+      teal: '#dcfbef', blue: '#deefff', purple: '#ebe0fa', peach: '#ffebdf',
+    };
+    return backgrounds[this.driverAvatarColor];
+  }
+
+  get driverAvatarForeground(): string {
+    const foregrounds: Record<DriverAvatarColor, string> = {
+      teal: '#078b70', blue: '#397dbb', purple: '#8054b5', peach: '#b86b46',
+    };
+    return foregrounds[this.driverAvatarColor];
+  }
+
+  private refreshDriverAvatar(driverId: string | null): void {
+    this.profileDriverId = driverId;
+    this.driverProfilePhoto = driverId ? this.profilePhotos.getPhoto(driverId) : null;
+    this.driverAvatarColor = driverId ? this.profilePhotos.getAvatarColor(driverId) : 'teal';
+    this.changes.markForCheck();
+  }
+
+  get driverWelcomeName(): string {
+    return this.cloudDriverName || this.auth.getLocalAccount()?.fullName?.trim() || 'Driver';
+  }
+
+  get driverFirstName(): string {
+    const fullName = this.driverWelcomeName.trim();
+    return fullName.split(/\s+/)[0] || 'Driver';
+  }
+
+  get personalizedGreeting(): string {
+    return `${this.timeGreeting}, ${this.driverFirstName}!`;
+  }
+
+  get todayTripCount(): number {
+    const today = this.toDayKey(new Date());
+    return this.scheduleRides.filter((ride) => this.rideDayKey(ride) === today).length;
+  }
+
+  get completedTripCount(): number {
+    return this.historyRides.filter((ride) => ride.status === 'Completed').length;
+  }
+
+  get upcomingHomeRides(): LocalRide[] {
+    const now = Date.now();
+    return this.scheduleRides
+      .filter((ride) => (this.pickupStart(ride) ?? 0) >= now)
+      .sort((a, b) => (this.pickupStart(a) ?? 0) - (this.pickupStart(b) ?? 0))
+      .slice(0, 3);
+  }
+
+  get recentHomeRides(): LocalRide[] {
+    const unique = new Map([...this.requestRides, ...this.scheduleRides, ...this.rides, ...this.historyRides]
+      .map((ride) => [ride.id, ride]));
+    return [...unique.values()]
+      .filter((ride) => Number.isFinite(Date.parse(ride.updatedAt)))
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+      .slice(0, 4);
   }
 
   get pageTitle(): string {
@@ -311,11 +661,13 @@ export class DriverPage implements OnInit, OnDestroy {
   }
 
   showTab(tab: 'home' | 'schedule' | 'active' | 'history' | 'clients'): void {
+    if (tab !== 'active') this.disableNearbyLocation();
     this.listTab = tab;
   }
 
   private syncViewFromUrl(): void {
     const path = this.router.url.split('?')[0];
+    if (!path.endsWith('/active')) this.disableNearbyLocation();
     if (path.endsWith('/schedule')) {
       this.listTab = 'schedule';
       return;
@@ -370,6 +722,49 @@ export class DriverPage implements OnInit, OnDestroy {
     void this.confirmRideAction(ride, 'complete');
   }
 
+  canUploadDropoffProof(ride: LocalRide): boolean {
+    return this.ridesApi.cloudBookings
+      && ride.status === 'Completed'
+      && ride.driverId === this.sessionDriverId()
+      && !this.uploadedProofIds.has(ride.id);
+  }
+
+  chooseDropoffProof(ride: LocalRide, input: HTMLInputElement): void {
+    if (!this.canUploadDropoffProof(ride) || this.dropoffProofUploading) {
+      return;
+    }
+    this.dropoffProofRide = ride;
+    input.value = '';
+    input.click();
+  }
+
+  async uploadDropoffProof(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.item(0);
+    const ride = this.dropoffProofRide;
+    this.dropoffProofRide = null;
+    if (!file || !ride || !this.canUploadDropoffProof(ride) || this.dropoffProofUploading) {
+      return;
+    }
+
+    this.dropoffProofUploading = true;
+    try {
+      await this.dropoffProofs.upload(ride.id, file, {
+        destinationLabel: ride.destination,
+        destinationLatitude: ride.destinationLatitude,
+        destinationLongitude: ride.destinationLongitude,
+      });
+      this.uploadedProofIds.add(ride.id);
+      this.showNotice('The safe-arrival photo is now available to the passenger in Ride History.', 'Photo sent');
+    } catch (error: unknown) {
+      this.showNotice(error instanceof Error ? error.message : 'The arrival photo could not be uploaded.', 'Photo not sent');
+    } finally {
+      this.dropoffProofUploading = false;
+      if (input) input.value = '';
+      this.changes.markForCheck();
+    }
+  }
+
   rideActionId: string | null = null;
 
   private async confirmRideAction(ride: LocalRide, action: 'start' | 'complete'): Promise<void> {
@@ -381,7 +776,7 @@ export class DriverPage implements OnInit, OnDestroy {
       const alert = await this.alerts.create({
         header: action === 'start' ? 'Start ride' : 'Complete ride',
         message: action === 'start'
-          ? 'Start this ride now? It will show as in progress.'
+          ? 'Start this ride now? It will show as in progress. While you remain Go Online and allow GPS, fresh location updates can be shared with this passenger.'
           : 'Complete this ride? It will move to your completed trips.',
         backdropDismiss: false,
         buttons: [
@@ -400,12 +795,17 @@ export class DriverPage implements OnInit, OnDestroy {
           : await this.ridesApi.completeBooking(ride.id);
         this.localRides.saveRide(saved);
         this.applyRides();
+        if (action === 'start' && this.auth.cloudAuthEnabled && this.myAvailability === 'available') {
+          // Starting a ride is explicit Driver consent. Existing publisher checks
+          // permission, availability, session validity, accuracy, and freshness.
+          await this.locationPublisher.optIn(this.locationPublisher.onlineIntent());
+        }
         if (action === 'complete') {
           this.driverGps.stop();
         }
         this.showNotice(
           action === 'start'
-            ? 'Ride started. It is now in progress.'
+            ? 'Ride started. Location sharing will begin when Go Online and GPS permission are active.'
             : 'Ride completed. It is in your trip history.',
           action === 'start' ? 'Ride started' : 'Ride completed',
         );
@@ -515,8 +915,14 @@ export class DriverPage implements OnInit, OnDestroy {
     if (!driverId) {
       return false;
     }
+    if (this.ridesApi.cloudBookings && !isProfileUuid(ride.id)) {
+      return false;
+    }
     if (ride.status !== 'Pending' && ride.status !== 'Scheduled') {
       return false;
+    }
+    if (this.ridesApi.cloudBookings && this.cloudAvailableRides.some((item) => item.id === ride.id)) {
+      return !ride.preferredDriverId || ride.preferredDriverId === driverId;
     }
     return ride.preferredDriverId === driverId || ride.driverId === driverId;
   }
@@ -685,6 +1091,8 @@ export class DriverPage implements OnInit, OnDestroy {
   }
 
   signOut(): void {
+    void this.locationPublisher.disable();
+    this.disableNearbyLocation();
     this.driverGps.stop();
     void this.auth.signOut().then(() => this.router.navigate(['/login']));
   }
@@ -822,6 +1230,9 @@ export class DriverPage implements OnInit, OnDestroy {
   private cloudAvailability: 'available' | 'busy' | 'offline' | null = null;
 
   get myAvailability(): 'available' | 'busy' | 'offline' | 'unknown' {
+    if (this.auth.cloudAuthEnabled) {
+      return this.cloudAvailability ?? 'unknown';
+    }
     if (this.ridesApi.cloudBookings && this.cloudAvailability) {
       return this.cloudAvailability;
     }
@@ -842,9 +1253,13 @@ export class DriverPage implements OnInit, OnDestroy {
     return 'Not set';
   }
 
-  setMyAvailability(status: 'available' | 'busy' | 'offline'): void {
-    if (this.ridesApi.cloudBookings) {
-      void this.setCloudAvailability(status);
+  async setMyAvailability(status: 'available' | 'offline'): Promise<void> {
+    if (status === 'offline') void this.locationPublisher.disable();
+    if (this.availabilityUpdating) {
+      return;
+    }
+    if (this.auth.cloudAuthEnabled || this.ridesApi.cloudBookings) {
+      await this.setCloudAvailability(status);
       return;
     }
     if (this.myAvailability === status) {
@@ -867,6 +1282,31 @@ export class DriverPage implements OnInit, OnDestroy {
       return 'Offline';
     }
     return 'Available';
+  }
+
+  private async refreshCloudAvailability(): Promise<void> {
+    this.availabilityError = '';
+    try {
+      const profile = await this.auth.currentCloudProfile();
+      if (!profile || profile.role !== 'driver' || profile.accountStatus !== 'approved') {
+        throw new Error('Could not verify your approved Driver account. Sign in again or contact an admin.');
+      }
+      if (profile.availability !== 'available' && profile.availability !== 'busy' && profile.availability !== 'offline') {
+        throw new Error('Your availability could not be read. Please try again.');
+      }
+      this.cloudDriverName = profile.fullName?.trim() || '';
+      this.refreshDriverAvatar(profile.id);
+      this.cloudAvailability = profile.availability;
+      if (profile.availability !== 'available') void this.locationPublisher.disable();
+    } catch (error: unknown) {
+      this.cloudDriverName = '';
+      this.refreshDriverAvatar(null);
+      this.cloudAvailability = null;
+      this.availabilityError = error instanceof Error
+        ? error.message
+        : 'Your availability could not be read. Please try again.';
+    }
+    this.changes.markForCheck();
   }
 
   trackRide(_index: number, ride: LocalRide): string {
@@ -936,13 +1376,12 @@ export class DriverPage implements OnInit, OnDestroy {
     }
   }
 
-  private clockStamp = '';
-
   private startClock(): void {
     if (this.clockTimer !== null) {
+      this.tickClock();
       return;
     }
-    this.tickClock(true);
+    this.tickClock();
     this.clockTimer = setInterval(() => this.tickClock(), 1000);
   }
 
@@ -953,23 +1392,34 @@ export class DriverPage implements OnInit, OnDestroy {
     }
   }
 
-  private tickClock(force = false): void {
+  private tickClock(_force = false): void {
     const now = new Date();
-    const stamp = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
-    if (!force && stamp === this.clockStamp) {
-      return;
-    }
-    this.clockStamp = stamp;
-    this.clockWeekday = now.toLocaleDateString(undefined, { weekday: 'long' });
-    this.clockDate = now.toLocaleDateString(undefined, {
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
       month: 'long',
       day: 'numeric',
       year: 'numeric',
+    };
+    this.clockWeekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+    this.clockDate = now.toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
     });
+    this.clockFullDate = now.toLocaleDateString('en-US', dateOptions);
+    this.clockTime = now.toLocaleTimeString('en-US', {
+      hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true,
+    });
+
     const hour = now.getHours();
-    const minute = String(now.getMinutes()).padStart(2, '0');
-    const hour12 = hour % 12 || 12;
-    this.clockTime = `${hour12}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`;
+    if (hour >= 5 && hour < 12) {
+      this.timeGreeting = 'Good Morning';
+    } else if (hour >= 12 && hour < 17) {
+      this.timeGreeting = 'Good Afternoon';
+    } else if (hour >= 17 && hour < 21) {
+      this.timeGreeting = 'Good Evening';
+    } else {
+      this.timeGreeting = 'Good Night';
+    }
+    this.changes.markForCheck();
   }
 
   private startAutoFetch(): void {
@@ -988,14 +1438,31 @@ export class DriverPage implements OnInit, OnDestroy {
 
   private async fetchRides(): Promise<void> {
     this.fetching = true;
+    this.homeLoadError = '';
     try {
       this.localRides.reloadFromStorage();
       await this.ridesApi.hydrateFromCloud();
-    } catch {
-      this.localRides.reloadFromStorage();
-    } finally {
+      // The booking RLS policy returns only trips visible to this Driver,
+      // including a Passenger's selected pending request. Keep that cache as
+      // the source of driver requests until broad booking dispatch exists.
+      this.cloudAvailableRides = this.ridesApi.cloudBookings
+        ? this.localRides.getRides().filter((ride) => isProfileUuid(ride.id) && this.canRespond(ride))
+        : [];
       this.applyRides();
+      this.homeLoaded = true;
+    } catch {
+      this.cloudAvailableRides = [];
+      this.homeLoadError = 'Trip activity could not be refreshed. Try again shortly.';
+      try {
+        this.localRides.reloadFromStorage();
+        this.applyRides();
+        this.homeLoaded = true;
+      } catch {
+        this.homeLoaded = false;
+      }
+    } finally {
       this.fetching = false;
+      this.changes.markForCheck();
     }
   }
 
@@ -1117,17 +1584,28 @@ export class DriverPage implements OnInit, OnDestroy {
     }
   }
 
-  private async setCloudAvailability(status: 'available' | 'busy' | 'offline'): Promise<void> {
+  private async setCloudAvailability(status: 'available' | 'offline'): Promise<void> {
     if (this.cloudAvailability === status) {
       this.showNotice(`You are already ${this.availabilityName(status)}.`, 'Availability');
       return;
     }
+    this.availabilityUpdating = true;
+    this.availabilityError = '';
     try {
-      await this.ridesApi.setOwnAvailability(status);
+      if (this.auth.cloudAuthEnabled) {
+        await this.auth.setCloudDriverAvailability(status);
+      } else {
+        await this.ridesApi.setOwnAvailability(status);
+      }
       this.cloudAvailability = status;
+
       this.showNotice(`You are now ${this.availabilityName(status)}.`, 'Availability updated');
     } catch (error: unknown) {
-      this.showNotice(error instanceof Error ? error.message : 'Unable to update availability.');
+      this.availabilityError = error instanceof Error ? error.message : 'Unable to update availability.';
+      this.showNotice(this.availabilityError);
+    } finally {
+      this.availabilityUpdating = false;
+      this.changes.markForCheck();
     }
   }
 
@@ -1282,6 +1760,9 @@ export class DriverPage implements OnInit, OnDestroy {
   }
 
   private sessionDriverId(): string | null {
+    if (this.ridesApi.cloudBookings && this.ridesApi.cloudProfileId) {
+      return this.ridesApi.cloudProfileId;
+    }
     const account = this.auth.getLocalAccount();
     if (!account || account.accountType !== 'driver') {
       return null;
@@ -1296,20 +1777,24 @@ export class DriverPage implements OnInit, OnDestroy {
     const sessionDriverId = this.sessionDriverId();
     this.me = this.localRides.findDriver(sessionDriverId) ?? this.localRides.localDemoDriver();
     this.requestRides = sessionDriverId
-      ? this.localRides.getRides().filter((ride) => this.canRespond(ride))
+      ? this.ridesApi.cloudBookings
+        ? this.cloudAvailableRides.filter((ride) => this.canRespond(ride))
+        : this.localRides.getRides().filter((ride) => this.canRespond(ride))
       : [];
     const scheduleOwner = sessionDriverId;
     this.scheduleRides = this.localRides.getDriverScheduleRides(scheduleOwner ?? undefined).filter((ride) =>
-      Boolean(scheduleOwner) &&
-      ride.driverId === scheduleOwner &&
-      ride.status !== 'Pending' &&
-      ride.status !== 'Scheduled',
+      Boolean(scheduleOwner) && (
+        ride.driverId === scheduleOwner ||
+        (ride.status === 'Scheduled' && ride.preferredDriverId === scheduleOwner)
+      ) && (!this.ridesApi.cloudBookings || isProfileUuid(ride.id)),
     );
     this.rides = this.localRides.getDriverQueueRides().filter((ride) =>
-      Boolean(scheduleOwner) && ride.driverId === scheduleOwner,
+      Boolean(scheduleOwner) && ride.driverId === scheduleOwner
+        && (!this.ridesApi.cloudBookings || isProfileUuid(ride.id)),
     );
     this.historyRides = this.localRides.getDriverHistoryRides().filter((ride) =>
-      Boolean(scheduleOwner) && ride.driverId === scheduleOwner,
+      Boolean(scheduleOwner) && ride.driverId === scheduleOwner
+        && (!this.ridesApi.cloudBookings || isProfileUuid(ride.id)),
     );
     this.clientReviews = sessionDriverId
       ? this.localRides.getDriverClientReviews(sessionDriverId).filter((ride) => ride.driverId === sessionDriverId)

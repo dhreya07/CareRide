@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { homePathForRole } from '../../core/models/care-ride.models';
 import { IonIcon } from '@ionic/angular';
@@ -28,13 +28,31 @@ export class LoginPage implements OnInit {
   isLoading = false;
 
   errorMessage = '';
+  successMessage = '';
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private auth: AuthService,
+    private changeDetector: ChangeDetectorRef,
+    private destroyRef: DestroyRef,
   ) {}
 
   ngOnInit(): void {
+    const confirmation = this.route.snapshot.queryParamMap.get('authConfirmation');
+    if (confirmation === 'confirmed') {
+      this.successMessage = 'Email confirmed. Sign in to check your account status; pending accounts still require Admin approval.';
+    } else if (confirmation === 'failed') {
+      this.errorMessage = 'Email confirmation could not be verified. The link may be invalid or expired. Request a new confirmation email.';
+    }
+    if (confirmation) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { authConfirmation: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
 
     const rememberedEmail =
       localStorage.getItem('careride_remembered_email');
@@ -56,11 +74,13 @@ export class LoginPage implements OnInit {
 
   clearError(): void {
     this.errorMessage = '';
+    this.successMessage = '';
   }
 
   login(): Promise<void> | void {
 
     this.errorMessage = '';
+    this.successMessage = '';
 
     const emailValue = this.email.trim();
     const passwordValue = this.password.trim();
@@ -116,25 +136,21 @@ export class LoginPage implements OnInit {
       })
       .finally(() => {
         this.isLoading = false;
+        if (!this.destroyRef.destroyed) {
+          this.changeDetector.detectChanges();
+        }
       });
   }
 
   /**
-   * Local sign-in keeps the role AuthService already checked.
-   * Cloud sign-in asks for the profile home again, so a stored display role cannot choose the page.
+   * AuthService returns the role from the freshly approved database profile.
+   * The destination guard independently checks access; no display role is used.
    */
   private async destinationFor(role: string): Promise<string | null> {
     if (role !== 'passenger' && role !== 'driver' && role !== 'admin') {
       return null;
     }
-    if (!this.auth.cloudAuthEnabled) {
-      return homePathForRole(role);
-    }
-    const verified = await this.auth.homePath();
-    if (verified !== '/dashboard' && verified !== '/driver' && verified !== '/admin') {
-      return null;
-    }
-    return verified;
+    return homePathForRole(role);
   }
 
   goToRegister(): void {
@@ -160,6 +176,11 @@ export class LoginPage implements OnInit {
         this.errorMessage = error instanceof Error
           ? error.message
           : 'Unable to send a password reset message.';
+      })
+      .finally(() => {
+        if (!this.destroyRef.destroyed) {
+          this.changeDetector.detectChanges();
+        }
       });
   }
 

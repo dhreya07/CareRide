@@ -6,7 +6,7 @@ import { AdminService } from '../../core/services/admin.service';
 import { AuthService, LocalCareRideUser } from '../../core/services/auth.service';
 import { LocalRideService } from '../../core/services/local-ride.service';
 import { RideService } from '../../core/services/ride.service';
-import { CloudManagedAccount } from '../../core/services/supabase-auth.adapter';
+import { CloudManagedAccount, mapDriverV3ReadOnlyFields } from '../../core/services/supabase-auth.adapter';
 import { AdminPage } from './admin.page';
 
 const PASSENGER_ID = '11111111-1111-4111-8111-111111111111';
@@ -113,6 +113,109 @@ describe('Admin accounts screen', () => {
     expect(fixture.nativeElement.textContent).toContain('Accounts could not be loaded');
     expect(fixture.nativeElement.textContent).not.toContain('Local Pat');
     expect(localStorage.getItem('careride_users')).toBe('[]');
+    fixture.destroy();
+  });
+
+  it('renders driver review sections and keeps missing V3 values explicit', async () => {
+    auth.cloudAuthEnabled = true;
+    auth.listCloudAccounts.mockResolvedValue([
+      {
+        ...cloudAccount(DRIVER_ID, 'driver', 'pending', 'Dee Driver'),
+        vehicleType: 'Accessible van',
+        licenseNumber: 'N01-23-456789',
+        plateNumber: 'ABC 1234',
+      },
+    ]);
+    const fixture = await createPage();
+    fixture.componentInstance.showTab('accounts');
+    fixture.componentInstance.selectAccountGroup('driver');
+    await settled(fixture.componentInstance);
+    fixture.detectChanges();
+
+    const copy = fixture.nativeElement.textContent as string;
+    expect(copy).toContain('Personal and emergency contact');
+    expect(copy).toContain("Driver's license");
+    expect(copy).toContain('Vehicle registration');
+    expect(copy).toContain('Legacy vehicle type');
+    expect(copy).toContain('Accessible van');
+    expect(copy).toContain('Passenger capacity (excluding driver)');
+    expect(copy).toContain('Capacity verification status');
+    expect(copy).toContain('Not yet available');
+    expect(copy).toContain('Accessibility and assistance');
+    expect(copy).toContain('Driver-declared capabilities');
+    expect(copy).toContain('Pending');
+    expect(fixture.componentInstance.visibleAccounts[0].approvalStatus).toBe('pending');
+    fixture.destroy();
+  });
+
+  it('maps optional snake_case V3 fields without interpreting approval as verification', () => {
+    const mapped = mapDriverV3ReadOnlyFields({
+      license_expiration_date: '2030-12-31',
+      emergency_contact_name: 'Kim Driver',
+      vehicle_body_type: 'Van',
+      vehicle_model_year: 2024,
+      passenger_seating_capacity: 8,
+      verified_passenger_seating_capacity: null,
+      capacity_verification_status: 'unverified',
+      driver_declared_accessibility: ['wheelchair_ramp'],
+      admin_verified_accessibility: [],
+      accessibility_verification_status: 'in_review',
+    });
+
+    expect(mapped).toMatchObject({
+      licenseExpirationDate: '2030-12-31',
+      emergencyContactName: 'Kim Driver',
+      vehicleBodyType: 'Van',
+      vehicleModelYear: 2024,
+      passengerSeatingCapacity: 8,
+      capacityVerificationStatus: 'unverified',
+      driverDeclaredAccessibility: ['wheelchair_ramp'],
+      adminVerifiedAccessibility: [],
+      accessibilityVerificationStatus: 'in_review',
+    });
+    expect(mapped.verifiedPassengerSeatingCapacity).toBeUndefined();
+    expect(mapDriverV3ReadOnlyFields({ capacity_verification_status: 'approved' }).capacityVerificationStatus).toBeUndefined();
+  });
+
+  it('shows declared and Admin-verified values only when those values are present', async () => {
+    auth.cloudAuthEnabled = true;
+    auth.listCloudAccounts.mockResolvedValue([
+      {
+        ...cloudAccount(DRIVER_ID, 'driver', 'approved', 'Dee Driver'),
+        vehicleType: 'Accessible van',
+        licenseExpirationDate: '2030-12-31',
+        emergencyContactName: 'Kim Driver',
+        emergencyContactPhone: '09170000003',
+        vehicleBodyType: 'Van',
+        vehicleBrand: 'Toyota',
+        vehicleModel: 'HiAce',
+        vehicleVariant: 'Commuter',
+        vehicleModelYear: 2024,
+        vehicleColor: 'White',
+        plateNumber: 'ABC 1234',
+        passengerSeatingCapacity: 8,
+        verifiedPassengerSeatingCapacity: 7,
+        capacityVerificationStatus: 'verified',
+        driverDeclaredAccessibility: ['wheelchair_ramp'],
+        adminVerifiedAccessibility: ['wheelchair_ramp'],
+        accessibilityVerificationStatus: 'verified',
+      },
+    ]);
+    const fixture = await createPage();
+    fixture.componentInstance.showTab('accounts');
+    fixture.componentInstance.selectAccountGroup('driver');
+    fixture.componentInstance.selectAccountFilter('approved');
+    await settled(fixture.componentInstance);
+    fixture.detectChanges();
+
+    const copy = fixture.nativeElement.textContent as string;
+    expect(copy).toContain('Driver-declared capacity');
+    expect(copy).toContain('Admin-verified capacity');
+    expect(copy).toContain('8');
+    expect(copy).toContain('7');
+    expect(copy).toContain('Commuter');
+    expect(copy).toContain('wheelchair ramp');
+    expect(copy).toContain('Verified');
     fixture.destroy();
   });
 

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { SupabaseAuthAdapter, dashboardAccessAllowed } from './supabase-auth.adapter';
-import { SUPABASE_AUTH_STORAGE_KEY, resetSharedSupabaseClient } from './supabase-client';
+import { Capacitor } from '@capacitor/core';
+import { SupabaseAuthAdapter, dashboardAccessAllowed, stagingNativeSignupRedirect } from './supabase-auth.adapter';
+import { SUPABASE_AUTH_STORAGE_KEY, peekSharedSupabaseClient, resetSharedSupabaseClient } from './supabase-client';
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(),
@@ -21,10 +22,11 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
   let adapter: SupabaseAuthAdapter;
   let session: { id: string; email: string; user_metadata: Record<string, unknown> } | null;
   let signOutCount: number;
-  let signUps: Array<{ email: string; password: string; data: Record<string, unknown> }>;
+  let signUps: Array<{ email: string; password: string; data: Record<string, unknown>; emailRedirectTo?: string }>;
   let rpcs: Array<{ fn: string; args: Record<string, unknown> }>;
   let queries: QueryCall[];
   let returnSessionOnSignUp: boolean;
+  let availabilityRpcError: { message: string } | null;
   let profiles: Record<string, unknown>[];
   let passengerDetails: Record<string, unknown>[];
   let driverDetails: Record<string, unknown>[];
@@ -37,6 +39,7 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
     rpcs = [];
     queries = [];
     returnSessionOnSignUp = false;
+    availabilityRpcError = null;
     profiles = [];
     passengerDetails = [];
     driverDetails = [];
@@ -69,9 +72,9 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
         }: {
           email: string;
           password: string;
-          options?: { data?: Record<string, unknown> };
+          options?: { data?: Record<string, unknown>; emailRedirectTo?: string };
         }) => {
-          signUps.push({ email, password, data: options?.data ?? {} });
+          signUps.push({ email, password, data: options?.data ?? {}, emailRedirectTo: options?.emailRedirectTo });
           if (returnSessionOnSignUp) {
             session = { id: PASSENGER_ID, email, user_metadata: options?.data ?? {} };
             return { data: { user: session, session: { access_token: 'mock-only' } }, error: null };
@@ -116,7 +119,7 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
       }),
       rpc: vi.fn(async (fn: string, args: Record<string, unknown>) => {
         rpcs.push({ fn, args });
-        return { data: null, error: null };
+        return { data: null, error: fn === 'set_driver_availability' ? availabilityRpcError : null };
       }),
     } as never);
 
@@ -124,6 +127,8 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     const calls = vi.mocked(fetch).mock.calls;
     expect(calls.some((call) => String(call[0]).includes('supabase.co'))).toBe(false);
     vi.unstubAllGlobals();
@@ -135,6 +140,32 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
     expect(dashboardAccessAllowed(profile(PASSENGER_ID, 'passenger', 'rejected'))).toBe(false);
     expect(dashboardAccessAllowed(profile(PASSENGER_ID, 'passenger', 'approved'), ['admin'])).toBe(false);
     expect(dashboardAccessAllowed(profile(ADMIN_ID, 'admin', 'approved'), ['admin'])).toBe(true);
+  });
+
+  it('updates only the authenticated user availability through the existing RPC', async () => {
+    session = { id: DRIVER_ID, email: 'dee@example.com', user_metadata: {} };
+
+    await adapter.setOwnDriverAvailability('available');
+
+    expect(rpcs).toEqual([{
+      fn: 'set_driver_availability',
+      args: { p_user_id: DRIVER_ID, p_availability: 'available' },
+    }]);
+  });
+
+  it('surfaces a rejected availability update without retrying', async () => {
+    session = { id: DRIVER_ID, email: 'dee@example.com', user_metadata: {} };
+    availabilityRpcError = { message: 'Only an approved driver can change availability' };
+
+    await expect(adapter.setOwnDriverAvailability('offline'))
+      .rejects.toThrow('Only an approved driver can change availability');
+    expect(rpcs).toHaveLength(1);
+  });
+
+  it('does not call availability RPC without an authenticated identity', async () => {
+    await expect(adapter.setOwnDriverAvailability('available'))
+      .rejects.toThrow('Sign in again before changing your availability.');
+    expect(rpcs).toHaveLength(0);
   });
 
   it('registers a passenger as pending and sends the signup trigger field names', async () => {
@@ -168,10 +199,22 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
         emergency_name: 'Kim',
         emergency_phone: '09170000000',
       },
+      emailRedirectTo: undefined,
     }]);
     expect(signUps[0].data['password']).toBeUndefined();
     expect(localStorage.getItem('careride_users')).toBeNull();
     expect(JSON.stringify(localStorage)).not.toContain('secret-pass');
+  });
+
+  it('uses the staging callback only for a native staging signup', async () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+    expect(stagingNativeSignupRedirect()).toBe('careride-staging://auth/callback');
+
+    await adapter.registerPassenger({
+      email: 'pat@example.com', password: 'secret-pass', fullName: 'Pat', phone: '09171234567',
+    });
+
+    expect(signUps[0].emailRedirectTo).toBe('careride-staging://auth/callback');
   });
 
   it('registers a driver with the trigger field names and refuses an incomplete driver', async () => {
@@ -197,6 +240,17 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
       plateNumber: ' abc 123 ',
       wheelchairAccessible: true,
       seniorAssistance: false,
+      licenseExpirationDate: '2030-12-31',
+      emergencyContactName: ' Kim Driver ',
+      emergencyContactPhone: ' 09170000003 ',
+      vehicleBodyType: 'Passenger van',
+      vehicleBrand: 'Toyota',
+      vehicleModel: 'HiAce',
+      vehicleVariant: 'Commuter',
+      vehicleModelYear: 2024,
+      vehicleColor: 'White',
+      passengerSeatingCapacity: 10,
+      driverDeclaredAccessibility: ['wheelchair_ramp', 'transfer_assistance'],
     });
 
     expect(result.accountStatus).toBe('pending');
@@ -210,12 +264,71 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
       plate_number: 'abc 123',
       wheelchair_accessible: 'true',
       senior_assistance: 'false',
+      license_expiration_date: '2030-12-31',
+      emergency_contact_name: 'Kim Driver',
+      emergency_contact_phone: '09170000003',
+      vehicle_body_type: 'Passenger van',
+      vehicle_brand: 'Toyota',
+      vehicle_model: 'HiAce',
+      vehicle_variant: 'Commuter',
+      vehicle_model_year: '2024',
+      vehicle_color: 'White',
+      passenger_seating_capacity: '10',
+      driver_declared_accessibility: ['wheelchair_ramp', 'transfer_assistance'],
     });
     expect(signUps[0].data['role']).not.toBe('admin');
+    expect(signUps[0].data).not.toHaveProperty('capacity_verification_status');
+    expect(signUps[0].data).not.toHaveProperty('verified_passenger_seating_capacity');
+    expect(signUps[0].data).not.toHaveProperty('capacity_verified_by');
+    expect(signUps[0].data).not.toHaveProperty('capacity_verified_at');
+    expect(signUps[0].data).not.toHaveProperty('admin_verified_accessibility');
+    expect(signUps[0].data).not.toHaveProperty('accessibility_verification_status');
+    expect(signUps[0].data).not.toHaveProperty('accessibility_verified_by');
+    expect(signUps[0].data).not.toHaveProperty('accessibility_verified_at');
   });
 
-  it('signs out a session created during registration so a pending account is not left signed in', async () => {
+  it('omits optional driver metadata when its values are not provided', async () => {
+    await adapter.registerDriver({
+      email: 'dee@example.com',
+      password: 'secret-pass',
+      fullName: 'Dee',
+      phone: '09170000002',
+      licenseNumber: 'N01',
+      vehicleType: 'van',
+      plateNumber: 'ABC 123',
+    });
+
+    expect(signUps[0].data).toMatchObject({
+      license_number: 'N01',
+      vehicle_type: 'van',
+      plate_number: 'ABC 123',
+      wheelchair_accessible: 'false',
+      senior_assistance: 'false',
+      driver_declared_accessibility: [],
+    });
+    expect(signUps[0].data).not.toHaveProperty('license_expiration_date');
+    expect(signUps[0].data).not.toHaveProperty('vehicle_model_year');
+    expect(signUps[0].data).not.toHaveProperty('passenger_seating_capacity');
+  });
+
+  it('rejects unsupported accessibility identifiers before creating signup metadata', async () => {
+    await expect(adapter.registerDriver({
+      email: 'dee@example.com',
+      password: 'secret-pass',
+      fullName: 'Dee',
+      phone: '09170000002',
+      licenseNumber: 'N01',
+      vehicleType: 'van',
+      plateNumber: 'ABC 123',
+      driverDeclaredAccessibility: ['admin_verified_accessibility'] as never,
+    })).rejects.toThrow('Unsupported driver accessibility capability');
+
+    expect(signUps).toHaveLength(0);
+  });
+
+  it('isolates a registration session without waiting for sign-out or creating the shared client', async () => {
     returnSessionOnSignUp = true;
+    localStorage.setItem(SUPABASE_AUTH_STORAGE_KEY, 'existing-app-session');
 
     const result = await adapter.registerPassenger({
       email: 'pat@example.com',
@@ -225,8 +338,45 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
     });
 
     expect(result).toEqual({ accountStatus: 'pending', emailConfirmationRequired: false });
-    expect(signOutCount).toBe(1);
-    expect(session).toBeNull();
+    expect(signOutCount).toBe(0);
+    expect(peekSharedSupabaseClient()).toBeNull();
+    expect(localStorage.getItem(SUPABASE_AUTH_STORAGE_KEY)).toBe('existing-app-session');
+    expect(vi.mocked(createClient).mock.calls[0]?.[2]).toMatchObject({
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: 'careride.registration',
+      },
+    });
+  });
+
+  it('bounds a stalled signup without retrying or signing out', async () => {
+    vi.useFakeTimers();
+    const client = vi.mocked(createClient).getMockImplementation()!('', '')!;
+    vi.mocked(client.auth.signUp).mockImplementation(() => new Promise(() => {}));
+    const registration = adapter.registerDriver({
+      email: 'dee@example.com', password: 'secret-pass', fullName: 'Dee',
+      phone: '09170000002', licenseNumber: 'N01', vehicleType: 'van', plateNumber: 'ABC 123',
+    });
+    const rejected = expect(registration).rejects.toThrow('The account may have been created');
+    await vi.advanceTimersByTimeAsync(20000);
+    await rejected;
+    expect(client.auth.signUp).toHaveBeenCalledTimes(1);
+    expect(client.auth.signOut).not.toHaveBeenCalled();
+    expect(peekSharedSupabaseClient()).toBeNull();
+  });
+
+  it('surfaces a signup database failure without reporting pending success', async () => {
+    const client = vi.mocked(createClient).getMockImplementation()!('', '')!;
+    vi.mocked(client.auth.signUp).mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: 'Database error saving new user' },
+    } as never);
+    await expect(adapter.registerPassenger({
+      email: 'pat@example.com', password: 'secret-pass', fullName: 'Pat', phone: '09171234567',
+    })).rejects.toThrow('Database error saving new user');
+    expect(client.auth.signUp).toHaveBeenCalledTimes(1);
   });
 
   it('refuses pending and rejected accounts even when Supabase created a session', async () => {
@@ -254,6 +404,27 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
     expect(session).toBeNull();
   });
 
+  it('turns Supabase invalid-credential, unconfirmed-email, and network failures into clear login errors', async () => {
+    const client = vi.mocked(createClient).getMockImplementation()!('', '')!;
+    vi.mocked(client.auth.signInWithPassword)
+      .mockResolvedValueOnce({
+        data: { user: null, session: null },
+        error: { message: 'Invalid login credentials', code: 'invalid_credentials' },
+      } as never)
+      .mockResolvedValueOnce({
+        data: { user: null, session: null },
+        error: { message: 'Email not confirmed', code: 'email_not_confirmed' },
+      } as never)
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await expect(adapter.signIn('pat@example.com', 'wrong-pass'))
+      .rejects.toThrow('Incorrect email or password');
+    await expect(adapter.signIn('pat@example.com', 'secret-pass'))
+      .rejects.toThrow('confirm your email address');
+    await expect(adapter.signIn('pat@example.com', 'secret-pass'))
+      .rejects.toThrow('Unable to reach CareRide');
+  });
+
   it('logs in an approved account using profiles.role, not user metadata', async () => {
     profiles.push(profileRow(DRIVER_ID, 'driver', 'approved', 'Dee Driver'));
     driverDetails.push({
@@ -271,6 +442,7 @@ describe('SupabaseAuthAdapter (mocked, no live Supabase)', () => {
     expect(signedIn.role).toBe('driver');
     expect(signedIn.accountStatus).toBe('approved');
     expect(signedIn.licenseNumber).toBe('N01');
+    expect(vi.mocked(createClient).mock.results[0].value.auth.getUser).not.toHaveBeenCalled();
     expect(session?.user_metadata['role']).toBe('admin');
     expect(signOutCount).toBe(0);
     expect(await adapter.canAccessDashboard(['driver'])).toBe(true);

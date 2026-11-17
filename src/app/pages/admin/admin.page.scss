@@ -1,3 +1,5 @@
+@use '../../shared/passenger-glass' as glass;
+
 :host {
   display: block;
   width: 100%;
@@ -260,6 +262,15 @@ button {
   line-height: 1.1;
 }
 
+.admin-welcome {
+  max-width: 29rem;
+  margin: 7px 0 0;
+  color: #d5fffa;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.42;
+}
+
 .sign-out-button {
   flex: none;
   min-height: 40px;
@@ -394,7 +405,12 @@ button {
 }
 
 .operations-report {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(243, 255, 255, 0.52), rgba(189, 249, 245, 0.3));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 24px rgba(0, 81, 87, 0.12);
 }
 
 .operations-report h3 {
@@ -402,6 +418,219 @@ button {
   color: #06141B;
   font-size: 16px;
   font-weight: 800;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  margin-bottom: 10px;
+}
+
+.section-kicker {
+  margin: 0 0 4px;
+  color: #087d78;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #073d45;
+  font-size: clamp(21px, 6vw, 26px);
+  font-weight: 850;
+  letter-spacing: -0.045em;
+}
+
+.section-summary,
+.report-caption,
+.insight-note {
+  margin: 6px 0 0;
+  color: #356b73;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.report-caption {
+  margin: -2px 0 14px;
+  padding: 10px 12px;
+  border-left: 3px solid #11a69c;
+  border-radius: 0 12px 12px 0;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.priority-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.priority-card {
+  position: relative;
+  min-height: 102px;
+  overflow: hidden;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 10px 18px rgba(1, 76, 80, 0.13);
+}
+
+.priority-card::after {
+  position: absolute;
+  right: -14px;
+  bottom: -22px;
+  width: 78px;
+  height: 78px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 50%;
+  content: '';
+}
+
+.priority-card span,
+.priority-card small,
+.priority-card strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.priority-card span {
+  color: #315f66;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.priority-card strong {
+  margin: 7px 0 2px;
+  color: #063c43;
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.priority-card small {
+  color: #255c63;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.priority-card.pending { background: linear-gradient(145deg, rgba(255, 248, 207, 0.92), rgba(255, 219, 164, 0.65)); }
+.priority-card.confirmed { background: linear-gradient(145deg, rgba(222, 246, 255, 0.92), rgba(171, 216, 242, 0.64)); }
+.priority-card.ongoing { background: linear-gradient(145deg, rgba(211, 255, 240, 0.9), rgba(126, 224, 196, 0.62)); }
+.priority-card.drivers { background: linear-gradient(145deg, rgba(242, 233, 255, 0.92), rgba(203, 185, 239, 0.62)); }
+
+.period-filter {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+  overflow: visible;
+  padding: 0;
+}
+
+.period-filter button {
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 6px;
+  font-size: 13px;
+}
+
+.admin-insight {
+  margin: 12px 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  background: rgba(247, 255, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 8px 18px rgba(7, 88, 96, 0.12);
+}
+
+.admin-insight > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 13px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-insight > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-insight > summary::after {
+  content: '⌄';
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: rgba(4, 101, 96, 0.12);
+  color: #056b65;
+  font-size: 18px;
+  font-weight: 800;
+  transition: transform 160ms ease;
+}
+
+.admin-insight[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.admin-insight > summary > span:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.admin-insight summary strong {
+  color: #083d45;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.admin-insight summary small {
+  color: #4b757b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.summary-count {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ccfff3, #77ded9);
+  color: #075951;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.admin-insight > :not(summary) {
+  margin-right: 12px;
+  margin-left: 12px;
+}
+
+.admin-insight > .stats-grid {
+  margin-top: 12px;
+}
+
+.admin-insight > .referral-note,
+.admin-insight > .empty-note {
+  margin-top: 0;
 }
 
 .period-filter {
@@ -1094,3 +1323,265 @@ button {
     background: #CCD0CF;
   }
 }
+.driver-review-note {
+  margin: 14px 0 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #edf7f5;
+  color: #28645e;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.driver-review-section {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #dce9e6;
+  border-radius: 12px;
+  background: #fbfefd;
+}
+
+.driver-review-section h4 {
+  margin: 0 0 4px;
+  color: #164b49;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+/* CareRide aqua theme shared with the Passenger app. */
+.admin-shell { @include glass.aqua-backdrop; }
+.operations-report, .stat-card, .ride-card, .empty-card, .review-card { @include glass.frosted-card; }
+.care-role-brand {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 8px 4px; margin-bottom: 10px; color: #043b37;
+}
+.care-role-brand img { display: block; width: 60px; height: auto; border-radius: 12px; }
+.care-role-brand div { display: grid; gap: 4px; }
+.care-role-brand strong { font-size: clamp(25px, 7vw, 34px); font-weight: 900; line-height: .95; letter-spacing: -.055em; }
+.care-role-brand span { font-size: clamp(7px, 1.9vw, 9px); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.admin-page .admin-topbar {
+  background: radial-gradient(circle at 95% 18%, #008e79, transparent 60%), linear-gradient(132deg, #04363a, #006b62);
+  border: 1px solid #d0fff9;
+  border-radius: 22px;
+  padding: 14px;
+  box-shadow: 0 8px 18px #006f6f46;
+}
+.admin-topbar :is(h1, .live-note, .live-clock, .live-clock strong, .live-clock span) { color: #f3ffff; }
+.admin-page .stat-card { border-radius: 18px; }
+.admin-page .stat-card:nth-child(3n + 2) { background: linear-gradient(145deg, #e5effadb, #c4dbf0a6); }
+.admin-page .stat-card:nth-child(3n + 3) { background: linear-gradient(145deg, #f3eaffeb, #d8c9eda8); }
+
+/* Compact mobile Operations overview. */
+.admin-page .operations-report {
+  padding: 14px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(243, 255, 255, 0.65), rgba(189, 249, 245, 0.42));
+}
+
+/* Admin operations dashboard presentation. */
+.admin-page .admin-topbar {
+  position: relative;
+  min-height: 190px;
+  overflow: hidden;
+  padding: 18px;
+  isolation: isolate;
+}
+
+.admin-page .admin-topbar::before {
+  position: absolute;
+  z-index: -1;
+  right: -50px;
+  bottom: -64px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgba(139, 255, 235, 0.45);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 28px rgba(31, 223, 192, 0.06), inset 0 0 0 64px rgba(31, 223, 192, 0.04);
+  content: '';
+}
+
+.role-chip { gap: 6px; background: rgba(1, 40, 47, 0.78); }
+.role-chip ion-icon { font-size: 15px; }
+.sign-out-button { display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(145deg, #eafff9, #83efe1); color: #053c3d; }
+.sign-out-button ion-icon { font-size: 19px; }
+.admin-page .admin-topbar h1 { position: relative; z-index: 1; margin-top: 18px; font-size: clamp(34px, 10vw, 44px); }
+.admin-page .live-note { margin-top: 11px; }
+.admin-hero-mark { position: absolute; right: 10px; bottom: 9px; width: min(47%, 184px); opacity: .9; filter: drop-shadow(0 10px 17px rgba(0, 0, 0, .28)); }
+
+.operations-heading > div { display: flex; align-items: center; gap: 10px; }
+.operations-heading ion-icon { flex: none; color: #047e76; font-size: 28px; }
+.operations-heading h2 { font-size: clamp(25px, 7vw, 31px); }
+
+.priority-card { padding: 13px 14px 13px 68px; min-height: 112px; }
+.priority-card > span:not(.priority-icon) { color: #174d54; font-size: 12px; }
+.priority-card strong { margin-top: 5px; font-size: 33px; }
+.priority-card small { max-width: 108px; color: #0b474e; font-size: 12px; }
+.priority-card .priority-icon {
+  position: absolute;
+  z-index: 2;
+  top: 15px;
+  left: 13px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 15px;
+  color: #06483f;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .9), rgba(151, 255, 222, .56));
+  box-shadow: inset 0 1px 1px #fff, 0 5px 11px rgba(2, 103, 93, .16);
+}
+.priority-card .priority-icon ion-icon { font-size: 24px; }
+.priority-card.pending .priority-icon { background: linear-gradient(145deg, #fff4b0, #ffd67a); color: #724800; }
+.priority-card.confirmed .priority-icon { background: linear-gradient(145deg, #c8f9ff, #6ce7ee); }
+.priority-card.ongoing .priority-icon { background: linear-gradient(145deg, #c9ffe9, #65efbc); }
+.priority-card.drivers .priority-icon { background: linear-gradient(145deg, #f6d8ff, #d9a7ff); color: #522175; }
+.priority-card .priority-arrow {
+  position: absolute;
+  z-index: 2;
+  right: 12px;
+  bottom: 14px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: #06474d;
+  background: rgba(255, 255, 255, .77);
+  font-size: 18px;
+}
+
+.admin-insight > summary { gap: 10px; padding: 11px 13px; }
+.admin-insight > summary > .insight-icon {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 15px;
+  color: #00665f;
+  background: linear-gradient(145deg, #cdfff2, #72eadb);
+  font-size: 23px;
+}
+.admin-insight > summary > span:nth-child(2) { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.admin-insight > summary::after { content: '›'; font-size: 26px; line-height: 1; transform: none; }
+.admin-insight[open] > summary::after { transform: rotate(90deg); }
+
+/* Accounts dashboard presentation. */
+.account-overview { display: grid; gap: 12px; margin-bottom: 14px; }
+.admin-page .account-type-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.admin-page .account-type-cards .account-type-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 47px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 112px;
+  padding: 13px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 22px;
+  color: #063d44;
+  background: linear-gradient(145deg, rgba(245, 255, 255, .82), rgba(169, 240, 242, .52));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .94), 0 9px 17px rgba(0, 79, 86, .14);
+}
+.admin-page .account-type-cards .account-type-card.driver { background: linear-gradient(145deg, rgba(244, 255, 255, .82), rgba(181, 227, 247, .57)); }
+.admin-page .account-type-cards .account-type-card.selected { border-color: #11baa8; box-shadow: inset 0 0 0 1px #dffff9, 0 9px 19px rgba(0, 112, 102, .22); }
+.account-type-card .account-type-icon {
+  display: grid;
+  width: 47px;
+  height: 47px;
+  place-items: center;
+  border-radius: 16px;
+  color: #005d59;
+  background: linear-gradient(145deg, #d5fff7, #70eadc);
+  box-shadow: 0 5px 11px rgba(0, 111, 101, .18);
+}
+.account-type-card.driver .account-type-icon { background: linear-gradient(145deg, #d9f3ff, #8ee5ea); }
+.account-type-card .account-type-icon ion-icon { font-size: 27px; }
+.account-type-card > span:not(.account-type-icon) { display: grid; gap: 5px; min-width: 0; }
+.account-type-card strong { color: #073f47; font-size: 16px; font-weight: 850; line-height: 1.08; }
+.account-type-card em { padding: 0; background: none; color: #063c43; font-size: 31px; font-style: normal; font-weight: 900; line-height: 1; }
+.account-type-card .account-card-arrow { position: absolute; right: 12px; bottom: 12px; display: grid; width: 29px; height: 29px; place-items: center; border-radius: 50%; color: #06454b; background: rgba(255, 255, 255, .82); font-size: 18px; }
+
+.account-status-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.account-status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 116px; padding: 10px 6px; border: 1px solid rgba(255, 255, 255, .88); border-radius: 19px; text-align: center; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .9), 0 8px 16px rgba(0, 84, 90, .12); }
+.account-status-card ion-icon { display: block; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 11px; padding: 6px; box-sizing: border-box; font-size: 20px; }
+.account-status-card .account-status-label { display: block; width: 100%; color: #174e56; font-size: 11px; font-weight: 850; line-height: 1.1; white-space: nowrap; }
+.account-status-card strong { display: block; color: #063c43; font-size: 27px; font-weight: 900; line-height: 1; }
+.account-status-card.pending { background: linear-gradient(145deg, #fff8c9, #ffe39a); }.account-status-card.pending ion-icon { color: #6d4c04; background: #ffe78a; }
+.account-status-card.approved { background: linear-gradient(145deg, #d9fff1, #8aefd5); }.account-status-card.approved ion-icon { color: #006653; background: #a1f6d8; }
+.account-status-card.rejected { background: linear-gradient(145deg, #ffe7ef, #f7aed0); }.account-status-card.rejected ion-icon { color: #72213e; background: #ffc1da; }
+
+.admin-page .account-status-filter { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.admin-page .account-status-filter button { justify-content: center; min-width: 0; min-height: 42px; padding: 8px 6px; border-radius: 999px; font-size: 12px; }
+.admin-page .account-status-filter button.selected { border-color: #03a992; color: #f5ffff; background: linear-gradient(145deg, #006a60, #034348); box-shadow: 0 5px 11px rgba(0, 105, 94, .28); }
+.admin-page .account-status-filter em { min-width: 18px; padding: 2px 5px; font-size: 11px; }
+.admin-page .account-status-filter button.selected em { color: #07554e; background: #d4fff6; }
+
+@media (max-width: 360px) {
+  .account-status-card { min-height: 108px; }
+  .account-status-card strong { font-size: 24px; }
+}
+
+/* Compact referral history dashboard. */
+.admin-page .referral-history {
+  margin-top: 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .88);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(244, 255, 255, .62), rgba(181, 247, 243, .36));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .88), 0 12px 24px rgba(0, 81, 87, .12);
+}
+.admin-page .history-heading { justify-content: flex-start; gap: 10px; min-height: 38px; margin: 0 0 12px; }
+.admin-page .history-heading > ion-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 14px; padding: 8px; box-sizing: border-box; color: #00685f; background: linear-gradient(145deg, #caffef, #75e7dc); font-size: 23px; }
+.admin-page .history-heading h2 { color: #073f47; font-size: clamp(23px, 7vw, 29px); font-weight: 900; letter-spacing: -.04em; }
+.history-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 13px; }
+.history-stat-card { display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 91px; padding: 7px 4px; border: 1px solid rgba(255, 255, 255, .84); border-radius: 17px; text-align: center; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .9), 0 7px 14px rgba(0, 82, 87, .1); }
+.history-stat-card ion-icon { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 10px; padding: 5px; box-sizing: border-box; font-size: 18px; }
+.history-stat-card span { color: #215a61; font-size: 9px; font-weight: 850; line-height: 1.1; }
+.history-stat-card strong { color: #073f47; font-size: 24px; font-weight: 900; line-height: 1; }
+.history-stat-card.total { background: linear-gradient(145deg, #dffff7, #92ecdf); }.history-stat-card.total ion-icon { color: #00695d; background: #b2f7e9; }
+.history-stat-card.pending { background: linear-gradient(145deg, #fff6c8, #ffe393); }.history-stat-card.pending ion-icon { color: #715000; background: #ffe68e; }
+.history-stat-card.confirmed { background: linear-gradient(145deg, #dff8ff, #96dcf6); }.history-stat-card.confirmed ion-icon { color: #006579; background: #b7eefc; }
+.history-stat-card.declined { background: linear-gradient(145deg, #ffe7ef, #f9b8d8); }.history-stat-card.declined ion-icon { color: #72213e; background: #ffcadf; }
+.admin-page .referral-history > .booking-filter { margin-bottom: 13px; }
+.admin-page .referral-history > .booking-filter button { min-height: 39px; padding: 7px 10px; font-size: 12px; }
+.admin-page .referral-history .empty-card { min-height: 235px; display: grid; place-content: center; }
+.admin-page .referral-history .ride-card { margin-top: 10px; }
+
+@media (max-width: 360px) {
+  .history-stats { gap: 5px; }
+  .history-stat-card { min-height: 84px; padding: 6px 3px; }
+  .history-stat-card span { font-size: 8px; }
+  .history-stat-card strong { font-size: 21px; }
+}
+
+/* Summary-only driver accounts dashboard. */
+.admin-page .driver-overview {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, .88);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(244, 255, 255, .66), rgba(184, 247, 242, .4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 12px 24px rgba(0, 81, 87, .12);
+}
+.driver-overview-heading { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.driver-overview-icon { display: grid; flex: none; width: 46px; height: 46px; place-items: center; border-radius: 16px; color: #006b62; background: linear-gradient(145deg, #cdfff3, #72eadb); box-shadow: 0 5px 11px rgba(0, 111, 101, .16); }
+.driver-overview-icon ion-icon { font-size: 27px; }
+.driver-overview-heading div { display: grid; gap: 3px; }
+.driver-overview-heading div > span { color: #087d76; font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.driver-overview-heading h2 { margin: 0; color: #073f47; font-size: clamp(23px, 7vw, 29px); font-weight: 900; letter-spacing: -.04em; }
+.driver-status-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.driver-status-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 116px; padding: 10px 6px; border: 1px solid rgba(255, 255, 255, .88); border-radius: 20px; text-align: center; box-shadow: inset 0 1px 1px rgba(255, 255, 255, .88), 0 8px 16px rgba(0, 84, 90, .1); }
+.driver-status-card ion-icon { display: block; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 11px; padding: 7px; box-sizing: border-box; font-size: 21px; }
+.driver-status-card .driver-status-label { display: block; width: 100%; color: #1d5259; font-size: 11px; font-weight: 850; line-height: 1.1; white-space: nowrap; }
+.driver-status-card strong { display: block; color: #063d44; font-size: 28px; font-weight: 900; line-height: 1; }
+.driver-status-card.approved { background: linear-gradient(145deg, #e4f9ff, #b6e6f7); }.driver-status-card.approved ion-icon { color: #006579; background: #b9effa; }
+.driver-status-card.available { background: linear-gradient(145deg, #dbfff1, #8deed5); }.driver-status-card.available ion-icon { color: #006750; background: #a5f7db; }
+.driver-status-card.busy { background: linear-gradient(145deg, #fff5c9, #ffe294); }.driver-status-card.busy ion-icon { color: #714d00; background: #ffe88f; }
+.driver-status-card.offline { background: linear-gradient(145deg, #f1e9ff, #d4c0f4); }.driver-status-card.offline ion-icon { color: #56317b; background: #e4d4ff; }

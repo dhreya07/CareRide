@@ -52,6 +52,9 @@ describe('password recovery', () => {
     expect(recoveryResetUrl(
       'http://localhost:8100/login#access_token=token-a&refresh_token=token-b&type=signup',
     )).toBeNull();
+    expect(recoveryResetUrl(
+      'http://localhost:8100/#error=access_denied&error_code=otp_expired&type=signup',
+    )).toBeNull();
   });
 
   it('reads a recovery code without treating a missing link as ready', () => {

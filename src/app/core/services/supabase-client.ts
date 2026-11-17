@@ -75,6 +75,15 @@ export function clearPasswordRecoveryStorage(): void {
 }
 
 export function createIsolatedAuthClient(): SupabaseClient {
+  return createMemoryAuthClient(SUPABASE_PROBE_STORAGE_KEY);
+}
+
+/** Signup must never replace or wait for the persisted app session. */
+export function createRegistrationClient(): SupabaseClient {
+  return createMemoryAuthClient('careride.registration');
+}
+
+function createMemoryAuthClient(storageKey: string): SupabaseClient {
   const bucket = new Map<string, string>();
   const { url, anonKey } = environment.supabase;
   if (!url || !anonKey) {
@@ -85,7 +94,7 @@ export function createIsolatedAuthClient(): SupabaseClient {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
-      storageKey: SUPABASE_PROBE_STORAGE_KEY,
+      storageKey,
       storage: {
         getItem: (key) => bucket.get(key) ?? null,
         setItem: (key, value) => {

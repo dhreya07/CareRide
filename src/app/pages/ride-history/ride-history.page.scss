@@ -1,3 +1,5 @@
+@use '../../shared/passenger-glass' as glass;
+
 :host {
   display: block;
   width: 100%;
@@ -247,4 +249,164 @@
     background: #CCD0CF;
     padding: 0;
   }
+}
+
+/* Match the other Passenger tabs. */
+.history-page, .history-container {
+  color: #20394b;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #dce8ee;
+}
+.history-container {
+  background: radial-gradient(ellipse at 96% 24%, #a9c3ce 0, transparent 55%),
+    radial-gradient(ellipse at 10% 0%, #a6bfcf 0, transparent 29%),
+    linear-gradient(150deg, #dce8ee 8%, #bdcfd9 70%, #a5bdcb);
+}
+.history-brand { justify-content: center; gap: 9px; margin-bottom: 14px; }
+.history-brand > a:first-child { display: grid; place-items: center; width: 60px; min-height: 44px; flex: 0 0 60px; }
+.history-brand img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.history-wordmark { display: grid; gap: 4px; color: #20394b; text-decoration: none; }
+.history-wordmark strong { font-size: clamp(25px, 7vw, 34px); font-weight: 900; line-height: .95; letter-spacing: -.055em; }
+.history-wordmark span { font-size: clamp(7px, 1.9vw, 9px); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.history-heading {
+  margin-bottom: 16px;
+  padding: clamp(15px, 4vw, 24px);
+  border: 2px solid #8fadb9;
+  border-radius: 24px;
+  background: radial-gradient(circle at 90% 30%, #00a78e 0, transparent 64%), linear-gradient(132deg, #04363a, #006b62);
+  box-shadow: inset 0 0 0 1px #fff, 0 8px 17px #006a5f50;
+}
+.history-heading > span { color: #c8e4ec; font-size: 11px; font-weight: 850; letter-spacing: .12em; }
+.history-heading .page-title { color: #f4fffd; margin: 4px 0 0; font-size: clamp(27px, 6vw, 36px); font-weight: 850; }
+.history-heading .page-subtitle { color: #e6f2f6; margin: 6px 0 0; }
+.empty-state, .ride-card {
+  border: 2px solid #96b5c3;
+  border-radius: 23px;
+  background: linear-gradient(135deg, #edf5f8, #ccdee7);
+  box-shadow: inset 0 0 0 2px #f7ffff, 0 7px 13px #00786c33;
+}
+.empty-state .empty-icon { background: linear-gradient(145deg, #d6eaf0, #94bbc7); color: #284f60; }
+.empty-state h2, .route strong { color: #20394b; }
+.empty-state p, .meta, .route small { color: #405e70; }
+.route { border-color: #a7dedb; }
+.history-details { margin-block: 10px; border-top: 1px solid #a7dedb; }
+.history-details summary { padding: 12px 0; color: #284f60; font-size: 14px; font-weight: 750; cursor: pointer; }
+.primary-link, .ride-actions .details-button:first-child {
+  border-radius: 999px; color: #fff; background: linear-gradient(140deg, #007767, #043d40);
+}
+.ride-actions .details-button:last-child { border-radius: 999px; background: #f7ffff; border-color: #83b9b5; color: #20394b; }
+.history-page :is(a, button, summary):focus-visible { outline: 3px solid #087c75; outline-offset: 3px; }
+
+.arrival-proof {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(44, 183, 157, .42);
+  border-radius: 16px;
+  background: rgba(232, 255, 248, .7);
+}
+
+.arrival-proof > div { display: flex; align-items: flex-start; gap: 10px; }
+.arrival-proof ion-icon { flex: 0 0 auto; margin-top: 2px; color: #087c68; font-size: 23px; }
+.arrival-proof strong { display: block; color: #073f43; font-size: 14px; }
+.arrival-proof p { margin: 4px 0 0; color: #406d70; font-size: 13px; line-height: 1.4; }
+.arrival-proof img { display: block; width: 100%; max-height: 320px; border-radius: 12px; object-fit: cover; background: #d8eded; }
+.arrival-proof-error { margin: 12px 0; color: #8a3e35; font-size: 13px; }
+@media (max-width: 360px) {
+  .ride-card { padding: 13px; }
+  .ride-actions { grid-template-columns: 1fr; }
+}
+
+/* Aqua backdrop shared by the Passenger screens. */
+.history-page, .history-container {
+  background: radial-gradient(ellipse at 95% 14%, #8ceee8 0, transparent 52%),
+    linear-gradient(150deg, #e6fbff, #b4f0ef 58%, #a0e5e8);
+}
+.history-wordmark { color: #073f43; }
+
+.empty-state .empty-icon { background: linear-gradient(145deg, #f1eaff, #d5caec); color: #4e406b; }
+.route { background: #e3eefc; border-radius: 14px; }
+
+/* Frosted surfaces over the aqua Passenger theme. */
+.empty-state, .ride-card {
+  background: linear-gradient(142deg, rgba(255, 255, 255, .83), rgba(218, 249, 250, .55));
+  border-color: rgba(249, 255, 255, .92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .86), 0 8px 23px rgba(0, 88, 88, .14);
+  -webkit-backdrop-filter: blur(13px) saturate(135%);
+  backdrop-filter: blur(13px) saturate(135%);
+}
+
+
+.history-container { @include glass.aqua-backdrop; }
+.empty-state, .ride-card { @include glass.frosted-card; }
+
+/* Booking status overview */
+.history-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.overview-card {
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: 18px;
+  color: #123947;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .82), 0 6px 14px rgba(0, 91, 90, .12);
+}
+
+.overview-card span,
+.overview-card strong { display: block; }
+.overview-card span { font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.overview-card strong { margin-top: 6px; font-size: 30px; line-height: 1; }
+.overview-card.accepted { background: linear-gradient(135deg, #d9f3ff, #a9e1f4); }
+.overview-card.completed { background: linear-gradient(135deg, #d8fff1, #99ebcf); }
+.overview-card.not-completed { background: linear-gradient(135deg, #fff0cb, #f4cfa1); }
+.overview-card.selected { outline: 3px solid #057a70; outline-offset: 2px; }
+
+.history-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 12px;
+}
+
+.history-filter-row h2 { margin: 0; color: #073f43; font-size: 17px; }
+.history-filter-row button {
+  padding: 8px 12px;
+  border: 1px solid rgba(5, 122, 112, .28);
+  border-radius: 999px;
+  color: #075f59;
+  background: rgba(255, 255, 255, .72);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+}
+.history-filter-row button.active { color: #fff; background: #08786e; }
+
+.empty-filter-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px 18px;
+  border: 1px solid rgba(255, 255, 255, .85);
+  border-radius: 22px;
+  color: #355d68;
+  text-align: center;
+  background: rgba(245, 255, 255, .58);
+}
+.empty-filter-state ion-icon { color: #087c75; font-size: 28px; }
+.empty-filter-state strong { color: #123947; font-size: 18px; }
+.empty-filter-state span { font-size: 14px; line-height: 1.45; }
+
+@media (max-width: 360px) {
+  .overview-card { min-height: 84px; padding: 10px; }
+  .overview-card span { font-size: 10px; }
+  .overview-card strong { font-size: 25px; }
 }

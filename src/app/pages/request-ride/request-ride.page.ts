@@ -1,3 +1,4 @@
+import { flashOutline } from 'ionicons/icons';
 import { ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { LocationMapComponent, MapCoordinate } from '../../shared/location-map.component';
 import { LocationPickerComponent, PickedLocation, placesAreSameStop } from '../../shared/location-picker.component';
 import { RoadRouteService, roadRouteSummary } from '../../core/services/road-route.service';
+import { isProfileUuid } from '../../core/models/profile-id';
 
 @Component({
   selector: 'app-request-ride',
@@ -91,6 +93,8 @@ export class RequestRidePage implements OnDestroy {
 
   @ViewChild(LocationMapComponent) private locationMap?: LocationMapComponent;
 
+  readonly rideNowIcon = flashOutline;
+
   constructor(
     private alertController: AlertController,
     private router: Router,
@@ -142,7 +146,12 @@ export class RequestRidePage implements OnDestroy {
   openLocationPicker(role: 'pickup' | 'destination'): void {
     this.pickerRole = role;
     this.mapMode = role;
-    this.pickerQuery = role === 'pickup' ? this.pickupLocation : this.destination;
+    // Pickup is GPS-first: do not prefill a place search from an old label.
+    // The picker requests a fresh GPS fix and requires explicit confirmation.
+    this.pickerQuery = role === 'pickup' ? '' : this.destination;
+    this.locationNotice = role === 'pickup'
+      ? 'Checking your current GPS position. Confirm the pin or adjust it on the map.'
+      : '';
     this.changes.markForCheck();
   }
 
@@ -336,7 +345,7 @@ export class RequestRidePage implements OnDestroy {
   }
 
   refreshDrivers(): void {
-    if (this.rides.cloudBookings) {
+    if (this.auth.cloudAuthEnabled || this.rides.cloudBookings) {
       void this.loadCloudDrivers();
       return;
     }
@@ -523,7 +532,7 @@ export class RequestRidePage implements OnDestroy {
 
   confirmMapPoint(): void {
     if (this.mapMode === 'pickup') {
-      if (this.pickupLatitude === null || this.pickupLongitude === null) {
+      if (!this.point(this.pickupLatitude, this.pickupLongitude)) {
         this.locationNotice = 'Choose a pickup on the map before confirming it.';
         return;
       }
@@ -532,7 +541,7 @@ export class RequestRidePage implements OnDestroy {
       this.changes.markForCheck();
       return;
     }
-    if (this.destinationLatitude === null || this.destinationLongitude === null) {
+    if (!this.point(this.destinationLatitude, this.destinationLongitude)) {
       this.locationNotice = 'Choose a destination on the map before confirming it.';
       return;
     }
@@ -665,7 +674,7 @@ export class RequestRidePage implements OnDestroy {
   }
 
   selectDriver(driver: BookingDriverOption): void {
-    if (this.rides.cloudBookings) {
+    if (this.auth.cloudAuthEnabled || this.rides.cloudBookings) {
       if (!this.drivers.some((item) => item.id === driver.id)) {
         this.selectedDriverId = '';
         void this.loadCloudDrivers();
@@ -701,7 +710,7 @@ export class RequestRidePage implements OnDestroy {
   }
 
   private point(latitude: number | null, longitude: number | null): MapCoordinate | null {
-    if (latitude === null || longitude === null) {
+    if (latitude === null || longitude === null || !isUsableCoordinate(latitude, longitude)) {
       return null;
     }
     return { latitude, longitude };
@@ -794,13 +803,14 @@ export class RequestRidePage implements OnDestroy {
     }
     const pickupPoint = this.point(this.pickupLatitude, this.pickupLongitude);
     const destinationPoint = this.point(this.destinationLatitude, this.destinationLongitude);
+    if (!pickupPoint) {
+      return 'Choose a valid pickup pin on the map.';
+    }
+    if (!destinationPoint) {
+      return 'Choose a valid destination pin on the map.';
+    }
     if (placesAreSameStop(pickupPoint, destinationPoint)) {
       return 'Pickup and destination are the same point. Choose a different destination.';
-    }
-    // Same barangay/place name is allowed when the mapped coordinates clearly differ.
-    if (this.pickupLocation.trim().toLowerCase() === this.destination.trim().toLowerCase()
-      && (!pickupPoint || !destinationPoint)) {
-      return 'Pickup and destination must be different locations.';
     }
     if (!this.purpose.trim()) {
       return 'Please enter the purpose of this trip.';
@@ -808,7 +818,7 @@ export class RequestRidePage implements OnDestroy {
     if (this.passengerType === 'family' && !this.passengerName.trim()) {
       return 'Please enter the passenger name for this family booking.';
     }
-    if (this.rides.cloudBookings) {
+    if (this.auth.cloudAuthEnabled || this.rides.cloudBookings) {
       if (!this.selectedDriverId || !this.drivers.some((driver) => driver.id === this.selectedDriverId)) {
         return 'Please choose an available driver for this trip.';
       }
@@ -836,10 +846,10 @@ export class RequestRidePage implements OnDestroy {
     if (!this.emergencyContactName.trim() || !this.emergencyContactNumber.trim()) {
       return 'Please enter an emergency contact name and number.';
     }
-    if (this.pickupLatitude !== null && !this.pickupConfirmed) {
+    if (!this.pickupConfirmed) {
       return 'Confirm the pickup on the map before submitting.';
     }
-    if (this.destinationLatitude !== null && !this.destinationConfirmed) {
+    if (!this.destinationConfirmed) {
       return 'Confirm the destination on the map before submitting.';
     }
     return null;
@@ -863,34 +873,38 @@ export class RequestRidePage implements OnDestroy {
 
   private async loadCloudDrivers(): Promise<void> {
     const previous = this.selectedDriverId;
+    let loaded = false;
     try {
-      const drivers = await this.rides.listAvailableDrivers();
-      this.drivers = drivers.map((driver) => ({
-        id: driver.id,
-        name: driver.name,
-        phone: driver.phone,
-        vehicleType: driver.vehicleType,
-        plateNumber: driver.plateNumber,
-        vehicleLabel: driver.vehicleLabel,
-        ratingText: driver.ratingCount
-          ? `${driver.rating?.toFixed(1) ?? '0.0'} ★ · ${driver.ratingCount} reviews`
-          : 'Not yet rated',
-        rating: driver.rating,
-        wheelchair: driver.wheelchairAccessible,
-        seniorAssistance: driver.seniorAssistance,
-      }));
+      const drivers = await this.rides.listAvailablePassengerDrivers();
+      this.drivers = drivers
+        .filter((driver) => isProfileUuid(driver.id) && driver.availability === 'available')
+        .map((driver) => ({
+          id: driver.id,
+          name: driver.name,
+          phone: driver.phone,
+          vehicleType: driver.vehicleType,
+          plateNumber: driver.plateNumber,
+          vehicleLabel: driver.vehicleLabel,
+          ratingText: driver.ratingCount
+            ? `${driver.rating?.toFixed(1) ?? '0.0'} ★ · ${driver.ratingCount} reviews`
+            : 'Not yet rated',
+          rating: driver.rating,
+          wheelchair: driver.wheelchairAccessible,
+          seniorAssistance: driver.seniorAssistance,
+        }));
+      loaded = true;
     } catch (error: unknown) {
       this.drivers = [];
       this.formError = error instanceof Error ? error.message : 'Available drivers could not be loaded.';
     }
-    if (previous && this.drivers.some((driver) => driver.id === previous)) {
-      return;
-    }
-    if (previous) {
+    if (previous && !this.drivers.some((driver) => driver.id === previous)) {
       this.selectedDriverId = '';
-      this.formError = 'That driver is no longer available. Please choose another driver.';
       this.step = 'form';
+      if (loaded) {
+        this.formError = 'That driver is no longer available. Please choose another driver.';
+      }
     }
+    this.changes.markForCheck();
   }
 
   private eligibleBookingDrivers(): BookingDriverOption[] {

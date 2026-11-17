@@ -7,15 +7,7 @@
     </section>
 
     <header class="brand-area">
-      <div class="brand-chip">
-        <span class="brand-mark">
-          <ion-icon name="heart-outline" aria-hidden="true"></ion-icon>
-        </span>
-        <div class="brand-copy">
-          <h1>Care<span>Ride</span></h1>
-          <p>Mobility with care</p>
-        </div>
-      </div>
+      <img class="brand-logo" src="assets/careride-healthcare-mark.png" alt="CareRide — Your healthcare transportation">
     </header>
 
     <section class="login-panel">
@@ -76,15 +68,6 @@
             />
             <span>Remember me</span>
           </label>
-
-          <button
-            type="button"
-            class="forgot-button"
-            (click)="forgotPassword()"
-            [disabled]="isLoading"
-          >
-            Forgot password?
-          </button>
         </div>
 
         <div
@@ -93,6 +76,14 @@
           role="alert"
         >
           {{ errorMessage }}
+        </div>
+
+        <div
+          *ngIf="successMessage"
+          class="success-message"
+          role="status"
+        >
+          {{ successMessage }}
         </div>
 
         <button
@@ -120,11 +111,7 @@
       <div class="social-buttons">
         <button type="button" (click)="socialLogin('Google')">
           <ion-icon name="logo-google" aria-hidden="true"></ion-icon>
-          Google
-        </button>
-        <button type="button" (click)="socialLogin('Facebook')">
-          <ion-icon name="logo-facebook" aria-hidden="true"></ion-icon>
-          Facebook
+          Continue with Google
         </button>
       </div>
 

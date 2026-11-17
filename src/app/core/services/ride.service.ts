@@ -2,7 +2,12 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { CreateLocalRideInput, LocalRide, LocalRideStatus } from '../models/local-ride.model';
 import { isProfileUuid } from '../models/profile-id';
-import { bookingTransitionAllowed, CloudAvailableDriver, SupabaseBookingAdapter } from './supabase-booking.adapter';
+import {
+  ActiveBookingDriverLocation,
+  bookingTransitionAllowed,
+  CloudAvailableDriver,
+  SupabaseBookingAdapter,
+} from './supabase-booking.adapter';
 import { LocalRideService } from './local-ride.service';
 import { NotificationService } from './notification.service';
 import { SupabaseService } from './supabase.service';
@@ -105,11 +110,36 @@ export class RideService {
     return this.cacheCloudRide(ride);
   }
 
+  /**
+   * Approved Driver booking discovery.
+   * Does not activate cloud booking migration.
+   */
+  async listAvailableBookings(): Promise<LocalRide[]> {
+    if (!this.cloudBookings) {
+      return [];
+    }
+
+    return this.cloudBookingsApi.listAvailableBookings();
+  }
+
   async listAvailableDrivers(): Promise<CloudAvailableDriver[]> {
     if (!this.cloudBookings) {
       return [];
     }
     return this.cloudBookingsApi.listAvailableDrivers();
+  }
+
+  /** Passenger-only read can run with cloud auth while bookings stay local. */
+  async listAvailablePassengerDrivers(): Promise<CloudAvailableDriver[]> {
+    return this.cloudBookingsApi.listAvailablePassengerDrivers();
+  }
+
+  /** Only the signed-in Passenger's active booking may return a Driver fix. */
+  async getActiveBookingDriverLocation(id: string): Promise<ActiveBookingDriverLocation | null> {
+    if (!this.cloudBookings) {
+      return null;
+    }
+    return this.cloudBookingsApi.getActiveBookingDriverLocation(this.requireCloudBooking(id));
   }
 
   async declineReferral(id: string): Promise<LocalRide> {

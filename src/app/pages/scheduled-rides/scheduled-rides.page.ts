@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { LocalRide } from '../../core/models/local-ride.model';
 import { AuthService } from '../../core/services/auth.service';
 import { LocalRideService, RideProgressStep } from '../../core/services/local-ride.service';
 import { RideService } from '../../core/services/ride.service';
+import { isProfileUuid } from '../../core/models/profile-id';
 
 @Component({
   selector: 'app-scheduled-rides',
@@ -17,9 +18,12 @@ import { RideService } from '../../core/services/ride.service';
   templateUrl: './scheduled-rides.page.html',
   styleUrls: ['./scheduled-rides.page.scss'],
 })
-export class ScheduledRidesPage implements OnInit {
+export class ScheduledRidesPage implements OnInit, OnDestroy {
   rides: LocalRide[] = [];
   private readonly destroyRef = inject(DestroyRef);
+  private cloudPassengerName: string | null = null;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private refreshing = false;
 
   constructor(
     private localRides: LocalRideService,
@@ -37,7 +41,55 @@ export class ScheduledRidesPage implements OnInit {
 
   ionViewWillEnter(): void {
     this.localRides.reloadFromStorage();
-    void this.ridesApi.hydrateFromCloud().catch(() => undefined);
+    void this.refreshPassengerRides();
+    this.startAutoRefresh();
+  }
+
+  ionViewDidLeave(): void {
+    this.stopAutoRefresh();
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoRefresh();
+  }
+
+  private async refreshPassengerRides(): Promise<void> {
+    if (this.refreshing) {
+      return;
+    }
+    this.refreshing = true;
+    try {
+      const profile = await this.auth.currentCloudProfile();
+      this.cloudPassengerName = profile?.role === 'passenger' ? profile.fullName.trim() : null;
+    } catch {
+      this.cloudPassengerName = null;
+    }
+    this.loadRides();
+    try {
+      try {
+        await this.ridesApi.hydrateFromCloud();
+      } catch {
+        // The just-submitted cloud booking is already cached. Keep it visible.
+      }
+      this.loadRides();
+    } finally {
+      this.refreshing = false;
+    }
+  }
+
+  private startAutoRefresh(): void {
+    this.stopAutoRefresh();
+    if (!this.ridesApi.cloudBookings) {
+      return;
+    }
+    this.refreshTimer = setInterval(() => void this.refreshPassengerRides(), 4000);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.refreshTimer !== null) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 
   progressSteps(ride: LocalRide): RideProgressStep[] {
@@ -167,12 +219,11 @@ export class ScheduledRidesPage implements OnInit {
   }
 
   private ownsRide(ride: LocalRide): boolean {
-    const account = this.auth.getLocalAccount();
-    return Boolean(
-      account &&
-      account.accountType === 'passenger' &&
-      ride.passengerName.trim().toLowerCase() === account.fullName.trim().toLowerCase(),
-    );
+    if (this.ridesApi.cloudBookings) {
+      return isProfileUuid(ride.id);
+    }
+    const passengerName = this.currentPassengerName();
+    return Boolean(passengerName && ride.passengerName.trim().toLowerCase() === passengerName);
   }
 
   private async cancelCloudRide(id: string): Promise<boolean> {
@@ -193,15 +244,26 @@ export class ScheduledRidesPage implements OnInit {
     return Boolean(this.localRides.cancelRide(ride.id));
   }
 
-  private loadRides(): void {
+  private currentPassengerName(): string | null {
     const account = this.auth.getLocalAccount();
-    if (!account || account.accountType !== 'passenger') {
-      this.rides = [];
+    if (this.cloudPassengerName) {
+      return this.cloudPassengerName.toLowerCase();
+    }
+    return account?.accountType === 'passenger' ? account.fullName.trim().toLowerCase() : null;
+  }
+
+  private loadRides(): void {
+    if (this.ridesApi.cloudBookings) {
+      // Cloud RLS has already restricted the hydrated cache to this Passenger.
+      // UUID filtering deliberately excludes preserved on-device demo/local rides.
+      this.rides = this.localRides.getScheduledRides().filter((ride) => isProfileUuid(ride.id));
       return;
     }
-    const name = account.fullName.trim().toLowerCase();
-    this.rides = this.localRides.getScheduledRides().filter(
-      (ride) => ride.passengerName.trim().toLowerCase() === name,
-    );
+    const name = this.currentPassengerName();
+    this.rides = name
+      ? this.localRides.getScheduledRides().filter(
+          (ride) => ride.passengerName.trim().toLowerCase() === name,
+        )
+      : [];
   }
 }

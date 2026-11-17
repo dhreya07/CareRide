@@ -399,3 +399,51 @@
 :host.phone .picker-bar h2 {
   font-size: 16px;
 }
+
+/* GPS-first pickup: keep the map large and confirmation within reach. */
+.pickup-hint { margin: 0 0 8px; color: #3d5c56; font-size: 13px; line-height: 1.5; }
+.sheet.pickup-sheet { max-height: 35dvh; }
+.confirm:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 600px) { .sheet.pickup-sheet { max-height: 40dvh; } .picker-bar h2 { font-size: 16px; } }
+
+
+/* CareRide STEP 57D.19A - Driver Availability UI */
+
+.driver-availability {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid #d8f3ea;
+  border-radius: 12px;
+  background: #f3fbf8;
+}
+
+.driver-availability-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #12312c;
+  font-size: 13px;
+}
+
+.driver-availability-indicator {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: #94a3a0;
+}
+
+.driver-availability p {
+  margin: 0;
+  color: #3d5c56;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Keep pickup content scrollable on small screens. */
+.sheet.pickup-sheet {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

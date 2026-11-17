@@ -2,11 +2,16 @@
   <div class="admin-shell care-shell">
     <div class="shell-scroll">
 
+      <div class="care-role-brand">
+        <img src="assets/careride-healthcare-mark.png" alt="" width="288" height="192">
+        <div><strong>CareRide</strong><span>Your healthcare transportation</span></div>
+      </div>
+
       <header class="admin-topbar">
         <div class="top-row">
-          <span class="role-chip">Admin</span>
+          <span class="role-chip"><ion-icon name="medkit-outline" aria-hidden="true"></ion-icon> Admin</span>
           <button type="button" class="sign-out-button" (click)="signOut()">
-            Sign out
+            <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon> Sign out
           </button>
         </div>
         <h1>{{ pageTitle }}</h1>
@@ -18,11 +23,15 @@
           <strong>{{ clockTime }}</strong>
           <span>{{ clockWeekday }}, {{ clockDate }}</span>
         </p>
+        <img class="admin-hero-mark" src="assets/careride-healthcare-mark.png" alt="" aria-hidden="true">
       </header>
 
       <section class="operations-report" *ngIf="listTab === 'active'" aria-label="Operations report">
-        <div class="section-heading">
-          <h2>Operations</h2>
+        <div class="section-heading operations-heading">
+          <div>
+            <ion-icon name="list-outline" aria-hidden="true"></ion-icon>
+            <h2>Operations</h2>
+          </div>
         </div>
         <div class="booking-filter period-filter" role="group" aria-label="Report period">
           <button type="button" [class.selected]="reportPeriod === 'all'" (click)="selectReportPeriod('all')">All Time</button>
@@ -30,101 +39,124 @@
           <button type="button" [class.selected]="reportPeriod === 'week'" (click)="selectReportPeriod('week')">This Week</button>
           <button type="button" [class.selected]="reportPeriod === 'month'" (click)="selectReportPeriod('month')">This Month</button>
         </div>
-        <p class="referral-note">
-          Booking counts use the date each booking was created on this device. This week runs Sunday through Saturday. These cards do not change a booking.
-        </p>
-
-        <h3>Booking activity</h3>
-        <p class="empty-note">
-          Each booking is counted once, in its current status. A referral on a booking is not a second booking.
-        </p>
-        <section class="stats-grid report-grid" aria-label="Booking activity">
-          <div class="stat-card">
-            <span>Total bookings</span>
-            <strong>{{ totalCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Pending bookings</span>
+        <section class="priority-stats" aria-label="Priority operations">
+          <article class="priority-card pending">
+            <span class="priority-icon"><ion-icon name="time-outline" aria-hidden="true"></ion-icon></span>
+            <span>Waiting for action</span>
             <strong>{{ pendingCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Confirmed bookings</span>
+            <small>Pending bookings</small>
+            <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+          </article>
+          <article class="priority-card confirmed">
+            <span class="priority-icon"><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon></span>
+            <span>Ready to serve</span>
             <strong>{{ confirmedCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Ongoing rides</span>
+            <small>Confirmed bookings</small>
+            <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+          </article>
+          <article class="priority-card ongoing">
+            <span class="priority-icon"><ion-icon name="car-outline" aria-hidden="true"></ion-icon></span>
+            <span>On the road</span>
             <strong>{{ ongoingCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Completed rides</span>
-            <strong>{{ completedCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Cancelled bookings</span>
-            <strong>{{ cancelledCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Declined bookings</span>
-            <strong>{{ declinedCount }}</strong>
-          </div>
+            <small>Ongoing rides</small>
+            <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+          </article>
+          <article class="priority-card drivers">
+            <span class="priority-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
+            <span>Driver readiness</span>
+            <strong>{{ availableDriverCount }}</strong>
+            <small>Available drivers</small>
+            <ion-icon class="priority-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+          </article>
         </section>
-        <p class="empty-note" *ngIf="totalCount === 0">
-          {{ reportPeriod === 'all' ? 'No bookings are stored in this browser.' : 'No bookings were created in this period.' }}
-        </p>
+        <p class="empty-note" *ngIf="totalCount === 0">No bookings for this period.</p>
         <p class="empty-note" *ngIf="bookingsMissingCreatedAt > 0">
           {{ bookingsMissingCreatedAt }} booking{{ bookingsMissingCreatedAt === 1 ? '' : 's' }} have no creation time, so they are left out of this period.
         </p>
-        <ul class="status-bars" aria-label="Booking status share">
-          <li *ngFor="let item of bookingStatusBars">
-            <div class="bar-label">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.count }}</strong>
+        <details class="admin-insight">
+          <summary>
+            <span class="insight-icon"><ion-icon name="list-outline" aria-hidden="true"></ion-icon></span>
+            <span><strong>Booking report</strong><small>All booking totals and statuses</small></span>
+            <span class="summary-count">{{ totalCount }}</span>
+          </summary>
+          <section class="stats-grid report-grid" aria-label="All booking totals">
+            <div class="stat-card">
+              <span>Total bookings</span>
+              <strong>{{ totalCount }}</strong>
             </div>
-            <div
-              class="bar-track"
-              role="progressbar"
-              [attr.aria-valuenow]="item.count"
-              aria-valuemin="0"
-              [attr.aria-valuemax]="totalCount"
-              [attr.aria-label]="item.label"
-            >
-              <div class="bar-fill" [ngClass]="item.tone" [style.width.%]="item.percent"></div>
+            <div class="stat-card">
+              <span>Completed rides</span>
+              <strong>{{ completedCount }}</strong>
             </div>
-          </li>
-        </ul>
+            <div class="stat-card">
+              <span>Cancelled bookings</span>
+              <strong>{{ cancelledCount }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Declined bookings</span>
+              <strong>{{ declinedCount }}</strong>
+            </div>
+          </section>
+          <ul class="status-bars" aria-label="Booking status share">
+            <li *ngFor="let item of bookingStatusBars">
+              <div class="bar-label">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.count }}</strong>
+              </div>
+              <div
+                class="bar-track"
+                role="progressbar"
+                [attr.aria-valuenow]="item.count"
+                aria-valuemin="0"
+                [attr.aria-valuemax]="totalCount"
+                [attr.aria-label]="item.label"
+              >
+                <div class="bar-fill" [ngClass]="item.tone" [style.width.%]="item.percent"></div>
+              </div>
+            </li>
+          </ul>
+        </details>
 
-        <h3>Current accounts</h3>
-        <p class="empty-note">
-          These totals are the accounts stored now. The date filter does not change them. Available drivers are approved drivers marked Available.
-        </p>
-        <section class="stats-grid report-grid" aria-label="Current accounts">
-          <div class="stat-card">
-            <span>Registered passengers</span>
-            <strong>{{ registeredPassengerCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Registered drivers</span>
-            <strong>{{ registeredDriverCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Approved drivers</span>
-            <strong>{{ approvedDriverCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Pending passenger approvals</span>
-            <strong>{{ pendingPassengerCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Pending driver approvals</span>
-            <strong>{{ pendingDriverCount }}</strong>
-          </div>
-          <div class="stat-card">
-            <span>Available drivers</span>
-            <strong>{{ availableDriverCount }}</strong>
-          </div>
-        </section>
+        <details class="admin-insight">
+          <summary>
+            <span class="insight-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
+            <span><strong>Accounts</strong><small>Passengers, drivers, approvals, and availability</small></span>
+            <span class="summary-count">{{ registeredPassengerCount + registeredDriverCount }}</span>
+          </summary>
+          <section class="stats-grid report-grid" aria-label="Current accounts">
+            <div class="stat-card">
+              <span>Registered passengers</span>
+              <strong>{{ registeredPassengerCount }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Registered drivers</span>
+              <strong>{{ registeredDriverCount }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Approved drivers</span>
+              <strong>{{ approvedDriverCount }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Pending passenger approvals</span>
+              <strong>{{ pendingPassengerCount }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Pending driver approvals</span>
+              <strong>{{ pendingDriverCount }}</strong>
+            </div>
+            <div class="stat-card">
+              <span>Available drivers</span>
+              <strong>{{ availableDriverCount }}</strong>
+            </div>
+          </section>
+        </details>
 
-        <h3>Referrals</h3>
+        <details class="admin-insight">
+          <summary>
+            <span class="insight-icon"><ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon></span>
+            <span><strong>Referrals</strong><small>Replacement drivers</small></span>
+            <span class="summary-count">{{ referralAttemptCount }}</span>
+          </summary>
         <p class="referral-note" *ngIf="referralMetricsAvailable">
           Each booking keeps one current referral. These counts are bookings with a referral, not extra bookings. Referral times are not stored.
         </p>
@@ -153,20 +185,22 @@
             <strong>{{ declinedReferralCount }}</strong>
           </div>
         </section>
-        <p class="empty-note" *ngIf="referralMetricsAvailable && referralAttemptCount === 0">
-          No referrals are stored in this browser.
-        </p>
+        <p class="empty-note" *ngIf="referralMetricsAvailable && referralAttemptCount === 0">No referrals yet.</p>
+        </details>
 
-        <h3>Driver performance</h3>
+        <details class="admin-insight">
+          <summary>
+            <span class="insight-icon"><ion-icon name="star-outline" aria-hidden="true"></ion-icon></span>
+            <span><strong>Driver performance</strong><small>Completed rides and reviews</small></span>
+            <span class="summary-count">{{ driverPerformance.length }}</span>
+          </summary>
         <p class="referral-note" *ngIf="performanceMetricsAvailable">
           Completed rides are counted for the final assigned driver. Ratings come from passenger reviews on those rides. Completion time is not stored, so this list is All Time.
         </p>
         <p class="referral-note" *ngIf="!performanceMetricsAvailable">
           Completed rides do not store a completion time, so Today, This Week, and This Month cannot be calculated. Choose All Time to see completed rides and ratings.
         </p>
-        <p class="empty-note" *ngIf="performanceMetricsAvailable && driverPerformance.length === 0">
-          No approved drivers yet.
-        </p>
+        <p class="empty-note" *ngIf="performanceMetricsAvailable && driverPerformance.length === 0">No driver data yet.</p>
         <div class="performance-list" *ngIf="performanceMetricsAvailable && driverPerformance.length > 0">
           <article class="performance-row" *ngFor="let driver of driverPerformance">
             <strong>{{ driver.name }}</strong>
@@ -180,6 +214,7 @@
           {{ completedRidesOutsideApprovedDrivers === 1 ? 'is' : 'are' }} assigned to a driver who is not an approved account, so
           {{ completedRidesOutsideApprovedDrivers === 1 ? 'it is' : 'they are' }} not listed here.
         </p>
+        </details>
       </section>
 
       <div class="booking-filter" *ngIf="listTab === 'active'" role="group" aria-label="Booking status">
@@ -360,27 +395,29 @@
       </ng-container>
 
       <section class="referral-history" *ngIf="listTab === 'history'" aria-labelledby="referral-history-title">
-        <div class="section-heading">
+        <div class="section-heading history-heading">
+          <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
           <h2 id="referral-history-title">Referral history</h2>
         </div>
-        <p class="referral-note">
-          Each booking keeps one current referral. Referral times are not stored, so the timeline has no dates.
-        </p>
 
-        <section class="stats-grid" aria-label="Referral totals">
-          <div class="stat-card">
+        <section class="history-stats" aria-label="Referral totals">
+          <div class="history-stat-card total">
+            <ion-icon name="list-outline" aria-hidden="true"></ion-icon>
             <span>Total</span>
             <strong>{{ referralRides.length }}</strong>
           </div>
-          <div class="stat-card">
+          <div class="history-stat-card pending">
+            <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
             <span>Pending</span>
             <strong>{{ pendingReferralCount }}</strong>
           </div>
-          <div class="stat-card">
+          <div class="history-stat-card confirmed">
+            <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
             <span>Confirmed</span>
             <strong>{{ confirmedReferralCount }}</strong>
           </div>
-          <div class="stat-card">
+          <div class="history-stat-card declined">
+            <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
             <span>Declined</span>
             <strong>{{ declinedReferralCount }}</strong>
           </div>
@@ -398,21 +435,21 @@
             [class.selected]="referralFilter === 'accepted_by_replacement'"
             (click)="selectReferralFilter('accepted_by_replacement')"
           >
-            Accepted by Replacement <em>{{ referralFilterCount('accepted_by_replacement') }}</em>
+            Accepted <em>{{ referralFilterCount('accepted_by_replacement') }}</em>
           </button>
           <button
             type="button"
             [class.selected]="referralFilter === 'passenger_confirmed'"
             (click)="selectReferralFilter('passenger_confirmed')"
           >
-            Passenger Confirmed <em>{{ referralFilterCount('passenger_confirmed') }}</em>
+            Confirmed <em>{{ referralFilterCount('passenger_confirmed') }}</em>
           </button>
           <button
             type="button"
             [class.selected]="referralFilter === 'passenger_declined'"
             (click)="selectReferralFilter('passenger_declined')"
           >
-            Passenger Declined <em>{{ referralFilterCount('passenger_declined') }}</em>
+            Declined <em>{{ referralFilterCount('passenger_declined') }}</em>
           </button>
         </div>
 
@@ -421,7 +458,7 @@
             <ion-icon name="time-outline"></ion-icon>
           </div>
           <h2>{{ referralEmptyTitle }}</h2>
-          <p>Referral records saved on bookings in this browser appear here. This view does not change them.</p>
+          <p>Matching referral records will appear here.</p>
         </section>
 
         <article class="ride-card" *ngFor="let ride of visibleReferrals; trackBy: trackRide">
@@ -431,10 +468,6 @@
               <h3 class="person-name">{{ ride.passengerName || 'Passenger' }}</h3>
             </div>
             <span class="status-badge" [ngClass]="referralTone(ride)">{{ referralStatusLabel(ride) }}</span>
-          </div>
-          <div class="passenger-info">
-            <span>Referral ID</span>
-            <strong>Not stored</strong>
           </div>
           <div class="passenger-info">
             <span>Booking ID</span>
@@ -447,14 +480,6 @@
           <div class="passenger-info">
             <span>Replacement driver</span>
             <strong>{{ referralReplacementName(ride) }}</strong>
-          </div>
-          <div class="passenger-info">
-            <span>Referral status</span>
-            <strong>{{ referralStatusLabel(ride) }}</strong>
-          </div>
-          <div class="passenger-info">
-            <span>Referral created</span>
-            <strong>Not stored</strong>
           </div>
           <div class="passenger-info">
             <span>Replacement response</span>
@@ -474,28 +499,40 @@
       </section>
 
       <ng-container *ngIf="listTab === 'accounts'">
-        <div class="account-switch" role="group" aria-label="Account category">
+        <section class="account-overview" aria-label="Account overview">
+          <div class="account-switch account-type-cards" role="group" aria-label="Account category">
           <button
             type="button"
+            class="account-type-card passenger"
             [class.selected]="accountGroup === 'passenger'"
             [attr.aria-pressed]="accountGroup === 'passenger'"
             (click)="selectAccountGroup('passenger')"
           >
-            Passenger Accounts
-            <em>{{ accountCount('passenger') }}</em>
+            <span class="account-type-icon"><ion-icon name="person-outline" aria-hidden="true"></ion-icon></span>
+            <span><strong>Passenger<br>Accounts</strong><em>{{ accountCount('passenger') }}</em></span>
+            <ion-icon class="account-card-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
           </button>
           <button
             type="button"
+            class="account-type-card driver"
             [class.selected]="accountGroup === 'driver'"
             [attr.aria-pressed]="accountGroup === 'driver'"
             (click)="selectAccountGroup('driver')"
           >
-            Driver Accounts
-            <em>{{ accountCount('driver') }}</em>
+            <span class="account-type-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
+            <span><strong>Driver<br>Accounts</strong><em>{{ accountCount('driver') }}</em></span>
+            <ion-icon class="account-card-arrow" name="arrow-forward-outline" aria-hidden="true"></ion-icon>
           </button>
         </div>
 
-        <div class="status-switch" role="group" aria-label="Account status">
+        <div class="account-status-summary" aria-label="Selected account category status">
+          <div class="account-status-card pending"><ion-icon name="time-outline" aria-hidden="true"></ion-icon><span class="account-status-label">Pending</span><strong>{{ statusCount('pending') }}</strong></div>
+          <div class="account-status-card approved"><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon><span class="account-status-label">Approved</span><strong>{{ statusCount('approved') }}</strong></div>
+          <div class="account-status-card rejected"><ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon><span class="account-status-label">Rejected</span><strong>{{ statusCount('rejected') }}</strong></div>
+        </div>
+        </section>
+
+        <div class="status-switch account-status-filter" role="group" aria-label="Account status">
           <button
             type="button"
             [class.selected]="accountFilter === 'pending'"
@@ -558,7 +595,7 @@
             </div>
             <span class="status-badge" [ngClass]="accountStatusClass(account)">{{ accountStatusLabel(account) }}</span>
           </div>
-          <div class="passenger-info">
+          <div class="passenger-info" *ngIf="account.accountType !== 'driver'">
             <span>Email</span>
             <strong>{{ account.email }}</strong>
           </div>
@@ -566,18 +603,30 @@
             <span>Registered</span>
             <strong>{{ accountRegisteredOn(account) }}</strong>
           </div>
-          <div class="passenger-info">
+          <div class="passenger-info" *ngIf="account.accountType !== 'driver'">
             <span>Phone</span>
             <strong>{{ account.phone || 'Not provided' }}</strong>
           </div>
-          <div class="passenger-info" *ngIf="account.address">
+          <div class="passenger-info" *ngIf="account.accountType !== 'driver' && account.address">
             <span>Address</span>
             <strong>{{ account.address }}</strong>
           </div>
-          <div class="passenger-info" *ngFor="let line of vehicleLines(account)">
-            <span>{{ line.label }}</span>
-            <strong>{{ line.value }}</strong>
-          </div>
+          <ng-container *ngIf="account.accountType === 'driver'">
+            <p class="driver-review-note">Driver-declared application details. Account approval does not verify vehicle capacity or accessibility.</p>
+            <section class="driver-review-section" *ngFor="let section of driverReviewSections(account)">
+              <h4>{{ section.heading }}</h4>
+              <div class="passenger-info" *ngFor="let line of section.lines">
+                <span>{{ line.label }}</span>
+                <strong>{{ line.value }}</strong>
+              </div>
+            </section>
+          </ng-container>
+          <ng-container *ngIf="account.accountType !== 'driver'">
+            <div class="passenger-info" *ngFor="let line of vehicleLines(account)">
+              <span>{{ line.label }}</span>
+              <strong>{{ line.value }}</strong>
+            </div>
+          </ng-container>
           <div class="admin-actions account-actions" *ngIf="canReviewAccount(account)">
             <button
               type="button"
@@ -600,84 +649,34 @@
       </ng-container>
 
       <ng-container *ngIf="listTab === 'drivers'">
-        <section class="driver-stats" aria-label="Approved driver totals">
-          <article class="stat-card">
-            <span>Total approved</span>
-            <strong>{{ driverCount('all') }}</strong>
-          </article>
-          <article class="stat-card">
-            <span>Available</span>
-            <strong>{{ driverCount('available') }}</strong>
-          </article>
-          <article class="stat-card">
-            <span>Busy</span>
-            <strong>{{ driverCount('busy') }}</strong>
-          </article>
-          <article class="stat-card">
-            <span>Offline</span>
-            <strong>{{ driverCount('offline') }}</strong>
-          </article>
+        <section class="driver-overview" aria-label="Driver account overview">
+          <div class="driver-overview-heading">
+            <span class="driver-overview-icon"><ion-icon name="people-outline" aria-hidden="true"></ion-icon></span>
+            <div><span>Driver accounts</span><h2>Availability overview</h2></div>
+          </div>
+          <section class="driver-status-cards" aria-label="Approved driver totals">
+            <article class="driver-status-card approved">
+              <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+              <span class="driver-status-label">Approved</span>
+              <strong>{{ driverCount('all') }}</strong>
+            </article>
+            <article class="driver-status-card available">
+              <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+              <span class="driver-status-label">Available</span>
+              <strong>{{ driverCount('available') }}</strong>
+            </article>
+            <article class="driver-status-card busy">
+              <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+              <span class="driver-status-label">Busy</span>
+              <strong>{{ driverCount('busy') }}</strong>
+            </article>
+            <article class="driver-status-card offline">
+              <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+              <span class="driver-status-label">Offline</span>
+              <strong>{{ driverCount('offline') }}</strong>
+            </article>
+          </section>
         </section>
-
-        <div class="driver-filters" role="group" aria-label="Driver availability">
-          <button type="button" [class.selected]="driverAvailabilityFilter === 'all'" (click)="selectDriverFilter('all')">
-            All
-            <em>{{ driverCount('all') }}</em>
-          </button>
-          <button type="button" [class.selected]="driverAvailabilityFilter === 'available'" (click)="selectDriverFilter('available')">
-            Available
-            <em>{{ driverCount('available') }}</em>
-          </button>
-          <button type="button" [class.selected]="driverAvailabilityFilter === 'busy'" (click)="selectDriverFilter('busy')">
-            Busy
-            <em>{{ driverCount('busy') }}</em>
-          </button>
-          <button type="button" [class.selected]="driverAvailabilityFilter === 'offline'" (click)="selectDriverFilter('offline')">
-            Offline
-            <em>{{ driverCount('offline') }}</em>
-          </button>
-        </div>
-
-        <section class="empty-card" *ngIf="visibleApprovedDrivers.length === 0">
-          <div class="empty-icon">
-            <ion-icon name="people-outline"></ion-icon>
-          </div>
-          <h2>{{ driverEmptyTitle }}</h2>
-          <p>{{ driverEmptyCopy }}</p>
-        </section>
-
-        <article class="ride-card" *ngFor="let driver of visibleApprovedDrivers">
-          <div class="driver-panel-head">
-            <span class="driver-avatar light" aria-hidden="true">
-              <ion-icon name="person-outline"></ion-icon>
-            </span>
-            <div class="stack">
-              <span class="status-chip" [ngClass]="driverAvailability(driver)">{{ driverAvailabilityLabel(driver) }}</span>
-              <h3>{{ driver.fullName }}</h3>
-              <p>Approved</p>
-            </div>
-          </div>
-          <div class="passenger-info">
-            <span>Vehicle</span>
-            <strong>{{ driverVehicleType(driver) }}</strong>
-          </div>
-          <div class="passenger-info">
-            <span>Plate</span>
-            <strong>{{ driverPlate(driver) }}</strong>
-          </div>
-          <div class="passenger-info">
-            <span>Rating</span>
-            <strong>{{ driverRatingText(driver) }}</strong>
-          </div>
-          <div class="passenger-info">
-            <span>Availability</span>
-            <strong>{{ driverAvailabilityLabel(driver) }}</strong>
-          </div>
-          <div class="passenger-info">
-            <span>Approval</span>
-            <strong>Approved</strong>
-          </div>
-        </article>
       </ng-container>
 
     </div>

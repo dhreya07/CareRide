@@ -1,282 +1,203 @@
-:host {
-  display: block;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-}
+@use '../../shared/passenger-glass' as glass;
 
-.rides-page {
-  background: #9BA8AB;
-  color: #06141B;
-}
+:host { display: block; width: 100%; height: 100vh; overflow: hidden; }
+.rides-page { background: #9ba8ab; color: #06141b; }
+.rides-container { background: #ccd0cf; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+.brand { color: #06141b; font-size: 22px; font-weight: 850; letter-spacing: -.04em; text-decoration: none; }
+.brand span { color: #11212d; }
+.profile-chip { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: #9ba8ab; color: #11212d; font-weight: 800; text-decoration: none; }
+.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+.eyebrow { display: block; font-size: 11px; font-weight: 850; letter-spacing: .12em; color: #4a5c6a; margin-bottom: 7px; }
+.page-title { margin: 0; font-size: clamp(27px, 5vw, 36px); letter-spacing: -.04em; }
+.page-subtitle { color: #253745; margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
+.ride-count { white-space: nowrap; font-size: 12px; font-weight: 800; background: #e9eeee; border-radius: 100px; padding: 8px 11px; }
+.empty-state, .ride-card { background: #fff; border: 1px solid #b5c0c2; border-radius: 22px; padding: 20px; box-shadow: 0 8px 24px #06141b08; }
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 28px 20px; }
+.empty-icon, .when-icon { display: grid; place-items: center; flex-shrink: 0; width: 43px; height: 43px; border-radius: 13px; background: #e6ebeb; color: #11212d; }
+.empty-icon { width: 62px; height: 62px; border-radius: 20px; }
+.empty-icon ion-icon, .when-icon ion-icon { font-size: 23px; }
+.empty-state h2 { margin: 16px 0 7px; font-size: 21px; }
+.empty-state p { max-width: 360px; color: #253745; line-height: 1.55; margin: 0 0 18px; }
+.primary-link, .details-button, .cancel-ride-button { min-height: 46px; border-radius: 13px; font-weight: 750; font-size: 14px; }
+.primary-link, .details-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; background: #11212d; color: #fff; text-decoration: none; border: 0; }
+.ride-card { margin-bottom: 14px; }
+.ride-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ride-when { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.ride-when strong { font-size: 15px; }
+.ride-when p { margin: 3px 0 0; color: #4a5c6a; font-size: 13px; }
+.status-badge { display: inline-flex; align-items: center; border-radius: 99px; padding: 7px 11px; background: #e3e9e9; color: #11212d; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.route { display: flex; gap: 13px; padding: 17px 0; margin: 15px 0 0; border-top: 1px solid #e2e8e9; border-bottom: 1px solid #e2e8e9; }
+.route-track { width: 14px; display: flex; align-items: center; flex-direction: column; padding: 5px 0; }
+.route-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.pickup-dot { border: 3px solid #11212d; background: white; }
+.destination-dot { background: #11212d; }
+.route-line { width: 2px; flex: 1; min-height: 24px; background: #c5d0d2; }
+.route-stops { display: grid; gap: 16px; min-width: 0; }
+.route small { display: block; margin-bottom: 3px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #60717a; font-weight: 850; }
+.route strong { display: block; font-size: 14px; color: #06141b; line-height: 1.4; overflow-wrap: anywhere; }
+.booking-summary { display: flex; flex-wrap: wrap; gap: 7px 18px; padding: 13px 0 0; font-size: 12px; color: #4a5c6a; }
+.booking-summary span { display: inline-flex; align-items: center; gap: 5px; }
+.booking-summary ion-icon { font-size: 15px; }
+.more-details { border-top: 1px solid #e2e8e9; margin-top: 15px; }
+.more-details summary { display: flex; justify-content: space-between; align-items: center; padding: 13px 0 2px; color: #253745; font-size: 13px; font-weight: 800; cursor: pointer; list-style: none; }
+.more-details summary::-webkit-details-marker { display: none; }
+.more-details[open] summary ion-icon { transform: rotate(180deg); }
+.expanded-content { padding: 14px 0 0; }
+.meta { margin: 0 0 9px; color: #253745; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.progress-timeline { list-style: none; margin: 15px 0; padding: 0; }
+.progress-timeline li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; padding-bottom: 12px; }
+.progress-timeline li:last-child { padding-bottom: 0; }
+.progress-mark { width: 13px; height: 13px; margin-top: 3px; border: 2px solid #9ba8ab; border-radius: 50%; background: #fff; }
+.progress-timeline .done .progress-mark { border-color: #11212d; background: #11212d; }
+.progress-timeline .current .progress-mark { border-color: #11212d; background: #ccd0cf; box-shadow: 0 0 0 2px #11212d; }
+.progress-timeline strong, .progress-timeline small { display: block; }
+.progress-timeline strong { color: #06141b; font-size: 13px; }
+.progress-timeline small { color: #4a5c6a; font-size: 12px; }
+.progress-outcome, .referral-notice { margin: 13px 0 0; color: #253745; font-size: 13px; line-height: 1.5; }
+.referral-notice a { display: block; margin-top: 5px; color: #11212d; font-weight: 800; }
+.ride-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 15px; }
+.details-button { width: 100%; }
+.cancel-ride-button { width: 100%; border: 1px solid #9ba8ab; background: #fff; color: #11212d; }
+.cancel-ride-button:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 480px) { .ride-card { padding: 16px; } .page-heading { align-items: flex-start; flex-direction: column; } .ride-actions { grid-template-columns: 1fr; } .ride-when strong { font-size: 14px; } }
+@media (min-width: 700px) and (max-width: 1023px) { .rides-page { padding: 24px; } }
+@media (min-width: 1024px) { .rides-page { background: #ccd0cf; padding: 0; } }
 
+/* Match the Passenger Home palette and type hierarchy. */
+.rides-page, .rides-container {
+  color: #20394b;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #dce8ee;
+}
 .rides-container {
-  background: #CCD0CF;
+  background: radial-gradient(ellipse at 96% 24%, #a9c3ce 0, transparent 55%),
+    radial-gradient(ellipse at 10% 0%, #a6bfcf 0, transparent 29%),
+    linear-gradient(150deg, #dce8ee 8%, #bdcfd9 70%, #a5bdcb);
 }
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
+.page-header { margin-bottom: 14px; }
+.brand, .brand span { color: #20394b; }
+.brand { font-size: clamp(25px, 6vw, 34px); font-weight: 900; letter-spacing: -.06em; }
+.profile-chip, .empty-icon, .when-icon {
+  color: #284f60;
+  background: linear-gradient(145deg, #d6eaf0 6%, #94bbc7 95%);
+  border: 1px solid #eaf5f9;
+  box-shadow: 0 4px 9px #00786c26;
 }
-
-.brand {
-  color: #06141B;
-  font-size: 22px;
-  font-weight: 850;
-  letter-spacing: -0.04em;
-  text-decoration: none;
+.profile-chip { border-radius: 15px; }
+.page-heading {
+  flex-wrap: wrap;
+  padding: clamp(16px, 4vw, 24px);
+  border: 2px solid #8fadb9;
+  border-radius: 24px;
+  color: #fff;
+  background: radial-gradient(circle at 90% 30%, #00a78e 0, transparent 64%), linear-gradient(132deg, #04363a, #006b62);
+  box-shadow: inset 0 0 0 1px #fff, 0 8px 17px #006a5f50;
 }
-
-.brand span {
-  color: #11212D;
+.eyebrow { color: #c8e4ec; }
+.page-title { font-weight: 850; letter-spacing: -.045em; }
+.page-subtitle { color: #e6f2f6; }
+.ride-count { color: #00483e; background: linear-gradient(110deg, #dceff5, #a9cbd9); }
+.empty-state, .ride-card {
+  border: 2px solid #96b5c3;
+  border-radius: 23px;
+  background: linear-gradient(135deg, #edf5f8, #ccdee7);
+  box-shadow: inset 0 0 0 2px #f7ffff, 0 7px 13px #00786c33;
+}
+.empty-state p, .ride-when p, .booking-summary, .meta { color: #405e70; }
+.route, .more-details { border-color: #a7dedb; }
+.route strong, .more-details summary, .progress-timeline strong { color: #20394b; }
+.route small { color: #405e70; }
+.pickup-dot { border-color: #00745e; }
+.destination-dot { background: #00745e; }
+.route-line { background: #8accc8; }
+.progress-timeline .done .progress-mark { border-color: #00745e; background: #00745e; }
+.progress-timeline .current .progress-mark { border-color: #00745e; background: #d6eaf0; box-shadow: 0 0 0 2px #00745e; }
+.primary-link, .details-button {
+  border-radius: 999px;
+  background: linear-gradient(140deg, #007767, #043d40);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #aacbd5, 0 4px 9px #00594930;
+}
+.cancel-ride-button { border-color: #83b9b5; border-radius: 999px; color: #20394b; background: #f7ffff; }
+.rides-page :is(a, button, summary):focus-visible { outline: 3px solid #087c75; outline-offset: 3px; }
+@media (max-width: 360px) {
+  .ride-card { padding: 13px; }
+  .ride-card-top { flex-wrap: wrap; }
+  .ride-actions { grid-template-columns: 1fr; }
 }
 
 .profile-chip {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #9BA8AB;
-  color: #11212D;
-  font-weight: 800;
-  text-decoration: none;
+  width: clamp(76px, 23vw, 102px);
+  height: auto;
+  aspect-ratio: 3 / 2;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid #e9fffa;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #e4fff7, #78e4dd);
+  box-shadow: inset 0 0 0 1px #f5fffd, 0 5px 12px #00685b30;
 }
+.profile-brand-mark { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.page-heading .page-title { color: #f4fffd; }
 
-.page-title {
-  margin: 0;
-  font-size: clamp(28px, 5vw, 36px);
-  letter-spacing: -0.04em;
-}
-
-.page-subtitle {
-  color: #11212D;
-  margin: 8px 0 22px;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.empty-state,
-.ride-card {
-  background: white;
-  border: 1px solid #9BA8AB;
-  border-radius: 22px;
-  padding: 22px;
-  box-shadow: 0 8px 24px #06141B08;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.empty-state span,
-.when-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: #9BA8AB;
-  color: #11212D;
-}
-
-.empty-state span {
-  width: 62px;
-  height: 62px;
-  border-radius: 20px;
-}
-
-.empty-state ion-icon,
-.when-icon ion-icon {
-  font-size: 26px;
-}
-
-.empty-state h2 {
-  margin: 18px 0 7px;
-  font-size: 21px;
-}
-
-.empty-state p {
-  max-width: 360px;
-  color: #11212D;
-  line-height: 1.55;
-  margin: 0 0 18px;
-}
-
-.primary-link,
-.details-button,
-.cancel-ride-button {
-  min-height: 48px;
-  border-radius: 14px;
-  font-weight: 750;
-  font-size: 15px;
-}
-
-.primary-link,
-.details-button {
-  display: inline-flex;
-  align-items: center;
+.care-brand-header {
   justify-content: center;
-  padding: 0 18px;
-  background: #11212D;
-  color: white;
-  text-decoration: none;
-  border: 0;
-}
-
-.ride-card {
+  gap: 9px;
+  min-height: 52px;
   margin-bottom: 14px;
 }
-
-.ride-card-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.ride-when {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.ride-when p {
-  margin: 2px 0 0;
-  color: #11212D;
-}
-
-.route {
+.care-brand-emblem {
   display: grid;
-  gap: 12px;
-  margin: 18px 0 14px;
-  padding: 14px 0;
-  border-top: 1px solid #9BA8AB;
-  border-bottom: 1px solid #9BA8AB;
+  place-items: center;
+  width: 60px;
+  min-height: 44px;
+  flex: 0 0 60px;
 }
-
-.route small {
+.care-brand-emblem img {
   display: block;
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+.care-brand-wordmark {
+  display: grid;
+  gap: 4px;
+  color: #20394b;
+  text-decoration: none;
+}
+.care-brand-wordmark strong {
+  font-size: clamp(25px, 7vw, 34px);
+  font-weight: 900;
+  line-height: .95;
+  letter-spacing: -.055em;
+}
+.care-brand-wordmark span {
+  font-size: clamp(7px, 1.9vw, 9px);
+  font-weight: 800;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  color: #11212D;
-  font-weight: 800;
 }
 
-.route strong {
-  font-size: 16px;
-  color: #06141B;
-  line-height: 1.4;
+/* Aqua backdrop shared by the Passenger screens. */
+.rides-page, .rides-container {
+  background: radial-gradient(ellipse at 95% 14%, #8ceee8 0, transparent 52%),
+    linear-gradient(150deg, #e6fbff, #b4f0ef 58%, #a0e5e8);
+}
+.care-brand-wordmark, .brand, .brand span { color: #073f43; }
+
+.empty-icon, .when-icon { background: linear-gradient(145deg, #e1fff2, #b8e5d7); color: #214e49; }
+.ride-count { background: linear-gradient(145deg, #e3efff, #bed3ed); color: #294e70; }
+
+/* Frosted surfaces over the aqua Passenger theme. */
+.empty-state, .ride-card {
+  background: linear-gradient(142deg, rgba(255, 255, 255, .83), rgba(218, 249, 250, .55));
+  border-color: rgba(249, 255, 255, .92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .86), 0 8px 23px rgba(0, 88, 88, .14);
+  -webkit-backdrop-filter: blur(13px) saturate(135%);
+  backdrop-filter: blur(13px) saturate(135%);
 }
 
-.meta {
-  margin: 0 0 8px;
-  color: #11212D;
-  font-size: 15px;
-  line-height: 1.45;
-}
 
-.progress-timeline {
-  list-style: none;
-  margin: 14px 0;
-  padding: 0;
-}
-
-.progress-timeline li {
-  display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 10px;
-  align-items: start;
-  margin: 0;
-  padding-bottom: 12px;
-}
-
-.progress-timeline li:last-child {
-  padding-bottom: 0;
-}
-
-.progress-mark {
-  width: 14px;
-  height: 14px;
-  margin-top: 4px;
-  border: 2px solid #9BA8AB;
-  border-radius: 50%;
-  background: #fff;
-}
-
-.progress-timeline .done .progress-mark {
-  border-color: #11212D;
-  background: #11212D;
-}
-
-.progress-timeline .current .progress-mark {
-  border-color: #11212D;
-  background: #CCD0CF;
-  box-shadow: 0 0 0 3px #11212D;
-}
-
-.progress-timeline strong,
-.progress-timeline small {
-  display: block;
-}
-
-.progress-timeline strong {
-  color: #06141B;
-  font-size: 16px;
-}
-
-.progress-timeline small {
-  color: #253745;
-  font-size: 15px;
-}
-
-.progress-outcome,
-.referral-notice {
-  margin: 0 0 12px;
-  color: #06141B;
-  font-size: 16px;
-  line-height: 1.45;
-}
-
-.referral-notice a {
-  display: inline-block;
-  margin-top: 6px;
-  color: #11212D;
-  font-weight: 800;
-}
-
-.ride-actions {
-  display: grid;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.cancel-ride-button {
-  border: 1px solid #4A5C6A;
-  background: white;
-  color: #06141B;
-}
-
-.cancel-ride-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-@media (min-width: 700px) and (max-width: 1023px) {
-  .rides-page {
-    padding: 24px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .rides-page {
-    background: #CCD0CF;
-    padding: 0;
-  }
-}
+.rides-container { @include glass.aqua-backdrop; }
+.empty-state, .ride-card { @include glass.frosted-card; }

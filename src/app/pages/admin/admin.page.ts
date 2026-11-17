@@ -821,6 +821,79 @@ export class AdminPage implements OnInit, OnDestroy {
     return lines;
   }
 
+  driverReviewSections(user: LocalCareRideUser): { heading: string; lines: { label: string; value: string }[] }[] {
+    if (normalizeAccountRole(user.accountType) !== 'driver') return [];
+    const show = (value: string | number | null | undefined, missing = 'Not provided'): string => {
+      if (value === null || value === undefined || value === '') return missing;
+      const result = String(value).trim();
+      return result || missing;
+    };
+    const status = (value: LocalCareRideUser['capacityVerificationStatus']): string => {
+      if (!value) return 'Not yet available';
+      return value === 'in_review' ? 'In review' : value[0].toUpperCase() + value.slice(1);
+    };
+    const capabilities = (value: string[] | undefined, missing: string): string => value === undefined
+      ? missing
+      : value.length
+        ? value.map((capability) => capability.replace(/[_-]/g, ' ')).join(', ')
+        : 'None recorded';
+    const legacyCapabilities = [
+      user.wheelchairAccessible ? 'Wheelchair accessible' : null,
+      user.seniorAssistance ? 'Senior assistance' : null,
+    ].filter((value): value is string => value !== null);
+
+    return [
+      {
+        heading: 'Personal and emergency contact',
+        lines: [
+          { label: 'Full name', value: show(user.fullName) },
+          { label: 'Email', value: show(user.email) },
+          { label: 'Phone', value: show(user.phone) },
+          { label: 'Address', value: show(user.address) },
+          { label: 'Emergency contact name', value: show(user.emergencyContactName) },
+          { label: 'Emergency contact phone', value: show(user.emergencyContactPhone) },
+        ],
+      },
+      {
+        heading: "Driver's license",
+        lines: [
+          { label: 'License number', value: show(user.licenseNumber) },
+          { label: 'Expiration date', value: show(user.licenseExpirationDate) },
+        ],
+      },
+      {
+        heading: 'Vehicle registration',
+        lines: [
+          { label: 'Legacy vehicle type', value: show(user.vehicleType) },
+          { label: 'Body type', value: show(user.vehicleBodyType) },
+          { label: 'Brand', value: show(user.vehicleBrand) },
+          { label: 'Model', value: show(user.vehicleModel) },
+          { label: 'Variant', value: show(user.vehicleVariant) },
+          { label: 'Model year', value: show(user.vehicleModelYear) },
+          { label: 'Color', value: show(user.vehicleColor) },
+          { label: 'Plate number', value: show(user.plateNumber) },
+        ],
+      },
+      {
+        heading: 'Passenger capacity (excluding driver)',
+        lines: [
+          { label: 'Driver-declared capacity', value: show(user.passengerSeatingCapacity) },
+          { label: 'Capacity verification status', value: status(user.capacityVerificationStatus) },
+          { label: 'Admin-verified capacity', value: show(user.verifiedPassengerSeatingCapacity, 'Not yet available') },
+        ],
+      },
+      {
+        heading: 'Accessibility and assistance',
+        lines: [
+          { label: 'Driver-declared capabilities', value: capabilities(user.driverDeclaredAccessibility, 'Not provided') },
+          { label: 'Accessibility verification status', value: status(user.accessibilityVerificationStatus) },
+          { label: 'Admin-verified capabilities', value: capabilities(user.adminVerifiedAccessibility, 'Not yet available') },
+          { label: 'Legacy listing flags', value: legacyCapabilities.length ? legacyCapabilities.join(', ') : 'None declared' },
+        ],
+      },
+    ];
+  }
+
   get visibleAccounts(): LocalCareRideUser[] {
     return this.managedAccounts.filter(
       (user) => this.inAccountGroup(user, this.accountGroup) && this.matchesAccountFilter(user, this.accountFilter),
@@ -998,6 +1071,21 @@ export class AdminPage implements OnInit, OnDestroy {
       plateNumber: account.plateNumber,
       wheelchairAccessible: account.wheelchairAccessible,
       seniorAssistance: account.seniorAssistance,
+      licenseExpirationDate: account.licenseExpirationDate,
+      emergencyContactName: account.emergencyContactName,
+      emergencyContactPhone: account.emergencyContactPhone,
+      vehicleBodyType: account.vehicleBodyType,
+      vehicleBrand: account.vehicleBrand,
+      vehicleModel: account.vehicleModel,
+      vehicleVariant: account.vehicleVariant,
+      vehicleModelYear: account.vehicleModelYear,
+      vehicleColor: account.vehicleColor,
+      passengerSeatingCapacity: account.passengerSeatingCapacity,
+      verifiedPassengerSeatingCapacity: account.verifiedPassengerSeatingCapacity,
+      capacityVerificationStatus: account.capacityVerificationStatus,
+      driverDeclaredAccessibility: account.driverDeclaredAccessibility,
+      adminVerifiedAccessibility: account.adminVerifiedAccessibility,
+      accessibilityVerificationStatus: account.accessibilityVerificationStatus,
     };
   }
 

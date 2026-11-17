@@ -18,6 +18,12 @@ export interface MapCoordinate {
   longitude: number;
 }
 
+/** Extra pickup markers displayed on nearby booking previews. */
+export interface NearbyMapMarker extends MapCoordinate {
+  id: string;
+  label: string;
+}
+
 /** CareRide service area: Calapan City, Oriental Mindoro. */
 export const CALAPAN_CITY: MapCoordinate = { latitude: 13.4115, longitude: 121.1803 };
 export const CALAPAN_ZOOM = 14;
@@ -76,6 +82,7 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
   /** Device GPS accuracy for the pickup, in meters. Not used for the default map center. */
   @Input() pickupAccuracyMeters: number | null = null;
   @Input() driver: MapCoordinate | null = null;
+  @Input() nearbyPickups: NearbyMapMarker[] = [];
   @Input() driverAccuracyMeters: number | null = null;
   @Input() currentLocation: MapCoordinate | null = null;
   @Input() currentAccuracyMeters: number | null = null;
@@ -97,6 +104,7 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
   private pickupMarker: L.Marker | null = null;
   private destinationMarker: L.Marker | null = null;
   private driverMarker: L.Marker | null = null;
+  private readonly nearbyMarkers = new Map<string, L.CircleMarker>();
   private accuracyCircle: L.Circle | null = null;
   private currentDot: L.CircleMarker | null = null;
   private currentCircle: L.Circle | null = null;
@@ -134,6 +142,7 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
     this.pickupMarker = null;
     this.destinationMarker = null;
     this.driverMarker = null;
+    this.nearbyMarkers.clear();
     this.currentDot = null;
     this.currentCircle = null;
     this.accuracyCircle = null;
@@ -297,6 +306,7 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
       'Destination',
     );
     this.driverMarker = this.placeMarker(this.driverMarker, this.driver, 'driver', 'Driver');
+    this.drawNearbyMarkers();
     this.drawCurrentLocation();
   }
 
@@ -394,7 +404,12 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
     const routeKey = route.length >= 2
       ? `${route.length}:${route[0].latitude},${route[0].longitude}:${route[route.length - 1].latitude},${route[route.length - 1].longitude}`
       : '';
-    const key = `${this.pickup?.latitude ?? ''},${this.pickup?.longitude ?? ''}|${this.destination?.latitude ?? ''},${this.destination?.longitude ?? ''}|${this.driver?.latitude ?? ''},${this.driver?.longitude ?? ''}|${routeKey}`;
+    const nearby = this.nearbyPickups.filter((point) =>
+      Number.isFinite(point.latitude) && point.latitude >= -90 && point.latitude <= 90 &&
+      Number.isFinite(point.longitude) && point.longitude >= -180 && point.longitude <= 180,
+    );
+    const nearbyKey = nearby.map((point) => `${point.id}:${point.latitude},${point.longitude}`).join('|');
+    const key = `${this.pickup?.latitude ?? ''},${this.pickup?.longitude ?? ''}|${this.destination?.latitude ?? ''},${this.destination?.longitude ?? ''}|${this.driver?.latitude ?? ''},${this.driver?.longitude ?? ''}|${routeKey}|${nearbyKey}`;
     if (!force && key === this.focusKey) {
       return;
     }
@@ -407,6 +422,21 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
       });
       return;
     }
+    if (nearby.length > 0) {
+      const points = [this.pickup, this.destination, this.driver, ...nearby].filter(
+        (point): point is MapCoordinate => Boolean(point) &&
+          Number.isFinite(point!.latitude) && point!.latitude >= -90 && point!.latitude <= 90 &&
+          Number.isFinite(point!.longitude) && point!.longitude >= -180 && point!.longitude <= 180,
+      );
+      if (points.length >= 2) {
+        map.fitBounds(L.latLngBounds(points.map((point) => [point.latitude, point.longitude])), {
+          padding: [28, 28],
+        });
+      } else if (points.length === 1) {
+        map.setView([points[0].latitude, points[0].longitude], 16);
+      }
+      return;
+    }
     const focus = mapFocus(this.pickup, this.destination, this.driver);
     if ('points' in focus) {
       map.fitBounds(L.latLngBounds(focus.points.map((point) => [point.latitude, point.longitude])), {
@@ -415,6 +445,44 @@ export class LocationMapComponent implements AfterViewInit, OnChanges, OnDestroy
       return;
     }
     map.setView([focus.latitude, focus.longitude], focus.zoom);
+  }
+
+  /** Keeps nearby markers in sync without affecting single-ride markers. */
+  private drawNearbyMarkers(): void {
+    const map = this.map;
+    if (!map) {
+      return;
+    }
+    const valid = this.nearbyPickups.filter((point) =>
+      Boolean(point.id) &&
+      Number.isFinite(point.latitude) && point.latitude >= -90 && point.latitude <= 90 &&
+      Number.isFinite(point.longitude) && point.longitude >= -180 && point.longitude <= 180,
+    );
+    const activeIds = new Set(valid.map((point) => point.id));
+    for (const [id, marker] of this.nearbyMarkers) {
+      if (!activeIds.has(id)) {
+        marker.remove();
+        this.nearbyMarkers.delete(id);
+      }
+    }
+    for (const point of valid) {
+      const position = L.latLng(point.latitude, point.longitude);
+      const existing = this.nearbyMarkers.get(point.id);
+      if (existing) {
+        existing.setLatLng(position);
+        existing.unbindTooltip();
+        existing.bindTooltip(point.label, { direction: 'top' });
+        continue;
+      }
+      const marker = L.circleMarker(position, {
+        radius: 10,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#0f766e',
+        fillOpacity: 1,
+      }).bindTooltip(point.label, { direction: 'top' }).addTo(map);
+      this.nearbyMarkers.set(point.id, marker);
+    }
   }
 
   private placeMarker(

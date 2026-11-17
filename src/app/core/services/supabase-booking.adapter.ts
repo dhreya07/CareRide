@@ -30,6 +30,17 @@ export interface CloudBookingNotification {
   read: boolean;
 }
 
+/**
+ * A single current location for the authenticated passenger's active booking.
+ * This deliberately contains no driver id, name, or location history.
+ */
+export interface ActiveBookingDriverLocation {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number;
+  capturedAt: string;
+}
+
 const TRANSITIONS: Partial<Record<LocalRideStatus, readonly LocalRideStatus[]>> = {
   Pending: ['Driver Assigned', 'Cancelled', 'Rejected'],
   Scheduled: ['Driver Assigned', 'Cancelled', 'Rejected'],
@@ -39,6 +50,8 @@ const TRANSITIONS: Partial<Record<LocalRideStatus, readonly LocalRideStatus[]>> 
   'Picked Up': ['In Progress'],
   'In Progress': ['Completed'],
 };
+
+const ACTIVE_DRIVER_LOCATION_MAX_AGE_MS = 30_000;
 
 /** Same pairs as LocalRideService.canAdvance. The database enforces them again. */
 export function bookingTransitionAllowed(from: LocalRideStatus, to: LocalRideStatus): boolean {
@@ -52,7 +65,22 @@ export function bookingTransitionAllowed(from: LocalRideStatus, to: LocalRideSta
 @Injectable({ providedIn: 'root' })
 export class SupabaseBookingAdapter {
   async createBooking(input: CreateLocalRideInput): Promise<LocalRide> {
-    return this.rpc('create_booking', { p_booking: this.createPayload(input) });
+    const client = this.enabledClient();
+    await this.requireSession(client);
+    const { data, error } = await client.rpc('create_booking', {
+      p_booking: this.createPayload(input),
+    });
+    if (error) {
+      throw new Error(this.safeMessage(error.message, 'The booking could not be created.'));
+    }
+    if (!data || typeof data !== 'object') {
+      throw new Error('The server returned an invalid booking.');
+    }
+    const booking = this.toLocalRide(data);
+    if (!isProfileUuid(booking.id)) {
+      throw new Error('The server returned an invalid booking.');
+    }
+    return booking;
   }
 
   async getBooking(bookingId: string): Promise<LocalRide | null> {
@@ -143,13 +171,56 @@ export class SupabaseBookingAdapter {
     });
   }
 
+  /** Read-only discovery of pending rides for approved cloud Drivers. */
+  async listAvailableBookings(): Promise<LocalRide[]> {
+    const client = this.enabledClient();
+    await this.requireSession(client);
+    const { data, error } = await client.rpc('list_available_bookings');
+    if (error) {
+      throw new Error(this.safeMessage(error.message, 'Available bookings could not be loaded.'));
+    }
+    return (Array.isArray(data) ? data : []).map((row) => this.toLocalRide(row));
+  }
+
   async listAvailableDrivers(): Promise<CloudAvailableDriver[]> {
     const client = this.enabledClient();
     await this.requireSession(client);
+    return this.readAvailableDrivers(client);
+  }
+
+  /** Passenger-only read; does not enable cloud booking storage. */
+  async listAvailablePassengerDrivers(): Promise<CloudAvailableDriver[]> {
+    const client = getSharedSupabaseClient();
+    await this.requireSession(client);
+    const { data, error } = await client.rpc('list_available_passenger_drivers');
+    if (error) {
+      throw new Error(this.safeMessage(error.message, 'Available drivers could not be loaded.'));
+    }
+    return this.mapAvailableDrivers(data);
+  }
+
+  /** Passenger-only read for the assigned Driver's current active-booking fix. */
+  async getActiveBookingDriverLocation(bookingId: string): Promise<ActiveBookingDriverLocation | null> {
+    const client = this.enabledClient();
+    await this.requireSession(client);
+    const { data, error } = await client.rpc('get_active_booking_driver_location', {
+      p_booking_id: this.profileId(bookingId, 'Cloud booking ids'),
+    });
+    if (error) {
+      throw new Error(this.safeMessage(error.message, 'Live driver location could not be loaded.'));
+    }
+    return this.toActiveDriverLocation(Array.isArray(data) ? data[0] : data);
+  }
+
+  private async readAvailableDrivers(client: SupabaseClient): Promise<CloudAvailableDriver[]> {
     const { data, error } = await client.rpc('list_available_drivers');
     if (error) {
       throw new Error(this.safeMessage(error.message, 'Available drivers could not be loaded.'));
     }
+    return this.mapAvailableDrivers(data);
+  }
+
+  private mapAvailableDrivers(data: unknown): CloudAvailableDriver[] {
     return (Array.isArray(data) ? data : []).map((row) => this.toDriver(row));
   }
 
@@ -252,8 +323,10 @@ export class SupabaseBookingAdapter {
       emergency_contact_name: input.emergencyContactName,
       emergency_contact_number: input.emergencyContactNumber,
       pickup_latitude: input.pickupLatitude ?? null,
+      pickup_accuracy_meters: input.pickupAccuracyMeters ?? null,
       pickup_longitude: input.pickupLongitude ?? null,
       destination_latitude: input.destinationLatitude ?? null,
+      destination_accuracy_meters: input.destinationAccuracyMeters ?? null,
       destination_longitude: input.destinationLongitude ?? null,
       preferred_driver_id: this.optionalProfileId(input.preferredDriverId, 'The preferred driver'),
       preferred_driver_name: input.preferredDriverName ?? null,
@@ -266,27 +339,31 @@ export class SupabaseBookingAdapter {
 
   private toLocalRide(value: unknown): LocalRide {
     const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
-    const status = this.status(row['status']);
+    const status = row['ride_type'] === 'scheduled' && row['status'] === 'pending'
+      ? 'Scheduled' as LocalRideStatus
+      : this.status(row['status']);
     return {
       id: this.text(row['id']),
       passengerType: row['passenger_type'] === 'family' ? 'family' : 'self',
       passengerName: this.text(row['passenger_name']),
-      pickupLocation: this.text(row['pickup_location']),
-      destination: this.text(row['destination']),
+      pickupLocation: this.text(row['pickup_address'] ?? row['pickup_location']),
+      destination: this.text(row['destination_address'] ?? row['destination']),
       purpose: this.text(row['purpose']),
-      date: this.text(row['ride_date']),
-      time: this.time(row['ride_time']),
-      assistance: Array.isArray(row['assistance'])
-        ? row['assistance'].filter((item): item is string => typeof item === 'string')
+      date: this.text(row['ride_date']) || this.dateFromTimestamp(row['scheduled_at'] ?? row['created_at']),
+      time: this.time(row['ride_time']) || this.timeFromTimestamp(row['scheduled_at'] ?? row['created_at']),
+      assistance: Array.isArray(row['assistance_needs'] ?? row['assistance'])
+        ? ((row['assistance_needs'] ?? row['assistance']) as unknown[]).filter((item): item is string => typeof item === 'string')
         : [],
       otherAssistanceNotes: this.text(row['other_assistance_notes']),
       notes: this.text(row['notes']),
       emergencyContactName: this.text(row['emergency_contact_name']),
       emergencyContactNumber: this.text(row['emergency_contact_number']),
-      pickupLatitude: this.number(row['pickup_latitude']),
-      pickupLongitude: this.number(row['pickup_longitude']),
-      destinationLatitude: this.number(row['destination_latitude']),
-      destinationLongitude: this.number(row['destination_longitude']),
+      pickupLatitude: this.number(row['pickup_lat'] ?? row['pickup_latitude']),
+      pickupLongitude: this.number(row['pickup_lng'] ?? row['pickup_longitude']),
+      destinationLatitude: this.number(row['destination_lat'] ?? row['destination_latitude']),
+      destinationLongitude: this.number(row['destination_lng'] ?? row['destination_longitude']),
+      pickupAccuracyMeters: this.number(row['pickup_accuracy_meters']),
+      destinationAccuracyMeters: this.number(row['destination_accuracy_meters']),
       driverId: this.optional(row['driver_id']),
       driverName: this.optional(row['driver_name']),
       driverPhone: this.optional(row['driver_phone']),
@@ -300,10 +377,10 @@ export class SupabaseBookingAdapter {
       clientRating: this.integer(row['client_rating']),
       clientComment: this.optional(row['client_comment']),
       ratedAt: this.optional(row['rated_at']),
-      ratedByPassengerId: this.optional(row['rated_by']),
+      ratedByPassengerId: this.optional(row['rated_by_passenger_id'] ?? row['rated_by']),
       referralStatus: this.referral(row['referral_status']),
       referralOriginalDriverId: this.optional(row['referral_original_driver_id']),
-      referralProposedDriverId: this.optional(row['referral_proposed_driver_id']),
+      referralProposedDriverId: this.optional(row['referred_driver_id'] ?? row['referral_proposed_driver_id']),
       referralProposedDriverName: this.optional(row['referral_proposed_driver_name']),
       status,
       createdAt: this.text(row['created_at']),
@@ -312,11 +389,27 @@ export class SupabaseBookingAdapter {
   }
 
   private status(value: unknown): LocalRideStatus {
-    const known: LocalRideStatus[] = [
-      'Pending', 'Scheduled', 'Driver Assigned', 'Driver On The Way', 'Arrived',
-      'Picked Up', 'In Progress', 'Completed', 'Cancelled', 'Rejected', 'Reported',
-    ];
-    return known.find((status) => status === value) ?? 'Pending';
+    const statusMap: Record<string, LocalRideStatus> = {
+      pending: 'Pending',
+      driver_assigned: 'Driver Assigned',
+      on_the_way: 'Driver On The Way',
+      arrived: 'Arrived',
+      in_transit: 'In Progress',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      Pending: 'Pending',
+      Scheduled: 'Scheduled',
+      'Driver Assigned': 'Driver Assigned',
+      'Driver On The Way': 'Driver On The Way',
+      Arrived: 'Arrived',
+      'Picked Up': 'Picked Up',
+      'In Progress': 'In Progress',
+      Completed: 'Completed',
+      Cancelled: 'Cancelled',
+      Rejected: 'Rejected',
+      Reported: 'Reported',
+    };
+    return typeof value === 'string' ? statusMap[value] ?? 'Pending' : 'Pending';
   }
 
   private referral(value: unknown): LocalRide['referralStatus'] {
@@ -345,6 +438,24 @@ export class SupabaseBookingAdapter {
 
   private integer(value: unknown): number | null {
     return typeof value === 'number' && Number.isInteger(value) ? value : null;
+  }
+
+  private dateFromTimestamp(value: unknown): string {
+    if (typeof value !== 'string' || !value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(date);
+  }
+
+  private timeFromTimestamp(value: unknown): string {
+    if (typeof value !== 'string' || !value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(date);
   }
 
   private time(value: unknown): string {
@@ -394,7 +505,7 @@ export class SupabaseBookingAdapter {
       vehicleType: this.text(row['vehicle_type']) || 'Not provided',
       plateNumber: this.text(row['plate_number']) || 'Not provided',
       vehicleLabel: this.text(row['vehicle_label']) || 'Not provided',
-      availability: this.text(row['availability']) || 'available',
+      availability: this.text(row['availability']) || 'unknown',
       wheelchairAccessible: row['wheelchair_accessible'] === true,
       seniorAssistance: row['senior_assistance'] === true,
       rating,
@@ -414,6 +525,26 @@ export class SupabaseBookingAdapter {
       createdAt: this.text(row['created_at']),
       read: row['read'] === true,
     };
+  }
+
+  private toActiveDriverLocation(value: unknown): ActiveBookingDriverLocation | null {
+    const row = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+    const latitude = this.number(row['latitude']);
+    const longitude = this.number(row['longitude']);
+    const accuracyMeters = this.number(row['accuracy_m']);
+    const capturedAt = this.text(row['captured_at']);
+    const captured = Date.parse(capturedAt);
+    const now = Date.now();
+    if (
+      latitude === null || longitude === null || accuracyMeters === null ||
+      !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+      !Number.isFinite(accuracyMeters) || accuracyMeters < 0 || accuracyMeters > 100 ||
+      latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180 ||
+      !Number.isFinite(captured) || captured > now || now - captured > ACTIVE_DRIVER_LOCATION_MAX_AGE_MS
+    ) {
+      return null;
+    }
+    return { latitude, longitude, accuracyMeters, capturedAt };
   }
 
   private safeMessage(message: string, fallback: string): string {

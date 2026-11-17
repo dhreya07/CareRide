@@ -1,4 +1,4 @@
-<div class="register-page">
+<div class="register-page" [class.driver-register-active]="screen === 'driver'">
 
   <main class="register-shell">
 
@@ -53,231 +53,164 @@
       </div>
     </section>
 
-    <section class="register-panel" *ngIf="screen === 'driver'">
+    <section class="register-panel driver-registration" *ngIf="screen === 'driver'">
       <div class="choice-nav">
         <button type="button" class="back-button" (click)="backToLogin()" [disabled]="isLoading">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Back to login
+          <ion-icon name="arrow-back-outline"></ion-icon> Back to login
         </button>
         <button type="button" class="back-button" (click)="backToChoices()" [disabled]="isLoading">
-          <ion-icon name="arrow-back-outline"></ion-icon>
-          Back to choices
+          <ion-icon name="arrow-back-outline"></ion-icon> Back to choices
         </button>
       </div>
 
       <div class="welcome-copy">
         <h2>Driver registration</h2>
-        <p>Apply to drive for CareRide. An admin must approve the account before you can sign in.</p>
+        <p>Register to provide private, non-emergency accessible transportation. Your application remains pending until Admin approval.</p>
       </div>
 
-      <form (ngSubmit)="registerDriver()" novalidate>
-        <h3 class="form-section">Personal information</h3>
+      <ol class="driver-stepper" aria-label="Driver registration progress">
+        <li *ngFor="let label of driverSteps; let index = index"
+          [class.active]="driverStep === index + 1" [class.complete]="driverStep > index + 1"
+          [attr.aria-current]="driverStep === index + 1 ? 'step' : null">
+          <span class="step-number">{{ index + 1 }}</span><span class="step-label">{{ label }}</span>
+        </li>
+      </ol>
+      <div class="step-progress" role="progressbar" [attr.aria-valuenow]="driverStep"
+        aria-valuemin="1" aria-valuemax="3" [attr.aria-label]="'Step ' + driverStep + ' of 3'">
+        <span [style.width.%]="driverProgressPercent"></span>
+      </div>
 
-        <label class="field-label" for="driverFullName">Full name</label>
-        <div class="input-field">
-          <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverFullName"
-            name="driverFullName"
-            type="text"
-            [(ngModel)]="driverFullName"
-            (input)="clearMessages()"
-            placeholder="Your full name"
-            autocomplete="name"
-            [disabled]="isLoading"
-          />
+      <form (ngSubmit)="onDriverFormSubmit()" novalidate>
+        <div class="driver-step-heading">
+          <span>Step {{ driverStep }} of 3</span><h3>{{ driverSteps[driverStep - 1] }}</h3>
         </div>
 
-        <label class="field-label" for="driverEmail">Email address</label>
-        <div class="input-field">
-          <ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverEmail"
-            name="driverEmail"
-            type="email"
-            [(ngModel)]="driverEmail"
-            (input)="clearMessages()"
-            placeholder="name@email.com"
-            autocomplete="email"
-            [disabled]="isLoading"
-          />
-        </div>
+        <ng-container [ngSwitch]="driverStep">
+          <div *ngSwitchCase="1" class="driver-step-content">
+            <p class="step-intro">Create the account you will use to access CareRide.</p>
+            <label class="field-label" for="driverEmail">Email address</label>
+            <div class="input-field"><ion-icon name="mail-outline" aria-hidden="true"></ion-icon>
+              <input id="driverEmail" name="driverEmail" type="email" [(ngModel)]="driverEmail"
+                (input)="clearMessages()" placeholder="name@email.com" autocomplete="email" inputmode="email"
+                aria-required="true" [disabled]="isLoading" />
+            </div>
+            <label class="field-label" for="driverPhone">Philippine mobile number</label>
+            <div class="input-field"><ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+              <input id="driverPhone" name="driverPhone" type="tel" [(ngModel)]="driverPhone"
+                (input)="clearMessages()" placeholder="09XX XXX XXXX" autocomplete="tel" inputmode="tel"
+                aria-required="true" [disabled]="isLoading" />
+            </div>
+            <label class="field-label" for="driverPassword">Password</label>
+            <div class="input-field"><ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+              <input id="driverPassword" name="driverPassword" [type]="showDriverPassword ? 'text' : 'password'"
+                [(ngModel)]="driverPassword" (input)="clearMessages()" placeholder="At least 6 characters"
+                autocomplete="new-password" aria-required="true" [disabled]="isLoading" />
+              <button type="button" class="eye-button" (click)="toggleDriverPassword()" [disabled]="isLoading"
+                [attr.aria-label]="showDriverPassword ? 'Hide password' : 'Show password'">
+                <ion-icon [name]="showDriverPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+            <label class="field-label" for="driverConfirmPassword">Confirm password</label>
+            <div class="input-field"><ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+              <input id="driverConfirmPassword" name="driverConfirmPassword"
+                [type]="showDriverConfirmPassword ? 'text' : 'password'" [(ngModel)]="driverConfirmPassword"
+                (input)="clearMessages()" placeholder="Enter password again" autocomplete="new-password"
+                aria-required="true" [disabled]="isLoading" />
+              <button type="button" class="eye-button" (click)="toggleDriverConfirmPassword()" [disabled]="isLoading"
+                [attr.aria-label]="showDriverConfirmPassword ? 'Hide confirm password' : 'Show confirm password'">
+                <ion-icon [name]="showDriverConfirmPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+          </div>
 
-        <label class="field-label" for="driverPhone">Mobile number</label>
-        <div class="input-field">
-          <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverPhone"
-            name="driverPhone"
-            type="tel"
-            [(ngModel)]="driverPhone"
-            (input)="clearMessages()"
-            placeholder="09XX XXX XXXX"
-            autocomplete="tel"
-            inputmode="tel"
-            [disabled]="isLoading"
-          />
-        </div>
+          <div *ngSwitchCase="2" class="driver-step-content">
+            <p class="step-intro">Tell us who you are and provide your driver's license number.</p>
+            <label class="field-label" for="driverFullName">Full name</label>
+            <div class="input-field"><ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+              <input id="driverFullName" name="driverFullName" type="text" [(ngModel)]="driverFullName"
+                (input)="clearMessages()" placeholder="Your full name" autocomplete="name" aria-required="true" [disabled]="isLoading" />
+            </div>
+            <label class="field-label" for="driverAddress">Complete address</label>
+            <div class="input-field"><ion-icon name="home-outline" aria-hidden="true"></ion-icon>
+              <input id="driverAddress" name="driverAddress" type="text" [(ngModel)]="driverAddress"
+                (input)="clearMessages()" placeholder="Street, barangay, city, province" autocomplete="street-address"
+                aria-required="true" [disabled]="isLoading" />
+            </div>
+            <label class="field-label" for="driverLicense">Driver's license number</label>
+            <div class="input-field"><ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+              <input id="driverLicense" name="driverLicense" type="text" [(ngModel)]="driverLicense"
+                (input)="clearMessages()" placeholder="License number" autocomplete="off" aria-required="true" [disabled]="isLoading" />
+            </div>
+          </div>
 
-        <label class="field-label" for="driverAddress">Complete address</label>
-        <div class="input-field">
-          <ion-icon name="home-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverAddress"
-            name="driverAddress"
-            type="text"
-            [(ngModel)]="driverAddress"
-            (input)="clearMessages()"
-            placeholder="Street, barangay, city"
-            autocomplete="street-address"
-            [disabled]="isLoading"
-          />
-        </div>
+          <div *ngSwitchCase="3" class="driver-step-content">
+            <p class="step-intro">Add the essential details for the vehicle you will use for CareRide trips.</p>
+            <label class="field-label" for="driverPlate">Plate number</label>
+            <div class="input-field"><ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+              <input id="driverPlate" name="driverPlate" type="text" [ngModel]="driverPlate"
+                (ngModelChange)="normalizeDriverPlate($event)" placeholder="ABC 1234" autocomplete="off" aria-required="true" [disabled]="isLoading" />
+            </div>
+            <label class="field-label" for="driverBodyType">Vehicle body type</label>
+            <div class="input-field"><ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+              <select id="driverBodyType" name="driverBodyType" [ngModel]="driverVehicleBodyType"
+                (ngModelChange)="changeDriverVehicleBodyType($event)" aria-required="true" [disabled]="isLoading">
+                <option value="">Select body type</option>
+                <option *ngFor="let body of vehicleBodyTypes" [value]="body">{{ body }}</option>
+              </select>
+            </div>
+            <label class="field-label" for="driverBrand">Vehicle brand</label>
+            <div class="input-field"><ion-icon name="business-outline" aria-hidden="true"></ion-icon>
+              <select id="driverBrand" name="driverBrand" [ngModel]="driverVehicleBrand"
+                (ngModelChange)="changeDriverVehicleBrand($event)" aria-required="true" [disabled]="isLoading || !driverVehicleBodyType">
+                <option value="">Select brand</option><option *ngFor="let brand of vehicleBrands" [value]="brand">{{ brand }}</option>
+              </select>
+            </div>
+            <div *ngIf="driverVehicleBrand === vehicleOtherOption" class="input-field">
+              <input name="driverBrandOther" type="text" [(ngModel)]="driverVehicleBrandOther"
+                placeholder="Enter vehicle brand" aria-label="Vehicle brand not listed" [disabled]="isLoading" />
+            </div>
+            <label class="field-label" for="driverModel">Vehicle model</label>
+            <div class="input-field"><ion-icon name="car-outline" aria-hidden="true"></ion-icon>
+              <select id="driverModel" name="driverModel" [ngModel]="driverVehicleModel"
+                (ngModelChange)="changeDriverVehicleModel($event)" aria-required="true" [disabled]="isLoading || !driverVehicleBrand">
+                <option value="">Select model</option>
+                <option *ngFor="let item of availableDriverVehicleModels" [value]="item.model">{{ item.model }}</option>
+                <option [value]="vehicleOtherOption">Other / Not Listed</option>
+              </select>
+            </div>
+            <div *ngIf="driverVehicleModel === vehicleOtherOption" class="input-field">
+              <input name="driverModelOther" type="text" [(ngModel)]="driverVehicleModelOther"
+                placeholder="Enter vehicle model" aria-label="Vehicle model not listed" [disabled]="isLoading" />
+            </div>
 
-        <h3 class="form-section">Account information</h3>
+            <section class="review-group driver-registration-summary" aria-label="Registration summary">
+              <h4>Registration summary</h4>
+              <p><span>Vehicle body type</span><strong>{{ driverVehicleBodyType || 'Select a body type' }}</strong></p>
+              <p><span>Brand and model</span><strong>{{ resolvedDriverVehicleBrand || 'Select a brand' }} {{ resolvedDriverVehicleModel || '' }}</strong></p>
+              <p><span>Plate number</span><strong>{{ driverPlate || 'Enter plate number' }}</strong></p>
+            </section>
+            <label class="consent-row">
+              <input type="checkbox" name="driverConsent" [(ngModel)]="driverConsent" [disabled]="isLoading" />
+              <span>I confirm the information is accurate and consent to its use for CareRide registration and safety support.</span>
+            </label>
+            <p class="step-note">Your account stays pending until Admin approval. Additional vehicle and accessibility verification is completed later in your Driver Profile.</p>
+          </div>
+        </ng-container>
 
-        <label class="field-label" for="driverPassword">Password</label>
-        <div class="input-field">
-          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverPassword"
-            name="driverPassword"
-            [type]="showDriverPassword ? 'text' : 'password'"
-            [(ngModel)]="driverPassword"
-            (input)="clearMessages()"
-            placeholder="At least 6 characters"
-            autocomplete="new-password"
-            [disabled]="isLoading"
-          />
-          <button
-            type="button"
-            class="eye-button"
-            (click)="toggleDriverPassword()"
-            [disabled]="isLoading"
-            [attr.aria-label]="showDriverPassword ? 'Hide password' : 'Show password'"
-          >
-            <ion-icon [name]="showDriverPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
+        <div *ngIf="errorMessage" class="form-message error-message" role="alert" aria-live="polite">{{ errorMessage }}</div>
+        <div *ngIf="successMessage" class="form-message success-message" role="status" aria-live="polite">{{ successMessage }}</div>
+        <div class="driver-step-actions">
+          <button type="button" class="secondary-step-button" (click)="previousDriverStep()" [disabled]="isLoading || driverStep === 1">Back</button>
+          <button *ngIf="driverStep < 3" type="submit" class="primary-button" [disabled]="isLoading">
+            Next <ion-icon name="arrow-forward-outline" class="arrow" aria-hidden="true"></ion-icon>
+          </button>
+          <button *ngIf="driverStep === 3" type="submit" class="primary-button" [disabled]="isLoading || !driverConsent">
+            <span *ngIf="!isLoading">Submit registration <ion-icon name="checkmark-outline" class="arrow" aria-hidden="true"></ion-icon></span>
+            <span *ngIf="isLoading" class="loading-content"><span class="spinner"></span>Submitting registration...</span>
           </button>
         </div>
-
-        <label class="field-label" for="driverConfirmPassword">Confirm password</label>
-        <div class="input-field">
-          <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverConfirmPassword"
-            name="driverConfirmPassword"
-            [type]="showDriverConfirmPassword ? 'text' : 'password'"
-            [(ngModel)]="driverConfirmPassword"
-            (input)="clearMessages()"
-            placeholder="Enter password again"
-            autocomplete="new-password"
-            [disabled]="isLoading"
-          />
-          <button
-            type="button"
-            class="eye-button"
-            (click)="toggleDriverConfirmPassword()"
-            [disabled]="isLoading"
-            [attr.aria-label]="showDriverConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
-          >
-            <ion-icon [name]="showDriverConfirmPassword ? 'eye-off-outline' : 'eye-outline'" aria-hidden="true"></ion-icon>
-          </button>
-        </div>
-
-        <h3 class="form-section">Driver information</h3>
-
-        <label class="field-label" for="driverLicense">Driver's license number</label>
-        <div class="input-field">
-          <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverLicense"
-            name="driverLicense"
-            type="text"
-            [(ngModel)]="driverLicense"
-            (input)="clearMessages()"
-            placeholder="License number"
-            autocomplete="off"
-            [disabled]="isLoading"
-          />
-        </div>
-
-        <label class="field-label" for="driverVehicleType">Vehicle type</label>
-        <div class="input-field">
-          <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
-          <select
-            id="driverVehicleType"
-            name="driverVehicleType"
-            [(ngModel)]="driverVehicleType"
-            (change)="clearMessages()"
-            [disabled]="isLoading"
-          >
-            <option value="">Select vehicle type</option>
-            <option value="Accessible van">Accessible van</option>
-            <option value="Sedan">Sedan</option>
-            <option value="SUV">SUV</option>
-            <option value="Multicab">Multicab</option>
-          </select>
-        </div>
-
-        <label class="field-label" for="driverPlate">Vehicle plate number</label>
-        <div class="input-field">
-          <ion-icon name="car-outline" aria-hidden="true"></ion-icon>
-          <input
-            id="driverPlate"
-            name="driverPlate"
-            type="text"
-            [(ngModel)]="driverPlate"
-            (input)="clearMessages()"
-            placeholder="ABC 1234"
-            autocomplete="off"
-            [disabled]="isLoading"
-          />
-        </div>
-
-        <h3 class="form-section">Accessibility</h3>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            name="driverWheelchair"
-            [(ngModel)]="driverWheelchair"
-            [disabled]="isLoading"
-          />
-          <span>Wheelchair accessible</span>
-        </label>
-        <label class="check-row">
-          <input
-            type="checkbox"
-            name="driverSeniorAssistance"
-            [(ngModel)]="driverSeniorAssistance"
-            [disabled]="isLoading"
-          />
-          <span>Senior assistance available</span>
-        </label>
-
-        <div *ngIf="errorMessage" class="form-message error-message" role="alert" aria-live="polite">
-          {{ errorMessage }}
-        </div>
-        <div *ngIf="successMessage" class="form-message success-message" role="status" aria-live="polite">
-          {{ successMessage }}
-        </div>
-
-        <p class="privacy-notice">
-          Your information is used only for CareRide transportation and safety support.
-        </p>
-
-        <button type="submit" class="primary-button" [disabled]="isLoading">
-          <span *ngIf="!isLoading">
-            Submit driver application
-            <ion-icon name="arrow-forward-outline" class="arrow"></ion-icon>
-          </span>
-          <span *ngIf="isLoading" class="loading-content">
-            <span class="spinner"></span>
-            Submitting application...
-          </span>
-        </button>
       </form>
     </section>
-
     <section class="register-panel" *ngIf="screen === 'passenger'">
 
       <button

@@ -8,11 +8,15 @@ export const authGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const roles = route.data['roles'] as readonly AccountRole[] | undefined;
-  if (await auth.hasAccess(roles)) {
-    return true;
-  }
-  if (await auth.isSignedIn()) {
-    return router.createUrlTree([await auth.homePath()]);
+  try {
+    if (await auth.hasAccess(roles)) {
+      return true;
+    }
+    if (await auth.isSignedIn()) {
+      return router.createUrlTree([await auth.homePath()]);
+    }
+  } catch {
+    // A failed or stalled profile lookup must not leave navigation pending.
   }
   return router.createUrlTree(['/login']);
 };
@@ -28,8 +32,13 @@ export const guestGuard: CanActivateFn = async () => {
       fragment: url.hash.startsWith('#') ? url.hash.slice(1) : undefined,
     });
   }
-  if (!(await auth.isSignedIn())) {
+  try {
+    if (!(await auth.isSignedIn())) {
+      return true;
+    }
+    return router.createUrlTree([await auth.homePath()]);
+  } catch {
+    // Treat an unavailable session/profile lookup as signed out.
     return true;
   }
-  return router.createUrlTree([await auth.homePath()]);
 };

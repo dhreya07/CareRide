@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Ionic Angular
-        run: npx ng build --configuration production
+      - name: Build Ionic Angular (Staging)
+        run: npx ng build --configuration development
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3

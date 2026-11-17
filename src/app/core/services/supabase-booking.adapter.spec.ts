@@ -1,3 +1,11 @@
+import {
+  vi,
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+} from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { createClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
@@ -88,6 +96,114 @@ describe('Supabase booking foundation', () => {
     await expect(adapter.listBookings()).rejects.toThrow('Cloud booking is not enabled.');
     expect(createClient).not.toHaveBeenCalled();
     expect(localStorage.getItem('careride.local.rides')).toBeNull();
+  });
+
+  it('reads passenger drivers through the dedicated RPC with migration off and maps its contract', async () => {
+    environment.supabase.cloudAuthEnabled = true;
+    rpc.mockResolvedValueOnce({
+      data: [{
+        driver_id: DRIVER_ID,
+        full_name: 'Approved Driver',
+        phone: '09170000000',
+        vehicle_type: 'Accessible van',
+        plate_number: 'ABC 123',
+        vehicle_label: 'Accessible van · ABC 123',
+        availability: 'available',
+        wheelchair_accessible: true,
+        senior_assistance: false,
+        rating: 4.8,
+        rating_count: 6,
+      }],
+      error: null,
+    });
+    const adapter = TestBed.inject(SupabaseBookingAdapter);
+
+    const drivers = await adapter.listAvailablePassengerDrivers();
+
+    expect(environment.supabase.cloudMigration).toBe(false);
+    expect(drivers).toEqual([{
+      id: DRIVER_ID,
+      name: 'Approved Driver',
+      phone: '09170000000',
+      vehicleType: 'Accessible van',
+      plateNumber: 'ABC 123',
+      vehicleLabel: 'Accessible van · ABC 123',
+      availability: 'available',
+      wheelchairAccessible: true,
+      seniorAssistance: false,
+      rating: 4.8,
+      ratingCount: 6,
+    }]);
+    expect(rpc).toHaveBeenCalledWith('list_available_passenger_drivers');
+  });
+
+  it('keeps missing cloud availability unknown', async () => {
+    environment.supabase.cloudAuthEnabled = true;
+    rpc.mockResolvedValueOnce({
+      data: [{ driver_id: DRIVER_ID, full_name: 'Missing Status' }],
+      error: null,
+    });
+    const adapter = TestBed.inject(SupabaseBookingAdapter);
+
+    const [driver] = await adapter.listAvailablePassengerDrivers();
+
+    expect(driver.availability).toBe('unknown');
+  });
+
+  it('surfaces passenger driver RPC errors without falling back to another RPC', async () => {
+    environment.supabase.cloudAuthEnabled = true;
+    rpc.mockResolvedValueOnce({ data: null, error: { message: 'Driver lookup is unavailable.' } });
+    const adapter = TestBed.inject(SupabaseBookingAdapter);
+
+    await expect(adapter.listAvailablePassengerDrivers()).rejects.toThrow('Driver lookup is unavailable.');
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('list_available_passenger_drivers');
+  });
+
+  it('keeps the shared driver RPC for cloud Admin and Driver integrations', async () => {
+    environment.supabase.cloudMigration = true;
+    rpc.mockResolvedValueOnce({ data: [], error: null });
+    const adapter = TestBed.inject(SupabaseBookingAdapter);
+
+    await adapter.listAvailableDrivers();
+
+    expect(rpc).toHaveBeenCalledWith('list_available_drivers');
+  });
+
+  it('reads only a validated active-booking Driver fix through the dedicated RPC', async () => {
+    environment.supabase.cloudMigration = true;
+    const capturedAt = new Date().toISOString();
+    rpc.mockResolvedValueOnce({
+      data: [{
+        latitude: 14.5995,
+        longitude: 120.9842,
+        accuracy_m: 10,
+        captured_at: capturedAt,
+      }],
+      error: null,
+    });
+    const adapter = TestBed.inject(SupabaseBookingAdapter);
+
+    await expect(adapter.getActiveBookingDriverLocation(BOOKING_ID)).resolves.toEqual({
+      latitude: 14.5995,
+      longitude: 120.9842,
+      accuracyMeters: 10,
+      capturedAt,
+    });
+    expect(rpc).toHaveBeenCalledWith('get_active_booking_driver_location', {
+      p_booking_id: BOOKING_ID,
+    });
+  });
+
+  it('never accepts an inaccurate or malformed active-booking Driver fix', async () => {
+    environment.supabase.cloudMigration = true;
+    rpc.mockResolvedValueOnce({
+      data: [{ latitude: 14.5995, longitude: 120.9842, accuracy_m: 101, captured_at: '2026-11-17T01:00:00.000Z' }],
+      error: null,
+    });
+    const adapter = TestBed.inject(SupabaseBookingAdapter);
+
+    await expect(adapter.getActiveBookingDriverLocation(BOOKING_ID)).resolves.toBeNull();
   });
 
   it('creates an immediate ride and a scheduled ride through create_booking', async () => {

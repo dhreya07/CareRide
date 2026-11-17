@@ -1,3 +1,5 @@
+@use '../../shared/passenger-glass' as glass;
+
 :host {
   display: block;
   width: 100%;
@@ -189,8 +191,19 @@ button {
 
 @media (min-width: 480px) {
   .availability-choices {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.availability-choices button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.availability-error {
+  margin: -4px 0 12px;
+  color: #a32626;
+  font-size: 13px;
 }
 
 .chart-note {
@@ -894,3 +907,2650 @@ button {
     background: #CCD0CF;
   }
 }
+
+.home-topbar { padding-bottom: 22px; }
+.home-eyebrow { margin: 16px 0 4px; font-size: .78rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.home-date { margin: 6px 0 0; }
+.home-status, .home-metrics { display: grid; gap: 10px; margin: 12px 0; }
+.home-status { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.home-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-panel { background: #fff; color: #102b2d; border: 1px solid #dce7e5; border-radius: 18px; padding: 14px; overflow-wrap: anywhere; }
+.home-panel h2 { font-size: 1rem; margin: 0 0 8px; }
+.home-panel p { margin: 0 0 8px; font-size: .86rem; }
+.home-panel a { color: #00635b; font-size: .82rem; font-weight: 750; }
+.home-panel .home-badge { display: inline-block; padding: 4px 9px; border-radius: 999px; background: #edf1f1; font-weight: 750; }
+.home-panel .home-badge-online { color: #005846; background: #d9f5e9; }
+.home-panel .home-detail { font-size: .72rem; color: #536867; }
+.home-metrics .home-panel { display: grid; align-content: start; gap: 5px; }
+.home-metrics span, .home-list li span { font-size: .8rem; color: #536867; }
+.home-metrics strong { font-size: 1.13rem; }
+.home-list { margin-bottom: 12px; }
+.home-section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; }
+.home-list ul { list-style: none; margin: 0; padding: 0; }
+.home-list li { display: grid; gap: 5px; padding: 10px 0; border-top: 1px solid #e4edeb; }
+.driver-shell { position: relative; }
+.home-help { position: absolute; right: 14px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 19; display: grid; place-items: center; min-width: 54px; min-height: 44px; border-radius: 24px; background: #07594f; color: white; font-weight: 750; text-decoration: none; box-shadow: 0 4px 12px #102b2d40; }
+:host .home-list:last-child { margin-bottom: 66px; }
+@media (max-width: 360px) {
+  .home-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-metrics .home-panel:last-child { grid-column: 1 / -1; }
+}
+
+/* =========================================
+   DRIVER DASHBOARD — PREMIUM UI
+========================================= */
+
+.dashboard-welcome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  overflow: hidden;
+  margin: 18px 0;
+  padding: 25px 22px;
+  min-height: 165px;
+  border-radius: 24px;
+  color: #ffffff;
+  background: linear-gradient(125deg, #073f3b 0%, #08766a 65%, #13a18b 100%);
+  box-shadow: 0 12px 28px rgba(4, 76, 68, .16);
+}
+
+.welcome-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 80%;
+}
+
+.welcome-label,
+.section-eyebrow {
+  display: block;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+}
+
+.welcome-label {
+  color: #a8e6d8;
+  margin-bottom: 10px;
+}
+
+.dashboard-welcome h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.45rem, 5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -.045em;
+}
+
+.dashboard-welcome p {
+  margin: 8px 0 14px;
+  color: #d1eee8;
+  font-size: .84rem;
+  line-height: 1.5;
+}
+
+.welcome-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #e4f8f3;
+  font-size: .76rem;
+  font-weight: 650;
+}
+
+.welcome-decoration {
+  position: absolute;
+  right: -18px;
+  bottom: -25px;
+  width: 145px;
+  height: 145px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .09);
+}
+
+.welcome-decoration ion-icon {
+  font-size: 90px;
+  color: rgba(255, 255, 255, .78);
+}
+
+.dashboard-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 24px;
+}
+
+.dashboard-status-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e1ebe8;
+  border-radius: 19px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(21, 59, 54, .045);
+}
+
+.status-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.status-icon,
+.metric-icon {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  border-radius: 13px;
+  font-size: 20px;
+}
+
+.availability-icon {
+  color: #087b68;
+  background: #e4f5ef;
+}
+
+.gps-icon {
+  color: #3976b9;
+  background: #eaf2fc;
+}
+
+.status-indicator {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c6cecb;
+}
+
+.indicator-online {
+  background: #18aa79;
+  box-shadow: 0 0 0 4px #e2f6ed;
+}
+
+.dashboard-card-label {
+  display: block;
+  color: #71817e;
+  font-size: .73rem;
+  font-weight: 650;
+  margin-bottom: 5px;
+}
+
+.dashboard-status-card > strong {
+  display: block;
+  color: #173d38;
+  font-size: .98rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-status-card p {
+  margin: 7px 0;
+  color: #788985;
+  font-size: .69rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-status-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  color: #08796b;
+  font-size: .72rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.dashboard-section {
+  margin: 25px 0 17px;
+}
+
+.dashboard-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-eyebrow {
+  color: #84938f;
+  font-size: .63rem;
+  margin-bottom: 5px;
+}
+
+.dashboard-section-heading h2 {
+  margin: 0;
+  color: #163c36;
+  font-size: 1.14rem;
+  font-weight: 800;
+  letter-spacing: -.025em;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 14px 12px;
+  border: 1px solid #e4ece9;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(21, 59, 54, .04);
+}
+
+.metric-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
+}
+
+.today-icon {
+  color: #3976b9;
+  background: #eaf2fc;
+}
+
+.completed-icon {
+  color: #07815e;
+  background: #e3f6ec;
+}
+
+.rating-icon {
+  color: #bd8621;
+  background: #fff5dc;
+}
+
+.metric-card strong {
+  color: #173d38;
+  font-size: 1.35rem;
+  font-weight: 850;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.metric-card > span:last-child {
+  color: #7a8985;
+  font-size: .68rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.dashboard-content-card {
+  margin: 18px 0;
+  padding: 18px 16px;
+  border: 1px solid #e3ece9;
+  border-radius: 21px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgba(21, 59, 54, .045);
+}
+
+.dashboard-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #08796b;
+  font-size: .73rem;
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dashboard-trip-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid #edf1ef;
+}
+
+.trip-date-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  color: #087b6c;
+  background: #e7f5f0;
+  font-size: 20px;
+}
+
+.trip-item-info,
+.activity-info {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.trip-item-info strong,
+.activity-info strong {
+  color: #1b403a;
+  font-size: .85rem;
+  font-weight: 750;
+}
+
+.trip-item-info span,
+.activity-info span {
+  color: #71817d;
+  font-size: .73rem;
+}
+
+.trip-item-info small,
+.activity-info small {
+  color: #98a39f;
+  font-size: .68rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.trip-arrow {
+  color: #9aaba5;
+  font-size: 18px;
+}
+
+.dashboard-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 23px 12px;
+  color: #84938e;
+}
+
+.dashboard-empty > ion-icon {
+  margin-bottom: 9px;
+  font-size: 30px;
+  color: #9bb9ae;
+}
+
+.dashboard-empty strong {
+  color: #36564f;
+  font-size: .85rem;
+}
+
+.dashboard-empty p {
+  margin: 5px 0 0;
+  font-size: .74rem;
+}
+
+.activity-item {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #edf1ef;
+}
+
+.activity-dot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  margin: 5px 0 0 4px;
+  border-radius: 50%;
+  background: #16a184;
+  box-shadow: 0 0 0 4px #e7f5f0;
+}
+
+.dashboard-help-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 85px;
+  padding: 16px;
+  border: 1px solid #d8eae4;
+  border-radius: 19px;
+  background: #edf7f3;
+  color: #174b40;
+  text-decoration: none;
+}
+
+.help-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #d6eee5;
+  color: #087b68;
+  font-size: 22px;
+}
+
+.dashboard-help-card > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.dashboard-help-card strong {
+  font-size: .83rem;
+}
+
+.dashboard-help-card small {
+  color: #70877f;
+  font-size: .71rem;
+}
+
+.dashboard-help-card > ion-icon {
+  color: #16816e;
+}
+
+.dashboard-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+  padding: 14px;
+  border-radius: 15px;
+  background: #edf7f3;
+  color: #27675a;
+  font-size: .8rem;
+}
+
+.dashboard-error,
+.dashboard-status-card .dashboard-error {
+  color: #b54747;
+  background: #fff0ef;
+}
+
+@media (max-width: 380px) {
+  .dashboard-welcome {
+    padding: 21px 17px;
+  }
+
+  .dashboard-status-grid {
+    gap: 8px;
+  }
+
+  .dashboard-status-card {
+    padding: 12px;
+  }
+
+  .dashboard-metrics {
+    gap: 7px;
+  }
+
+  .metric-card {
+    padding: 12px 9px;
+  }
+
+  .metric-card strong {
+    font-size: 1.18rem;
+  }
+}
+
+
+
+/* =========================================
+   DRIVER HOME — COMPACT PROFILE HEADER
+========================================= */
+.driver-home-identity {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 12px 0 20px;
+  padding: 17px;
+  border: 1px solid #dce6e4;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f6f4 100%);
+  box-shadow: 0 8px 22px rgba(17, 33, 45, .06);
+}
+.driver-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 66px;
+  width: 66px;
+  height: 66px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #173d48, #397b78);
+  color: #ffffff;
+  font-size: 1.22rem;
+  font-weight: 850;
+  letter-spacing: .03em;
+  box-shadow: 0 3px 12px rgba(17, 33, 45, .15);
+}
+.driver-home-copy { min-width: 0; flex: 1; }
+.driver-home-copy .home-eyebrow { margin: 0 0 4px; color: #628079; font-size: .64rem; font-weight: 850; letter-spacing: .12em; }
+.driver-home-copy h1 { margin: 0; color: #102d34; font-size: clamp(1.25rem, 5vw, 1.65rem); line-height: 1.15; overflow-wrap: anywhere; }
+.driver-home-quote { margin: 6px 0 8px; color: #637975; font-size: .76rem; line-height: 1.35; }
+.driver-live-clock { display: flex; flex-wrap: wrap; align-items: baseline; gap: 7px; }
+.driver-live-clock strong { color: #126b61; font-size: .9rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+.driver-live-clock span { color: #7b8c87; font-size: .68rem; }
+@media (max-width: 360px) {
+  .driver-home-identity { gap: 11px; padding: 13px; }
+  .driver-avatar { flex-basis: 56px; width: 56px; height: 56px; font-size: 1.05rem; }
+}
+
+
+/* ===========================================================
+   CARE RIDE — DRIVER DASHBOARD / DARK TEAL MOBILE REDESIGN
+   Match: driver.page.html (dashboard-hero + home-dashboard-body)
+   UI only. Existing services, booking, GPS, schedule and dialogs
+   stay untouched.
+   =========================================================== */
+
+:host {
+  --care-ink: #102c2a;
+  --care-teal: #064f47;
+  --care-teal-deep: #062e2e;
+  --care-teal-bright: #10a482;
+  --care-mint: #d0f5e5;
+  --care-muted: #57736f;
+  --care-surface: #f0f6f3;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.driver-page,
+.driver-shell {
+  color: var(--care-ink);
+  background: var(--care-surface);
+}
+
+/* ---- Distinct home hero, retains other tab headers ---- */
+.driver-topbar.home-topbar {
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.dashboard-hero {
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
+  min-height: 245px;
+  border-radius: 28px;
+  padding: clamp(22px, 3.5vw, 30px);
+  background:
+    radial-gradient(ellipse at 95% 5%, rgba(25, 169, 135, .23) 0%, transparent 53%),
+    linear-gradient(145deg, #042a2a 0%, #06483e 51%, #07866f 100%);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(4, 57, 50, .18);
+}
+
+.dashboard-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .22;
+  background: linear-gradient(120deg, transparent 20%, rgba(214, 255, 238, .08) 68%, transparent 100%);
+}
+
+.dashboard-hero-top,
+.dashboard-hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.dashboard-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hero-driver-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: #fff;
+  text-decoration: none;
+}
+
+.hero-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  border: 3px solid rgba(255, 255, 255, .95);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e1fff0 0%, #a5e7da 100%);
+  color: #075b50;
+  font-size: 1.58rem;
+  font-weight: 850;
+  box-shadow: 0 6px 16px rgba(1, 28, 25, .18);
+}
+
+.hero-driver-title {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.hero-driver-title strong {
+  font-size: clamp(.98rem, 2vw, 1.18rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.hero-driver-title small {
+  color: #b6e8dd;
+  font-size: .70rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+}
+
+.hero-top-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.driver-live-clock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid #d5e6e0;
+  border-radius: 14px;
+  background: #fff;
+  color: #164e45;
+  font-size: .89rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.driver-live-clock ion-icon {
+  flex: 0 0 auto;
+  color: #0a9b80;
+  font-size: 19px;
+}
+
+.driver-live-clock span {
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+}
+
+.hero-clock {
+  border-color: rgba(218, 255, 245, .23);
+  background: rgba(255, 255, 255, .10);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: blur(7px);
+}
+
+.hero-clock ion-icon { color: #c5f9e9; }
+
+.hero-notification,
+.hero-sign-out {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border: 1px solid rgba(218, 255, 245, .18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .10);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(7px);
+}
+
+.hero-notification ion-icon,
+.hero-sign-out ion-icon {
+  font-size: 21px;
+}
+
+.hero-sign-out { padding: 0; }
+.hero-sign-out span { display: none; }
+
+.hero-notification .notification-count {
+  background: #ffb43d;
+  color: #27312a;
+}
+
+.dashboard-hero-content {
+  padding-top: clamp(28px, 4vw, 44px);
+  max-width: min(100%, 600px);
+}
+
+.hero-kicker {
+  margin: 0 0 10px;
+  color: #adefdb;
+  font-size: .79rem;
+  font-weight: 850;
+  line-height: 1.4;
+  letter-spacing: .11em;
+}
+
+.driver-topbar .dashboard-hero-greeting {
+  margin: 0;
+  max-width: 580px;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 2.72rem);
+  font-weight: 850;
+  line-height: 1.08;
+  letter-spacing: -.04em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.hero-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  color: #dff8f0;
+  font-size: clamp(.90rem, 2.1vw, 1rem);
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.hero-date ion-icon {
+  flex: 0 0 auto;
+  font-size: 19px;
+}
+
+.hero-quote {
+  max-width: 520px;
+  margin: 20px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(231, 255, 246, .19);
+  color: #e2f9ef;
+  font-size: clamp(.92rem, 2vw, 1.02rem);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.hero-wave {
+  position: absolute;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.hero-wave-one {
+  right: -80px;
+  bottom: -190px;
+  width: min(650px, 90%);
+  height: 320px;
+  transform: rotate(-12deg);
+  background: linear-gradient(145deg, rgba(37, 211, 166, .18), rgba(54, 230, 182, .30));
+}
+
+.hero-wave-two {
+  right: -80px;
+  bottom: -235px;
+  width: min(680px, 94%);
+  height: 340px;
+  transform: rotate(-11deg);
+  background: linear-gradient(130deg, rgba(22, 141, 119, .08), rgba(24, 207, 158, .25));
+}
+
+/* ---- Dashboard body: white raised cards with generous touch sizes ---- */
+.home-dashboard-body {
+  padding: 2px 0 12px;
+}
+
+.home-dashboard-body .dashboard-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 12px;
+  margin: 0 0 26px;
+}
+
+.home-dashboard-body .dashboard-status-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 168px;
+  padding: clamp(16px, 2.4vw, 22px);
+  border: 1px solid #e2eee9;
+  border-radius: 23px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(11, 55, 46, .06);
+}
+
+.home-dashboard-body .status-card-top {
+  margin-bottom: 15px;
+}
+
+.home-dashboard-body .status-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+}
+
+.home-dashboard-body .status-icon svg {
+  display: block;
+  width: 25px;
+  height: 25px;
+}
+
+.home-dashboard-body .availability-icon {
+  background: #d8f7e8;
+  color: #099b75;
+}
+
+.home-dashboard-body .gps-icon {
+  background: #e8f1ff;
+  color: #3978c6;
+}
+
+.home-dashboard-body .status-indicator {
+  width: 11px;
+  height: 11px;
+  background: #bec9c5;
+}
+
+.home-dashboard-body .status-indicator.indicator-online {
+  background: #12ae78;
+  box-shadow: 0 0 0 4px #e0f8ec;
+}
+
+.home-dashboard-body .dashboard-card-label {
+  margin: 0 0 6px;
+  color: #516e67;
+  font-size: .94rem;
+  font-weight: 650;
+}
+
+.home-dashboard-body .dashboard-status-card .status-card-value {
+  display: block;
+  color: #0b3330;
+  font-size: clamp(1.16rem, 2.2vw, 1.42rem);
+  font-weight: 850;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+  overflow-wrap: anywhere;
+}
+
+.home-dashboard-body .dashboard-status-card p {
+  margin: 7px 0 0;
+  color: #5a716c;
+  font-size: .84rem;
+  line-height: 1.4;
+}
+
+.home-dashboard-body .dashboard-status-card .dashboard-error {
+  color: #b23b3b;
+}
+
+.home-dashboard-body .status-card-link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  min-height: 36px;
+  margin-top: auto;
+  padding: 7px 11px;
+  border-radius: 11px;
+  background: #e0f6eb;
+  color: #075b48;
+  font-size: .88rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.home-dashboard-body .status-card-link ion-icon {
+  font-size: 17px;
+}
+
+.home-dashboard-body .dashboard-section {
+  margin: 22px 0 22px;
+}
+
+.home-dashboard-body .dashboard-section-heading {
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.home-dashboard-body .section-eyebrow {
+  margin: 0 0 5px;
+  color: #5e7c76;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+
+.home-dashboard-body .dashboard-section-heading h2 {
+  margin: 0;
+  color: #0b3934;
+  font-size: clamp(1.24rem, 2.5vw, 1.48rem);
+  font-weight: 850;
+  letter-spacing: -.025em;
+}
+
+.home-dashboard-body .dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.home-dashboard-body .metric-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 9px;
+  padding: clamp(14px, 2.5vw, 20px);
+  border: 1px solid #e3eee9;
+  border-radius: 21px;
+  background: #fff;
+  box-shadow: 0 7px 18px rgba(11, 55, 46, .05);
+}
+
+.home-dashboard-body .metric-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+}
+
+.home-dashboard-body .metric-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.home-dashboard-body .today-icon { background: #e8f1ff; color: #3e79c6; }
+.home-dashboard-body .completed-icon { background: #ddf7e7; color: #079b70; }
+.home-dashboard-body .rating-icon { background: #fff1d4; color: #c48119; }
+
+.home-dashboard-body .metric-card .metric-value {
+  color: #0d3331;
+  font-size: clamp(1.7rem, 3.5vw, 2.05rem);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.home-dashboard-body .metric-card .metric-label {
+  color: #506a64;
+  font-size: .88rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.home-dashboard-body .dashboard-content-card {
+  margin: 16px 0;
+  padding: clamp(18px, 2.7vw, 25px);
+  border: 1px solid #e2ece7;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 8px 23px rgba(11, 55, 46, .055);
+}
+
+.home-dashboard-body .dashboard-content-card .dashboard-section-heading {
+  margin-bottom: 17px;
+}
+
+.home-dashboard-body .dashboard-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 3px 0 3px 5px;
+  color: #087b62;
+  font-size: .87rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home-dashboard-body .dashboard-empty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
+  padding: 18px 10px;
+  text-align: center;
+}
+
+.home-dashboard-body .dashboard-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 9px;
+  border-radius: 14px;
+  background: #e4f5ee;
+  color: #0c8c6b;
+}
+
+.home-dashboard-body .dashboard-empty-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.home-dashboard-body .dashboard-empty strong {
+  color: #173d35;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.home-dashboard-body .dashboard-empty p {
+  max-width: 280px;
+  margin: 6px 0 0;
+  color: #6b817b;
+  font-size: .90rem;
+  line-height: 1.5;
+}
+
+.home-dashboard-body .dashboard-trip-item {
+  gap: 12px;
+  padding: 15px 0;
+}
+
+.home-dashboard-body .trip-date-icon {
+  flex: 0 0 47px;
+  width: 47px;
+  height: 47px;
+  border-radius: 15px;
+}
+
+.home-dashboard-body .trip-item-info strong,
+.home-dashboard-body .activity-info strong {
+  color: #173e36;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.home-dashboard-body .trip-item-info span,
+.home-dashboard-body .activity-info span {
+  color: #53746c;
+  font-size: .89rem;
+  line-height: 1.3;
+}
+
+.home-dashboard-body .trip-item-info small,
+.home-dashboard-body .activity-info small {
+  color: #718b83;
+  font-size: .83rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.home-dashboard-body .activity-item {
+  padding: 15px 0;
+}
+
+.home-dashboard-body .dashboard-help-card {
+  min-height: 82px;
+  margin: 19px 0 96px;
+  padding: 16px 18px;
+  border: 1px solid #cde9de;
+  border-radius: 21px;
+  background: #e3f5eb;
+  color: #10483c;
+}
+
+.home-dashboard-body .help-icon {
+  width: 47px;
+  height: 47px;
+  background: #c8ebdc;
+  border-radius: 15px;
+}
+
+.home-dashboard-body .dashboard-help-card strong {
+  font-size: 1rem;
+}
+
+.home-dashboard-body .dashboard-help-card small {
+  color: #55766b;
+  font-size: .88rem;
+}
+
+.home-dashboard-body .dashboard-message {
+  color: #1d5c4d;
+  font-size: .94rem;
+}
+
+/* All action targets clearly focusable on phone and keyboard. */
+.dashboard-hero button:focus-visible,
+.dashboard-hero a:focus-visible,
+.home-dashboard-body a:focus-visible {
+  outline: 3px solid #5be5ba;
+  outline-offset: 3px;
+}
+
+.dashboard-hero button:active,
+.home-dashboard-body .status-card-link:active {
+  transform: translateY(1px);
+}
+
+/* ---- Mobile: allow the greeting to breathe on narrow screens ---- */
+@media (max-width: 680px) {
+  .dashboard-hero {
+    min-height: 285px;
+    padding: 20px 19px 24px;
+    border-radius: 26px;
+  }
+
+  .dashboard-hero-top {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .hero-top-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .dashboard-hero-content { padding-top: 27px; }
+
+  .driver-topbar .dashboard-hero-greeting {
+    font-size: clamp(1.95rem, 7.5vw, 2.45rem);
+  }
+
+  .hero-clock { font-size: .85rem; }
+  .hero-quote { margin-top: 19px; }
+
+  .home-dashboard-body .dashboard-status-card { min-height: 181px; }
+}
+
+@media (max-width: 430px) {
+  .dashboard-hero { padding: 19px 17px 23px; }
+
+  .hero-avatar {
+    flex-basis: 49px;
+    width: 49px;
+    height: 49px;
+    font-size: 1.44rem;
+  }
+
+  .hero-driver-title strong { font-size: 1rem; }
+
+  .hero-clock,
+  .hero-notification,
+  .hero-sign-out {
+    min-height: 42px;
+    height: 42px;
+  }
+
+  .hero-notification,
+  .hero-sign-out { width: 42px; }
+
+  .dashboard-hero-content { padding-top: 24px; }
+
+  .hero-date { font-size: .9rem; }
+  .hero-quote { font-size: .92rem; }
+
+  .home-dashboard-body .dashboard-status-grid { gap: 9px; }
+
+  .home-dashboard-body .dashboard-status-card {
+    min-height: 180px;
+    padding: 14px;
+    border-radius: 19px;
+  }
+
+  .home-dashboard-body .status-icon { width: 41px; height: 41px; }
+
+  .home-dashboard-body .dashboard-card-label { font-size: .87rem; }
+
+  .home-dashboard-body .dashboard-status-card .status-card-value {
+    font-size: 1.13rem;
+  }
+
+  .home-dashboard-body .dashboard-status-card p { font-size: .78rem; }
+  .home-dashboard-body .status-card-link { font-size: .80rem; }
+
+  .home-dashboard-body .dashboard-metrics { gap: 8px; }
+
+  .home-dashboard-body .metric-card {
+    padding: 14px 11px;
+    gap: 8px;
+    border-radius: 18px;
+  }
+
+  .home-dashboard-body .metric-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .home-dashboard-body .metric-icon svg { width: 22px; height: 22px; }
+  .home-dashboard-body .metric-card .metric-value { font-size: 1.65rem; }
+  .home-dashboard-body .metric-card .metric-label { font-size: .79rem; }
+
+  .home-dashboard-body .dashboard-content-card { padding: 18px 15px; }
+}
+
+@media (max-width: 350px) {
+  .hero-top-actions { gap: 6px; }
+  .hero-clock { padding-inline: 9px; font-size: .78rem; }
+  .dashboard-hero { padding-inline: 14px; }
+
+  .home-dashboard-body .dashboard-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-dashboard-body .dashboard-status-card { min-height: 140px; }
+
+  .home-dashboard-body .metric-card { padding: 12px 8px; }
+  .home-dashboard-body .metric-card .metric-label { font-size: .75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-hero button:active,
+  .home-dashboard-body .status-card-link:active { transform: none; }
+}
+
+
+/* === CARE RIDE MOBILE MOCKUP REFINEMENT (Dashboard only) ===
+   Target: dark teal, compact mobile UI, readable type and tight
+   information cards. Kept separate so ride/schedule/dialog styles
+   retain their existing behavior. No TS / service changes.
+   ================================================================ */
+
+/* Desktop remains a usable wider dashboard instead of forcing a
+   narrow 390px phone frame on a desktop browser. */
+.dashboard-hero {
+  background:
+    radial-gradient(ellipse 72% 65% at 97% 105%, rgba(25, 193, 147, .43), transparent 85%),
+    linear-gradient(130deg, #032d2d 0%, #064a42 55%, #087b67 100%);
+}
+
+.dashboard-hero .hero-quote {
+  max-width: 560px;
+}
+
+.home-dashboard-body .dashboard-status-card,
+.home-dashboard-body .metric-card,
+.home-dashboard-body .dashboard-content-card {
+  transition: box-shadow .16s ease, transform .16s ease;
+}
+
+.home-dashboard-body .dashboard-status-card,
+.home-dashboard-body .metric-card,
+.home-dashboard-body .dashboard-content-card {
+  box-shadow: 0 6px 18px rgba(0, 42, 37, .055);
+}
+
+/* PHONE LAYOUT */
+@media (max-width: 680px) {
+  /* Only apply the dark screen surface to the Driver HOME route.
+     Other tabs retain their original backgrounds and styling. */
+  @supports selector(.driver-page:has(.home-dashboard-body)) {
+    .driver-page:has(.home-dashboard-body),
+    .driver-page:has(.home-dashboard-body) > .driver-shell {
+      background: #063b36;
+      color: #fff;
+    }
+  }
+
+  .driver-topbar.home-topbar {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .dashboard-hero {
+    min-height: 0;
+    margin: 0;
+    padding: 18px 16px 26px;
+    border-radius: 25px 25px 10px 10px;
+    box-shadow: none;
+    background:
+      radial-gradient(ellipse 90% 60% at 90% 105%, rgba(5, 209, 153, .20), transparent 88%),
+      linear-gradient(152deg, #022a2b 3%, #043c38 60%, #097561 100%);
+  }
+
+  .dashboard-hero-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+
+  .dashboard-hero .hero-driver-profile {
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .dashboard-hero .hero-avatar {
+    flex: 0 0 43px;
+    width: 43px;
+    height: 43px;
+    border-width: 2px;
+    font-size: 1.34rem;
+  }
+
+  .dashboard-hero .hero-driver-title { gap: 1px; }
+  .dashboard-hero .hero-driver-title strong {
+    font-size: .94rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .dashboard-hero .hero-driver-title small {
+    font-size: .60rem;
+    letter-spacing: .025em;
+    white-space: nowrap;
+  }
+
+  .dashboard-hero .hero-top-actions {
+    flex: 0 0 auto;
+    width: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 5px;
+  }
+
+  .dashboard-hero .hero-clock {
+    height: 39px;
+    min-height: 39px;
+    padding: 0 7px;
+    gap: 4px;
+    border-radius: 12px;
+    font-size: .70rem;
+    font-weight: 750;
+    letter-spacing: -.025em;
+  }
+  .dashboard-hero .hero-clock ion-icon { font-size: 15px; }
+
+  .dashboard-hero .hero-notification,
+  .dashboard-hero .hero-sign-out {
+    width: 38px;
+    height: 39px;
+    min-height: 39px;
+    border-radius: 12px;
+  }
+  .dashboard-hero .hero-notification ion-icon,
+  .dashboard-hero .hero-sign-out ion-icon { font-size: 19px; }
+
+  .dashboard-hero-content {
+    padding-top: 32px;
+  }
+
+  .dashboard-hero .hero-kicker {
+    margin-bottom: 7px;
+    color: #a3e9d7;
+    font-size: .70rem;
+    font-weight: 850;
+    letter-spacing: .12em;
+  }
+
+  .driver-topbar .dashboard-hero-greeting {
+    max-width: 310px;
+    margin: 0 0 10px;
+    color: #fff;
+    font-size: clamp(1.92rem, 8.1vw, 2.25rem);
+    line-height: 1.05;
+    letter-spacing: -.045em;
+    text-wrap: balance;
+  }
+
+  .dashboard-hero .hero-date {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    color: #e9fff6;
+    font-size: .88rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .dashboard-hero .hero-quote {
+    max-width: 100%;
+    margin-top: 18px;
+    padding-top: 14px;
+    font-size: .86rem;
+    line-height: 1.45;
+    font-weight: 500;
+    border-top-color: rgba(235, 255, 246, .19);
+  }
+
+  .dashboard-hero .hero-wave-one {
+    right: -120px;
+    bottom: -175px;
+    width: 410px;
+    height: 245px;
+    transform: rotate(-13deg);
+    background: linear-gradient(125deg, rgba(21, 199, 160, .19), rgba(18, 158, 137, .48));
+  }
+  .dashboard-hero .hero-wave-two {
+    right: -110px;
+    bottom: -205px;
+    width: 430px;
+    height: 250px;
+    transform: rotate(-11deg);
+  }
+
+  .home-dashboard-body {
+    position: relative;
+    z-index: 3;
+    padding: 11px 0 23px;
+    background: transparent;
+  }
+
+  .home-dashboard-body .dashboard-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin: 0 0 17px;
+  }
+
+  .home-dashboard-body .dashboard-status-card {
+    min-height: 155px;
+    padding: 13px 12px 12px;
+    border: 1px solid rgba(222, 244, 236, .85);
+    border-radius: 19px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(0, 24, 21, .17);
+  }
+
+  .home-dashboard-body .status-card-top { margin-bottom: 11px; }
+  .home-dashboard-body .status-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+  .home-dashboard-body .status-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .home-dashboard-body .dashboard-card-label {
+    margin-bottom: 5px;
+    color: #496762;
+    font-size: .84rem;
+    font-weight: 750;
+  }
+
+  .home-dashboard-body .dashboard-status-card .status-card-value {
+    font-size: clamp(.96rem, 4.5vw, 1.19rem);
+    line-height: 1.2;
+    letter-spacing: -.015em;
+    overflow-wrap: anywhere;
+  }
+  .home-dashboard-body .dashboard-status-card p {
+    margin-top: 6px;
+    font-size: .77rem;
+  }
+  .home-dashboard-body .status-card-link {
+    min-height: 34px;
+    margin-top: 9px;
+    padding: 7px 8px;
+    border-radius: 10px;
+    font-size: .78rem;
+  }
+
+  .home-dashboard-body .dashboard-section {
+    margin: 11px 0 14px;
+  }
+  .home-dashboard-body .dashboard-section-heading {
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+  .home-dashboard-body .section-eyebrow {
+    margin-bottom: 3px;
+    color: #a6e7d4;
+    font-size: .66rem;
+    font-weight: 850;
+    letter-spacing: .1em;
+  }
+  .home-dashboard-body .dashboard-section-heading h2 {
+    color: #f2fff9;
+    font-size: 1.15rem;
+    letter-spacing: -.025em;
+  }
+
+  .home-dashboard-body .dashboard-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .home-dashboard-body .metric-card {
+    min-height: 123px;
+    gap: 7px;
+    padding: 12px 9px;
+    border: 0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 7px 17px rgba(0, 24, 21, .17);
+  }
+  .home-dashboard-body .metric-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+  }
+  .home-dashboard-body .metric-icon svg { width: 19px; height: 19px; }
+  .home-dashboard-body .metric-card .metric-value {
+    color: #102e2a;
+    font-size: 1.56rem;
+    line-height: 1;
+  }
+  .home-dashboard-body .metric-card .metric-label {
+    color: #344f49;
+    font-size: .74rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .home-dashboard-body .dashboard-content-card {
+    margin: 14px 0;
+    padding: 16px 13px;
+    border: 0;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 7px 18px rgba(0, 24, 21, .17);
+  }
+  .home-dashboard-body .dashboard-content-card .dashboard-section-heading h2,
+  .home-dashboard-body .dashboard-content-card .dashboard-section-heading .section-eyebrow {
+    color: #143b34;
+  }
+  .home-dashboard-body .dashboard-content-card .dashboard-section-heading .section-eyebrow {
+    color: #708982;
+  }
+  .home-dashboard-body .dashboard-view-link { font-size: .81rem; }
+
+  .home-dashboard-body .dashboard-empty {
+    min-height: 101px;
+    padding: 12px 5px;
+  }
+  .home-dashboard-body .dashboard-empty-icon {
+    width: 37px;
+    height: 37px;
+    margin-bottom: 7px;
+    border-radius: 12px;
+  }
+  .home-dashboard-body .dashboard-empty-icon svg { width: 21px; height: 21px; }
+  .home-dashboard-body .dashboard-empty strong { font-size: .91rem; }
+  .home-dashboard-body .dashboard-empty p {
+    margin-top: 4px;
+    font-size: .80rem;
+    line-height: 1.35;
+  }
+
+  .home-dashboard-body .trip-item-info strong,
+  .home-dashboard-body .activity-info strong { font-size: .95rem; }
+  .home-dashboard-body .trip-item-info span,
+  .home-dashboard-body .activity-info span { font-size: .81rem; }
+  .home-dashboard-body .dashboard-help-card {
+    min-height: 72px;
+    margin: 14px 0 26px;
+    padding: 13px;
+    border-radius: 17px;
+  }
+  .home-dashboard-body .dashboard-help-card strong { font-size: .92rem; }
+  .home-dashboard-body .dashboard-help-card small { font-size: .79rem; }
+}
+
+/* Very narrow Android screens: make actions stay accessible without
+   overlapping the driver name. */
+@media (max-width: 390px) {
+  .dashboard-hero .hero-driver-title small { display: none; }
+  .dashboard-hero .hero-driver-title strong { font-size: .84rem; }
+  .dashboard-hero .hero-avatar { width: 39px; height: 39px; flex-basis: 39px; }
+  .dashboard-hero .hero-clock { padding: 0 5px; font-size: .65rem; }
+  .dashboard-hero .hero-notification,
+  .dashboard-hero .hero-sign-out { width: 35px; height: 37px; min-height: 37px; }
+  .dashboard-hero .hero-clock { height: 37px; min-height: 37px; }
+}
+
+@media (max-width: 355px) {
+  .dashboard-hero .hero-driver-title strong { max-width: 65px; overflow: hidden; text-overflow: ellipsis; }
+  .dashboard-hero .hero-top-actions { gap: 3px; }
+  .dashboard-hero .hero-clock { font-size: .61rem; }
+  .home-dashboard-body .metric-card .metric-label { font-size: .70rem; }
+  .home-dashboard-body .dashboard-status-card { padding: 11px 10px; }
+}
+
+/* CARE RIDE — CUSTOM DASHBOARD BACKGROUND */
+
+.dashboard-hero {
+  background-color: #053b35;
+  background-image:
+    linear-gradient(
+      110deg,
+      rgba(1, 27, 30, 0.77) 0%,
+      rgba(1, 37, 37, 0.58) 50%,
+      rgba(0, 63, 52, 0.31) 100%
+    ),
+    url('/assets/images/Teal%20Waves%20Ride%20App%20Background.png');
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Remove old decorative waves */
+.dashboard-hero::after {
+  opacity: 0;
+}
+
+.dashboard-hero .hero-wave {
+  display: none;
+}
+
+/* Keep text readable */
+.dashboard-hero .dashboard-hero-greeting,
+.dashboard-hero .hero-date,
+.dashboard-hero .hero-kicker,
+.dashboard-hero .hero-quote,
+.dashboard-hero .hero-driver-title {
+  text-shadow: 0 2px 12px rgba(0, 16, 18, 0.36);
+}
+
+/* Apply background to home dashboard */
+.driver-page:has(.home-dashboard-body) {
+  background: #053b35;
+  color: #f5fff9;
+}
+
+.driver-page:has(.home-dashboard-body) > .driver-shell {
+  background-color: #063c36;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(2, 44, 43, 0.95),
+      rgba(4, 55, 49, 0.90),
+      rgba(2, 41, 40, 0.95)
+    ),
+    url('/assets/images/Teal%20Waves%20Ride%20App%20Background.png');
+
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+/* Dashboard headings */
+.home-dashboard-body > .dashboard-section
+.dashboard-section-heading h2 {
+  color: #f6fff9;
+}
+
+.home-dashboard-body > .dashboard-section
+.section-eyebrow {
+  color: #b9eadc;
+}
+
+/* Headings inside white cards */
+.home-dashboard-body .dashboard-content-card
+.dashboard-section-heading h2 {
+  color: #143b34;
+}
+
+.home-dashboard-body .dashboard-content-card
+.section-eyebrow {
+  color: #668077;
+}
+
+/* ============================================
+   CARERIDE - DRIVER SCHEDULE REDESIGN
+   Calendar First / Mobile Friendly
+   ============================================ */
+
+/* SCHEDULE BACKGROUND */
+.driver-page.schedule-mode,
+.driver-page.schedule-mode .driver-shell {
+  background-color: #032e2b;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(1, 35, 35, 0.76),
+      rgba(2, 55, 48, 0.90)
+    ),
+    url('/assets/images/Teal%20Waves%20Ride%20App%20Background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.driver-page.schedule-mode .shell-scroll {
+  background: transparent;
+}
+
+/* TOP HEADER */
+.schedule-mode .driver-topbar {
+  margin-bottom: 20px;
+}
+
+.schedule-mode .driver-topbar h1 {
+  margin-top: 15px;
+  color: #ffffff;
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 800;
+}
+
+.schedule-mode .role-chip {
+  background: rgba(208, 255, 234, 0.16);
+  color: #d7fff0;
+}
+
+.schedule-mode .driver-live-clock,
+.schedule-mode .notification-button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.schedule-mode .driver-live-clock span,
+.schedule-mode .driver-live-clock ion-icon,
+.schedule-mode .notification-button ion-icon {
+  color: #ffffff;
+}
+
+.schedule-mode .sign-out-button {
+  background: #bdf3db;
+  color: #063d35;
+}
+
+/* MAIN SCHEDULE LAYOUT */
+.driver-schedule-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 105px;
+}
+
+/* CALENDAR CARD */
+.schedule-calendar-panel {
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 26px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(0, 24, 24, 0.18);
+}
+
+.schedule-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.schedule-panel-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #14826e;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.schedule-panel-heading h2 {
+  margin: 0;
+  color: #073d35;
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.schedule-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #456c64;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.schedule-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #08b982;
+}
+
+/* CALENDAR MONTH NAVIGATION */
+.driver-schedule-view .calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.driver-schedule-view .calendar-nav h3 {
+  margin: 0;
+  color: #073d35;
+  font-size: 21px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.driver-schedule-view .cal-nav-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  background: #e3f5ee;
+  color: #08745c;
+  cursor: pointer;
+}
+
+.driver-schedule-view .cal-nav-button:active {
+  transform: scale(0.96);
+}
+
+/* WEEKDAY LABELS */
+.driver-schedule-view .calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.driver-schedule-view .calendar-weekdays span {
+  padding: 8px 0;
+  color: #67847a;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* CALENDAR DAYS */
+.driver-schedule-view .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.driver-schedule-view .calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 7px 2px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: #113d36;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.driver-schedule-view .calendar-day strong {
+  font-size: 16px;
+  font-weight: 750;
+}
+
+/* DAYS OUTSIDE CURRENT MONTH */
+.driver-schedule-view .calendar-day.muted {
+  color: #a9b8b1;
+  opacity: 0.65;
+}
+
+/* TODAY */
+.driver-schedule-view .calendar-day.today {
+  border-color: #19b58b;
+  box-shadow: none;
+}
+
+/* SELECTED DATE */
+.driver-schedule-view .calendar-day.selected {
+  background: #086f5b;
+  border-color: #086f5b;
+  color: #ffffff;
+  box-shadow: 0 5px 12px rgba(8, 111, 91, 0.18);
+}
+
+.driver-schedule-view .calendar-day.selected strong {
+  color: #ffffff;
+}
+
+/* GREEN EVENT DOT */
+.calendar-event-dot {
+  display: block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #07b981;
+  box-shadow: 0 0 0 2px #e4f9ef;
+}
+
+.driver-schedule-view .calendar-day.selected
+.calendar-event-dot {
+  background: #c5ffe2;
+  box-shadow: none;
+}
+
+/* HINT BELOW CALENDAR */
+.schedule-calendar-hint {
+  margin: 19px 0 0;
+  padding-top: 15px;
+  border-top: 1px solid #e8efeb;
+  color: #698279;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* SELECTED DAY SECTION */
+.schedule-day-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.schedule-day-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.schedule-day-heading h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 23px;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.schedule-day-heading .schedule-panel-eyebrow {
+  color: #a7efcf;
+}
+
+.schedule-trip-count {
+  flex-shrink: 0;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: rgba(190, 249, 220, 0.15);
+  color: #d4ffeb;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* EMPTY SCHEDULE */
+.schedule-day-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 195px;
+  padding: 30px 20px;
+  border-radius: 24px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(0, 20, 20, 0.12);
+}
+
+.schedule-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  background: #e0f6ec;
+  color: #078668;
+}
+
+.schedule-empty-icon ion-icon {
+  font-size: 28px;
+}
+
+.schedule-day-empty h3 {
+  margin: 0 0 8px;
+  color: #123f37;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.schedule-day-empty p {
+  max-width: 300px;
+  margin: 0;
+  color: #70867d;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* SCHEDULED TRIP CARDS */
+.schedule-ride-card {
+  padding: 20px;
+  border: 1px solid #e1eee8;
+  border-radius: 23px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 20, 20, 0.13);
+}
+
+.schedule-ride-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.schedule-ride-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #07493d;
+  font-size: 21px;
+  font-weight: 850;
+}
+
+.schedule-ride-time ion-icon {
+  color: #0a9b78;
+  font-size: 22px;
+}
+
+.schedule-passenger-name {
+  margin: 0 0 18px;
+  color: #123c34;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* PICKUP AND DESTINATION */
+.schedule-route-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding: 17px;
+  border-radius: 17px;
+  background: #f0f8f4;
+}
+
+.schedule-route-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.schedule-route-marker {
+  flex: 0 0 13px;
+  width: 13px;
+  height: 13px;
+  margin-top: 5px;
+  border-radius: 50%;
+}
+
+.schedule-route-marker.pickup {
+  background: #0fb780;
+}
+
+.schedule-route-marker.destination {
+  background: #f4a829;
+}
+
+.schedule-route-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.schedule-route-copy span {
+  color: #71877e;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.schedule-route-copy strong {
+  color: #163e36;
+  font-size: 15px;
+  font-weight: 750;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.schedule-request-note {
+  margin: 0 0 13px;
+  color: #245d59;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.schedule-ride-card .ride-actions {
+  margin: 0 0 12px;
+}
+
+/* VIEW TRIP BUTTON */
+.schedule-view-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 49px;
+  padding: 12px;
+  border: none;
+  border-radius: 14px;
+  background: #086b57;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.schedule-view-details ion-icon {
+  font-size: 19px;
+}
+
+.schedule-view-details:active {
+  background: #064d41;
+}
+
+/* MOBILE PHONE ADJUSTMENTS */
+@media (max-width: 480px) {
+  .schedule-calendar-panel {
+    padding: 17px 12px;
+    border-radius: 22px;
+  }
+
+  .schedule-panel-heading h2 {
+    font-size: 21px;
+  }
+
+  .driver-schedule-view .calendar-nav h3 {
+    font-size: 18px;
+  }
+
+  .driver-schedule-view .calendar-grid {
+    gap: 3px;
+  }
+
+  .driver-schedule-view .calendar-day {
+    min-height: 45px;
+    padding: 5px 1px;
+    border-radius: 11px;
+  }
+
+  .driver-schedule-view .calendar-day strong {
+    font-size: 15px;
+  }
+
+  .schedule-day-heading h2 {
+    font-size: 19px;
+  }
+
+  .schedule-ride-card {
+    padding: 16px;
+  }
+
+  .schedule-ride-time {
+    font-size: 19px;
+  }
+
+  .schedule-legend {
+    font-size: 12px;
+  }
+}
+
+/* ===== CARERIDE SCHEDULE 2.0 ===== */
+
+/* Intro banner */
+.schedule-mode .schedule-intro {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  border: 1px solid rgba(200,255,228,.22);
+  border-radius: 24px;
+  background: linear-gradient(120deg, #06453d, #0a826b);
+  box-shadow: 0 12px 28px rgba(0,25,23,.16);
+}
+
+.schedule-mode .schedule-intro::after {
+  content: '';
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  right: -95px;
+  top: -120px;
+  border-radius: 50%;
+  background: rgba(210,255,232,.1);
+  pointer-events: none;
+}
+
+.schedule-mode .schedule-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #bbffe1;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.schedule-mode .schedule-kicker ion-icon {
+  font-size: 17px;
+}
+
+.schedule-mode .schedule-intro h2 {
+  margin: 9px 0 6px;
+  color: #fff;
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.15;
+  font-weight: 850;
+}
+
+.schedule-mode .schedule-intro p {
+  max-width: 450px;
+  margin: 0;
+  color: #d9f7ec;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Actual-data summary cards */
+.schedule-mode .schedule-summary-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.schedule-mode .schedule-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 15px;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 6px 15px rgba(0,28,24,.12);
+}
+
+.schedule-mode .schedule-summary-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: #ddf7e9;
+  color: #08795f;
+}
+
+.schedule-mode .schedule-summary-icon.next-icon {
+  background: #e6f0ff;
+  color: #376fb7;
+}
+
+.schedule-mode .schedule-summary-icon ion-icon {
+  font-size: 23px;
+}
+
+.schedule-mode .schedule-summary-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+
+.schedule-mode .schedule-summary-info strong {
+  color: #093f35;
+  font-size: clamp(20px, 2.5vw, 26px);
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.schedule-mode .schedule-summary-info span {
+  color: #244b42;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.schedule-mode .schedule-summary-info small {
+  color: #627b71;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+/* Responsive calendar and daily agenda */
+.schedule-mode .schedule-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.schedule-mode .schedule-workspace > * {
+  min-width: 0;
+}
+
+.schedule-mode .schedule-calendar-panel {
+  margin: 0;
+}
+
+.schedule-mode .schedule-day-heading h2 {
+  overflow-wrap: anywhere;
+}
+
+.schedule-mode .schedule-calendar-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid #e5f0ec;
+  color: #5c776b;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.schedule-mode .schedule-calendar-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.schedule-mode .footer-dot,
+.schedule-mode .footer-today {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.schedule-mode .footer-dot {
+  background: #10b985;
+}
+
+.schedule-mode .footer-today {
+  border: 2px solid #139a79;
+}
+
+.schedule-mode .calendar-day:focus-visible,
+.schedule-mode .cal-nav-button:focus-visible,
+.schedule-mode .schedule-view-details:focus-visible {
+  outline: 3px solid #43d1a1;
+  outline-offset: 2px;
+}
+
+/* Desktop: calendar and daily agenda side by side */
+@media (min-width: 800px) {
+  .schedule-mode .schedule-workspace {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+    gap: 20px;
+  }
+
+  .schedule-mode .schedule-calendar-panel {
+    padding: 20px 16px;
+  }
+
+  .schedule-mode .calendar-day {
+    min-height: 49px;
+  }
+}
+
+/* Mobile: stacked and easy to read */
+@media (max-width: 520px) {
+  .schedule-mode .schedule-intro {
+    padding: 18px 14px;
+    border-radius: 20px;
+  }
+
+  .schedule-mode .schedule-intro h2 {
+    font-size: 25px;
+  }
+
+  .schedule-mode .schedule-intro p {
+    font-size: 14px;
+  }
+
+  .schedule-mode .schedule-summary-grid {
+    gap: 9px;
+    margin-top: 16px;
+  }
+
+  .schedule-mode .schedule-summary-card {
+    display: block;
+    padding: 12px;
+  }
+
+  .schedule-mode .schedule-summary-icon {
+    width: 37px;
+    height: 37px;
+    margin-bottom: 8px;
+  }
+
+  .schedule-mode .schedule-summary-info strong {
+    font-size: 20px;
+  }
+
+  .schedule-mode .schedule-summary-info span {
+    font-size: 13px;
+  }
+
+  .schedule-mode .schedule-summary-info small {
+    font-size: 11px;
+  }
+}
+/* CareRide Driver History — scoped visual enhancement, no logic changes */
+.history-overview, .history-feedback { margin: 0 0 24px; }
+.history-intro { position: relative; overflow: hidden; padding: clamp(22px,4vw,34px); border-radius: 25px; background: linear-gradient(125deg,#063b37,#086f60 75%,#0a9479); color: #fff; box-shadow: 0 12px 28px rgba(4,72,61,.14); }
+.history-intro::after { content: ''; position: absolute; right: -55px; bottom: -100px; width: 250px; height: 250px; border-radius: 50%; background: rgba(189,255,226,.09); pointer-events: none; }
+.history-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 800; letter-spacing: .10em; color: #427c6d; }
+.history-intro .history-eyebrow { color: #b8f4de; }
+.history-eyebrow ion-icon { font-size: 16px; }
+.history-intro h2 { position: relative; margin: 12px 0 8px; color: #fff; font-size: clamp(1.6rem,3.3vw,2.3rem); font-weight: 850; line-height: 1.12; letter-spacing: -.035em; }
+.history-intro p { position: relative; max-width: 520px; margin: 0; color: #d5f4e9; font-size: .94rem; line-height: 1.6; }
+.history-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin: 18px 0 30px; }
+.history-stat-card { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 8px; padding: 19px 17px; border: 1px solid #e0ece7; border-radius: 20px; background: #fff; box-shadow: 0 5px 18px rgba(12,58,48,.045); }
+.history-stat-icon { display: grid; place-items: center; width: 43px; height: 43px; border-radius: 14px; background: #e4f5ed; color: #087d64; font-size: 23px; }
+.history-stat-card:nth-child(2) .history-stat-icon { background: #e1f7e9; color: #148357; }
+.history-stat-card:nth-child(3) .history-stat-icon { background: #fff4dc; color: #b78220; }
+.history-stat-card:nth-child(4) .history-stat-icon { background: #e9f1ff; color: #3c74b8; }
+.history-stat-card strong { color: #0b3a33; font-size: clamp(1.45rem,3vw,1.85rem); font-weight: 850; line-height: 1.1; }
+.history-stat-card > span:last-child { color: #617b72; font-size: .78rem; font-weight: 700; line-height: 1.35; }
+.history-section-heading { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 24px 0 14px; }
+.history-section-heading h2 { margin: 5px 0; color: #103d35; font-size: clamp(1.25rem,2.4vw,1.55rem); font-weight: 850; letter-spacing: -.025em; }
+.history-section-heading p { margin: 0; color: #6d827a; font-size: .85rem; line-height: 1.45; }
+.history-record-count { display: inline-flex; align-items: center; gap: 5px; padding: 8px 12px; border-radius: 999px; background: #e3f4ed; color: #0a715c; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+.history-record-count ion-icon { color: #c28c29; }
+.history-empty-card { border: 1px solid #e1ece7; box-shadow: 0 5px 20px rgba(12,58,48,.04); padding: 42px 20px; }
+.history-feedback { padding-bottom: 80px; }
+.history-feedback-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 34px 18px; border: 1px dashed #c6ded3; border-radius: 21px; background: #fff; }
+.history-feedback-empty ion-icon { padding: 13px; border-radius: 16px; background: #e8f6ef; color: #0a866b; font-size: 30px; }
+.history-feedback-empty h3 { margin: 13px 0 5px; color: #153e36; font-size: 1.08rem; }
+.history-feedback-empty p { max-width: 400px; margin: 0; color: #71877e; font-size: .85rem; line-height: 1.5; }
+.history-review-card { padding: 20px; margin-bottom: 12px; border: 1px solid #e0ece7; border-radius: 19px; background: #fff; box-shadow: 0 5px 16px rgba(12,58,48,.04); }
+.history-review-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.history-review-top strong { color: #143e36; font-size: .96rem; }
+.history-review-stars { color: #b97f16; font-size: 1.06rem; letter-spacing: .06em; }
+.history-review-card p { margin: 12px 0; color: #3d5c52; font-size: .9rem; line-height: 1.55; overflow-wrap: anywhere; }
+.history-review-card small { color: #7e9389; font-size: .75rem; }
+.history-feedback-note { color: #71877e; font-size: .75rem; line-height: 1.5; }
+@media (max-width: 720px) { .history-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .history-stat-card { padding: 15px; } }
+@media (max-width: 360px) { .history-intro { padding: 20px 17px; } .history-stat-card { padding: 12px; } .history-stat-card strong { font-size: 1.35rem; } }
+
+
+/* CareRide aqua theme shared with the Passenger app. */
+.driver-shell { @include glass.aqua-backdrop; }
+.home-panel, .calendar-card, .chart-card, .availability-card, .ride-card, .empty-card, .stat-card, .history-stat-card, .history-review-card, .history-feedback-empty { @include glass.frosted-card; }
+.care-role-brand {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 8px 4px; margin-bottom: 10px; color: #043b37;
+}
+.care-role-brand img { display: block; width: 60px; height: auto; border-radius: 12px; }
+.care-role-brand div { display: grid; gap: 4px; }
+.care-role-brand strong { font-size: clamp(25px, 7vw, 34px); font-weight: 900; line-height: .95; letter-spacing: -.055em; }
+.care-role-brand span { font-size: clamp(7px, 1.9vw, 9px); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.driver-page .dashboard-hero, .driver-page .history-intro {
+  background: radial-gradient(circle at 95% 18%, #008e79, transparent 60%), linear-gradient(132deg, #04363a, #006b62);
+  border: 1px solid #d0fff9;
+  box-shadow: inset 0 1px 0 #d0fff96e, 0 8px 18px #006f6f46;
+}
+.driver-page :is(.history-stat-icon, .calendar-nav .cal-nav-button) { color: #24516c; background: #deebfd; }
+
+.driver-page.schedule-mode, .driver-page.schedule-mode .driver-shell { @include glass.aqua-backdrop; }
+.driver-page.schedule-mode .driver-topbar {
+  padding: 14px;
+  border: 1px solid #d0fff9;
+  border-radius: 22px;
+  background: linear-gradient(132deg, #04363a, #006b62);
+}
+.driver-page.schedule-mode .driver-topbar .schedule-top-subtitle { color: #dffbf5; }
+.driver-page.schedule-mode :is(.schedule-calendar-panel, .schedule-day-section, .schedule-summary-card, .schedule-ride-card, .schedule-day-empty) {
+  @include glass.frosted-card;
+}
+
+/* Final palette alignment: same aqua, mint, and pastel system as Passenger and Admin. */
+.driver-page .dashboard-hero {
+  background:
+    radial-gradient(circle at 96% 20%, rgba(16, 210, 182, .58), transparent 48%),
+    radial-gradient(circle at 5% 110%, rgba(64, 246, 219, .36), transparent 47%),
+    linear-gradient(132deg, #04363a, #006b62);
+}
+
+.driver-page .history-intro {
+  background:
+    radial-gradient(circle at 96% 20%, rgba(16, 210, 182, .45), transparent 48%),
+    linear-gradient(132deg, #04363a, #006b62);
+}
+
+.driver-page .metric-card:nth-child(1) { background: linear-gradient(145deg, rgba(221, 246, 255, .88), rgba(169, 223, 244, .62)); }
+.driver-page .metric-card:nth-child(2) { background: linear-gradient(145deg, rgba(218, 255, 241, .88), rgba(128, 235, 205, .61)); }
+.driver-page .metric-card:nth-child(3) { background: linear-gradient(145deg, rgba(244, 233, 255, .9), rgba(211, 190, 241, .62)); }
+
+@media (max-width: 680px) {
+  @supports selector(.driver-page:has(.home-dashboard-body)) {
+    .driver-page:has(.home-dashboard-body),
+    .driver-page:has(.home-dashboard-body) > .driver-shell {
+      background:
+        radial-gradient(ellipse at 93% 23%, #32d5c2a6, transparent 43%),
+        radial-gradient(ellipse at 12% 67%, #8cc7e5a8, transparent 48%),
+        repeating-linear-gradient(146deg, transparent 0 78px, #f1ffff70 120px, #39cfc06b 132px, transparent 170px 270px),
+        linear-gradient(150deg, #e6fbff, #9be9e3 62%, #83cfe0);
+      color: #073f43;
+    }
+  }
+
+  .home-dashboard-body .dashboard-section-heading .section-eyebrow { color: #007e75; }
+  .home-dashboard-body .dashboard-section-heading h2 { color: #073f43; }
+  .home-dashboard-body .dashboard-status-card,
+  .home-dashboard-body .dashboard-content-card {
+    border: 1px solid rgba(255, 255, 255, .92);
+    background: linear-gradient(145deg, rgba(255, 255, 255, .72), rgba(222, 253, 254, .42));
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, .9), 0 9px 18px rgba(7, 88, 96, .14);
+  }
+  .home-dashboard-body .dashboard-status-card:nth-child(2) { background: linear-gradient(145deg, rgba(234, 246, 255, .78), rgba(195, 223, 247, .48)); }
+  .home-dashboard-body .dashboard-card-label,
+  .home-dashboard-body .metric-card .metric-label,
+  .home-dashboard-body .dashboard-empty p { color: #3d6b72; }
+  .home-dashboard-body .dashboard-status-card .status-card-value,
+  .home-dashboard-body .metric-card .metric-value,
+  .home-dashboard-body .dashboard-content-card .dashboard-section-heading h2,
+  .home-dashboard-body .dashboard-empty strong { color: #073f43; }
+  .home-dashboard-body .dashboard-content-card .dashboard-section-heading .section-eyebrow { color: #007e75; }
+  .home-dashboard-body .metric-card { border: 1px solid rgba(255, 255, 255, .87); box-shadow: inset 0 1px 1px rgba(255, 255, 255, .82), 0 8px 16px rgba(7, 88, 96, .13); }
+}
+
+/* Readable mobile type scale for the Driver dashboard. */
+@media (max-width: 680px) {
+  .driver-topbar .dashboard-hero-greeting { font-size: clamp(26px, 7vw, 32px); }
+  .dashboard-hero .hero-date { font-size: 14px; }
+  .home-dashboard-body .dashboard-card-label { font-size: 13px; font-weight: 800; }
+  .home-dashboard-body .dashboard-status-card .status-card-value { font-size: 16px; line-height: 1.25; }
+  .home-dashboard-body .dashboard-status-card p { color: #315f66; font-size: 13px; line-height: 1.4; }
+  .home-dashboard-body .status-card-link { font-size: 13px; font-weight: 800; }
+  .home-dashboard-body .dashboard-section-heading h2,
+  .home-dashboard-body .dashboard-content-card .dashboard-section-heading h2 { font-size: 20px; line-height: 1.2; }
+  .home-dashboard-body .metric-card .metric-label { font-size: 12px; line-height: 1.25; }
+  .home-dashboard-body .dashboard-empty p { font-size: 13px; line-height: 1.4; }
+  .home-dashboard-body .trip-item-info strong,
+  .home-dashboard-body .activity-info strong { font-size: 15px; }
+  .home-dashboard-body .trip-item-info span,
+  .home-dashboard-body .activity-info span,
+  .home-dashboard-body .trip-item-info small,
+  .home-dashboard-body .activity-info small { color: #315f66; font-size: 13px; line-height: 1.35; }
+}
+
+/* Prevent the Driver hero controls from competing with the profile label on phones. */
+@media (max-width: 480px) {
+  .dashboard-hero { padding: 17px 14px 24px; }
+  .dashboard-hero-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+  .dashboard-hero .hero-driver-profile { gap: 7px; min-width: 0; }
+  .dashboard-hero .hero-avatar { flex: 0 0 38px; width: 38px; height: 38px; font-size: 16px; }
+  .dashboard-hero .hero-driver-title { min-width: 0; }
+  .dashboard-hero .hero-driver-title strong { display: block; overflow: hidden; color: #f4fffd; font-size: 14px; font-weight: 850; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+  .dashboard-hero .hero-driver-title small { display: none; }
+  .dashboard-hero .hero-top-actions { display: flex; width: auto; gap: 5px; }
+  .dashboard-hero .hero-clock,
+  .dashboard-hero .hero-notification,
+  .dashboard-hero .hero-sign-out { display: grid; flex: 0 0 36px; width: 36px; min-width: 36px; height: 38px; min-height: 38px; padding: 0; place-items: center; border-radius: 12px; }
+  .dashboard-hero .hero-clock span,
+  .dashboard-hero .hero-sign-out span { display: none; }
+  .dashboard-hero .hero-clock ion-icon,
+  .dashboard-hero .hero-notification ion-icon,
+  .dashboard-hero .hero-sign-out ion-icon { margin: 0; font-size: 18px; }
+  .dashboard-hero-content { padding-top: 27px; }
+  .driver-topbar .dashboard-hero-greeting { max-width: 100%; font-size: clamp(26px, 7.4vw, 31px); line-height: 1.08; }
+}
+
+/* High-contrast trip summary and support shortcut. */
+.driver-page .home-dashboard-body .dashboard-section-heading h2 { color: #073f47 !important; text-shadow: none; }
+.driver-page .home-dashboard-body .metric-card .metric-value { color: #073f47 !important; }
+.driver-page .home-dashboard-body .metric-card .metric-label { color: #214f56 !important; font-size: 13px; font-weight: 800; }
+.driver-page .home-dashboard-body .metric-icon { color: #006b63; background: #bffff1; }
+.driver-page .home-dashboard-body .metric-card:nth-child(1) .metric-icon { color: #00647a; background: #c9efff; }
+.driver-page .home-dashboard-body .metric-card:nth-child(3) .metric-icon { color: #66377f; background: #eddbff; }
+.driver-page .home-dashboard-body .metric-icon svg { display: block; stroke: currentColor !important; }
+.driver-page .home-dashboard-body .dashboard-help-card { border-color: rgba(255, 255, 255, .92); background: linear-gradient(145deg, rgba(246, 255, 255, .82), rgba(199, 246, 236, .6)); box-shadow: inset 0 1px 1px rgba(255, 255, 255, .92), 0 8px 16px rgba(7, 88, 96, .13); }
+.driver-page .home-dashboard-body .help-icon { color: #006b63; background: #bdf8ed; }
+.driver-page .home-dashboard-body .dashboard-help-card strong { color: #073f47; font-size: 16px; }
+.driver-page .home-dashboard-body .dashboard-help-card small { color: #315f66; font-size: 14px; }
+.driver-page .home-dashboard-body .dashboard-help-card > ion-icon { color: #006b63; font-size: 22px; }
+
+@media (max-width: 390px) {
+  .driver-page .home-dashboard-body .metric-card { min-height: 128px; padding: 12px 8px; }
+  .driver-page .home-dashboard-body .metric-card .metric-label { font-size: 12px; line-height: 1.25; }
+}
+
+/* Clear icon and text contrast across the Driver dashboard and schedule. */
+.home-dashboard-body .status-icon { color: #006e65; background: #bff8ed; }
+.home-dashboard-body .gps-icon { color: #24516c; background: #dcecff; }
+.home-dashboard-body :is(.status-icon, .metric-icon, .dashboard-empty-icon) svg { display: block; stroke: currentColor; }
+.home-dashboard-body .metric-icon { color: #075e58; background: #caffef; }
+.home-dashboard-body .rating-icon { color: #633b7d; background: #ebd7ff; }
+.home-dashboard-body .trip-date-icon,
+.home-dashboard-body .trip-arrow,
+.home-dashboard-body .dashboard-view-link { color: #006a61; }
+
+.driver-page.schedule-mode .schedule-day-heading h2 { color: #073f47; }
+.driver-page.schedule-mode .schedule-day-heading .schedule-panel-eyebrow { color: #087b73; }
+.driver-page.schedule-mode .schedule-trip-count { color: #075d58; background: rgba(230, 255, 251, .78); }
+.driver-page.schedule-mode .schedule-calendar-hint,
+.driver-page.schedule-mode .schedule-day-empty p,
+.driver-page.schedule-mode .schedule-legend { color: #356a71; font-size: 14px; }
+.driver-page.schedule-mode .schedule-panel-heading h2,
+.driver-page.schedule-mode .calendar-nav h3,
+.driver-page.schedule-mode .schedule-day-empty h3,
+.driver-page.schedule-mode .schedule-passenger-name { color: #073f47; }
+.driver-page.schedule-mode .calendar-weekdays span,
+.driver-page.schedule-mode .calendar-day { color: #174f56; }
+.driver-page.schedule-mode .schedule-ride-time { color: #075d58; }

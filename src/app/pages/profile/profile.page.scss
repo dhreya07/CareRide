@@ -317,3 +317,159 @@
     padding: 0;
   }
 }
+
+/* Passenger profile uses the same palette and typography as Home. */
+.profile-page, .profile-container {
+  color: #20394b;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #dce8ee;
+}
+.profile-container {
+  background: radial-gradient(ellipse at 96% 24%, #a9c3ce 0, transparent 55%),
+    radial-gradient(ellipse at 10% 0%, #a6bfcf 0, transparent 29%),
+    linear-gradient(150deg, #dce8ee 8%, #bdcfd9 70%, #a5bdcb);
+}
+.profile-brand { display: flex; align-items: center; justify-content: center; gap: 9px; margin: 0 0 12px; color: #20394b; }
+.profile-brand img { width: 60px; height: auto; border-radius: 12px; }
+.profile-brand div { display: grid; gap: 4px; }
+.profile-brand strong { font-size: clamp(25px, 7vw, 34px); font-weight: 900; line-height: .95; letter-spacing: -.055em; }
+.profile-brand span { font-size: clamp(7px, 1.9vw, 9px); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.identity-card {
+  padding: 14px;
+  border: 2px solid #8fadb9;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #20374c, #436b7c);
+  box-shadow: 0 6px 14px #006a5f44;
+}
+.identity-copy h1 { color: #f4fffd; }
+.identity-copy p, .identity-copy small { color: #e0edf3; overflow-wrap: anywhere; }
+.avatar, .card-icon, .need-icon { color: #284f60; background: linear-gradient(145deg, #d6eaf0, #a4c8d4); }
+.page-subtitle, .section-description, .optional { color: #405e70; }
+.profile-card {
+  padding: clamp(13px, 4vw, 19px);
+  border: 2px solid #a1bdcb;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #f0f6f9, #dae8ee);
+  box-shadow: inset 0 0 0 1px #fff, 0 5px 12px #00786c20;
+}
+.profile-card h2, .form-field label, .need-label { color: #20394b; }
+.section-kicker { color: #426d7e; }
+.form-field { margin-bottom: 11px; }
+.form-field input, .form-field textarea, .form-field select { border-color: #9cd8d1; background: #fbffff; color: #20394b; }
+.form-field input[readonly] { background: #e0f5f3; color: #405e70; }
+.form-field textarea { min-height: 64px; }
+.assistance-option { min-height: 44px; border-color: #bde7e3; background: #f8ffff; }
+.assistance-option.checked { background: #cef7eb; border-color: #0a927f; }
+.assistance-option input { accent-color: #00745e; }
+.info-banner { color: #06483e; background: #d4f6ed; border: 1px solid #8cd8c9; }
+.info-banner strong, .info-banner p { color: inherit; }
+.save-button { border-radius: 999px; background: linear-gradient(140deg, #007767, #043d40); color: #fff; }
+.secondary-button { border-color: #83b9b5; color: #20394b; background: #f7ffff; }
+.sign-out-button { color: #06483e; }
+.profile-page :is(button, input, textarea, select):focus-visible { outline: 2px solid #087c75; outline-offset: 2px; }
+
+.passenger-profile-header { margin-bottom: 20px; }
+.passenger-profile-header > h1 {
+  margin: 4px 0;
+  color: #103b32;
+  font-size: clamp(28px, 7vw, 42px);
+  letter-spacing: -.045em;
+}
+.passenger-profile-header > h1 span { color: #426d7e; }
+.passenger-profile-header > p:not(.section-kicker) { margin: 6px 0 14px; color: #405e70; }
+.identity-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: center;
+  background: linear-gradient(120deg, #edf5f8, #c6dce5);
+  border-color: #a1bcc9;
+}
+.avatar-wrap { position: relative; }
+.avatar-wrap .avatar {
+  width: 76px; height: 76px; border: 3px solid #fff; border-radius: 50%; overflow: hidden;
+  box-shadow: 0 4px 14px #006a5f2e;
+}
+.avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.avatar-camera {
+  position: absolute; right: -4px; bottom: -2px; display: grid; place-items: center;
+  width: 36px; height: 36px; padding: 0; border: 2px solid #e8fff8; border-radius: 50%;
+  background: #006954; color: #fff; font-size: 18px;
+}
+.avatar-camera:disabled { opacity: .55; }
+.identity-copy h2 { margin: 4px 0; color: #103b32; font-size: clamp(17px, 4.8vw, 24px); overflow-wrap: anywhere; }
+.identity-copy p, .identity-copy small { color: #405e70; }
+.passenger-account { display: inline-block; margin-top: 7px; padding: 5px 9px; border-radius: 999px; color: #284f60; background: #f6fffc; font-size: 11px; font-weight: 750; }
+.identity-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.identity-actions button {
+  min-height: 44px; padding: 0 11px; border: 1px solid #a7ded6; border-radius: 999px;
+  background: #f8fffd; color: #284f60; font: inherit; font-size: 12px; font-weight: 750;
+}
+.photo-feedback { grid-column: 1 / -1; margin: 0; color: #07574f; font-size: 13px; }
+.profile-menu-card > summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+}
+.profile-menu-card > summary::-webkit-details-marker { display: none; }
+.profile-menu-card[open] > summary { margin-bottom: 15px; }
+.profile-menu-arrow { color: #426d7e; font-size: 20px; }
+.profile-menu-card[open] .profile-menu-arrow { transform: rotate(180deg); }
+.profile-menu-card > summary:focus-visible { outline: 2px solid #087c75; outline-offset: 3px; border-radius: 8px; }
+
+/* Aqua backdrop shared by the Passenger screens. */
+.profile-page, .profile-container {
+  background: radial-gradient(ellipse at 95% 14%, #8ceee8 0, transparent 52%),
+    linear-gradient(150deg, #e6fbff, #b4f0ef 58%, #a0e5e8);
+}
+.profile-brand, .passenger-profile-header > h1 { color: #073f43; } .passenger-profile-header > .section-kicker, .passenger-profile-header > p:not(.section-kicker), .sign-out-button { color: #315d66; }
+
+.avatar, .passenger-account { background: linear-gradient(145deg, #e1fff2, #b8e5d7); color: #214e49; }
+.profile-menu-card:nth-of-type(1) .card-icon { background: #deebfd; color: #294e70; }
+.profile-menu-card:nth-of-type(2) .card-icon { background: #e9ddfa; color: #4e406b; }
+.profile-menu-card:nth-of-type(3) .card-icon { background: #f9e5d4; color: #693e27; }
+
+/* Frosted surfaces over the aqua Passenger theme. */
+.identity-card, .profile-card, .info-banner {
+  background: linear-gradient(142deg, rgba(255, 255, 255, .83), rgba(218, 249, 250, .55));
+  border-color: rgba(249, 255, 255, .92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .86), 0 8px 23px rgba(0, 88, 88, .14);
+  -webkit-backdrop-filter: blur(13px) saturate(135%);
+  backdrop-filter: blur(13px) saturate(135%);
+}
+
+/* Visible refraction needs a patterned backdrop behind the translucent cards. */
+.profile-container {
+  background:
+    radial-gradient(ellipse at 91% 24%, #22cfc1a8, transparent 42%),
+    radial-gradient(ellipse at 12% 66%, #81bde4b0, transparent 46%),
+    repeating-linear-gradient(146deg, transparent 0 78px, #f1ffff70 120px, #39cfc06b 132px, transparent 170px 270px),
+    linear-gradient(150deg, #e6fbff, #9be9e3 62%, #83cfe0);
+}
+.profile-container :is(.identity-card, .profile-card, .info-banner) {
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, .67), rgba(237, 255, 255, .34) 52%, rgba(192, 246, 247, .30)),
+    linear-gradient(20deg, rgba(239, 255, 253, .32), transparent 58%);
+  border: 1px solid rgba(255, 255, 255, .95);
+  box-shadow:
+    inset 0 1px 1px #ffffffed,
+    inset 0 -1px 0 #4ea8b34d,
+    0 6px 15px #07586029,
+    0 17px 25px -16px #07586070;
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
+}
+.profile-container .identity-card {
+  background: linear-gradient(140deg, rgba(255, 255, 255, .74), rgba(204, 255, 249, .30) 68%, rgba(128, 235, 228, .29));
+}
+.profile-container .form-field :is(input, textarea, select) { background: rgba(250, 255, 255, .89); }
+.profile-container .form-field input[readonly] { background: rgba(223, 249, 246, .88); }
+.profile-container .identity-actions button {
+  background: linear-gradient(145deg, #ffffffdb, #ebfff5a3);
+  border-color: #f5fffc;
+  box-shadow: inset 0 1px 0 #fff, 0 3px 8px #07586024;
+}

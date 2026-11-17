@@ -1,3 +1,5 @@
+@use '../../shared/passenger-glass' as glass;
+
 :host {
   display: block;
   width: 100%;
@@ -374,3 +376,6 @@
     padding: 0;
   }
 }
+
+.safety-container { @include glass.aqua-backdrop; }
+.safety-card:not(.emergency-card) { @include glass.frosted-card; }

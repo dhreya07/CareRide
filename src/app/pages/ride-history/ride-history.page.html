@@ -8,43 +8,38 @@
          HEADER
     ========================== -->
 
-    <header class="page-header">
-
-      <a
-        routerLink="/dashboard"
-        class="brand"
-      >
-        Care<span>Ride</span>
+    <header class="page-header history-brand">
+      <a routerLink="/profile" aria-label="My profile">
+        <img src="assets/careride-healthcare-mark.png" alt="" width="288" height="192">
       </a>
-
-
-      <a
-        routerLink="/profile"
-        class="profile-chip"
-        aria-label="Open profile"
-      >
-        CR
+      <a routerLink="/dashboard" class="history-wordmark" aria-label="CareRide home">
+        <strong>CareRide</strong>
+        <span>Your healthcare transportation</span>
       </a>
-
     </header>
 
+    <section class="history-heading" aria-labelledby="history-title">
+      <span>YOUR TRIPS</span>
+      <h1 id="history-title" class="page-title">Ride History</h1>
+      <p class="page-subtitle">See every booking update in one clear place.</p>
+    </section>
 
-    <!-- =========================
-         PAGE TITLE
-    ========================== -->
+    <section class="history-overview" aria-label="Booking overview">
+      <button type="button" class="overview-card accepted" [class.selected]="selectedFilter === 'accepted'" (click)="selectFilter('accepted')">
+        <span>Accepted</span><strong>{{ acceptedCount }}</strong>
+      </button>
+      <button type="button" class="overview-card completed" [class.selected]="selectedFilter === 'completed'" (click)="selectFilter('completed')">
+        <span>Completed</span><strong>{{ completedCount }}</strong>
+      </button>
+      <button type="button" class="overview-card not-completed" [class.selected]="selectedFilter === 'not-completed'" (click)="selectFilter('not-completed')">
+        <span>Cancelled / Declined</span><strong>{{ notCompletedCount }}</strong>
+      </button>
+    </section>
 
-    <h1 class="page-title">
-      Ride History
-    </h1>
-
-
-    <p class="page-subtitle">
-
-      Review your completed and cancelled
-      CareRide journeys.
-
-    </p>
-
+    <section class="history-filter-row" *ngIf="rides.length">
+      <h2>Recent {{ filterLabel() }}</h2>
+      <button type="button" [class.active]="selectedFilter === 'all'" (click)="selectFilter('all')">View all</button>
+    </section>
 
     <!-- =========================
          EMPTY HISTORY
@@ -66,19 +61,9 @@
 
 
       <p>
-        Completed and cancelled trips will
-        appear here after they leave
-        Scheduled Rides.
+        Your accepted, completed, declined, and
+        cancelled booking updates will appear here.
       </p>
-
-
-      <button
-        type="button"
-        class="primary-link"
-        (click)="requestRide()"
-      >
-        Request a Ride
-      </button>
 
     </section>
 
@@ -89,7 +74,7 @@
 
     <article
       class="ride-card"
-      *ngFor="let ride of rides"
+      *ngFor="let ride of displayedRides"
     >
 
 
@@ -115,13 +100,37 @@
           class="status-badge"
           [ngClass]="statusTone(ride)"
         >
-          {{ needsRating(ride) ? 'Rate driver' : ride.status }}
+          {{ statusLabel(ride) }}
         </div>
 
       </div>
 
 
-      <p class="meta"><strong>Booking ID:</strong> {{ ride.id }}</p>
+      <div class="route">
+        <div>
+          <small>Pickup</small>
+          <strong>{{ ride.pickupLocation }}</strong>
+        </div>
+        <div>
+          <small>Destination</small>
+          <strong>{{ ride.destination }}</strong>
+        </div>
+      </div>
+
+      <section class="arrival-proof" *ngIf="proofUrl(ride) as photoUrl">
+        <div>
+          <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+          <div>
+            <strong>Safe arrival confirmed</strong>
+            <p>Your driver shared a private arrival photo for this completed trip.</p>
+          </div>
+        </div>
+        <img [src]="photoUrl" alt="Safe-arrival confirmation for this completed ride">
+      </section>
+
+
+      <details class="history-details">
+        <summary>Trip details</summary>
       <p class="meta"><strong>Ride type:</strong> {{ rideTypeLabel(ride) }}</p>
       <p class="meta"><strong>Assigned driver:</strong> {{ assignedDriver(ride) }}</p>
       <p class="meta"><strong>Vehicle:</strong> {{ vehicleText(ride) }}</p>
@@ -138,33 +147,6 @@
       </ol>
       <p class="progress-outcome" *ngIf="progressOutcome(ride)">{{ progressOutcome(ride) }}</p>
 
-      <div class="route">
-        <div>
-          <small>Pickup</small>
-          <strong>{{ ride.pickupLocation }}</strong>
-        </div>
-        <div>
-          <small>Destination</small>
-          <strong>{{ ride.destination }}</strong>
-        </div>
-      </div>
-
-
-      <!-- PASSENGER -->
-
-      <p class="meta">
-
-        <strong>
-          Passenger:
-        </strong>
-
-        {{ ride.passengerName }}
-
-      </p>
-
-
-      <!-- PURPOSE -->
-
       <p
         class="meta"
         *ngIf="ride.purpose"
@@ -178,6 +160,8 @@
 
       </p>
 
+
+      </details>
 
       <!-- =========================
            ACTIONS
@@ -193,26 +177,25 @@
           class="details-button"
           (click)="viewDetails(ride)"
         >
-          {{ needsRating(ride) ? 'Rate driver' : 'View Details' }}
+          {{ needsRating(ride) ? 'Rate driver' : 'View trip' }}
         </button>
 
 
         <!-- REQUEST AGAIN -->
 
-        <button
-          type="button"
-          class="details-button"
-          (click)="requestAgain(ride)"
-        >
-          Request Again
-        </button>
-
-
       </div>
 
     </article>
 
+    <section class="empty-filter-state" *ngIf="rides.length > 0 && displayedRides.length === 0">
+      <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+      <strong>No {{ filterLabel() }} yet</strong>
+      <span>Choose another overview card to view a different booking status.</span>
+    </section>
+
+    <p class="arrival-proof-error" *ngIf="proofLoadError" role="status">{{ proofLoadError }}</p>
+
     </div>
-    <app-navigation></app-navigation>
+    <app-navigation class="dashboard-nav"></app-navigation>
   </div>
 </div>

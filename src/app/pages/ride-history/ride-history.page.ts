@@ -9,6 +9,10 @@ import { LocalRide } from '../../core/models/local-ride.model';
 import { AuthService } from '../../core/services/auth.service';
 import { LocalRideService, RideProgressStep } from '../../core/services/local-ride.service';
 import { RideService } from '../../core/services/ride.service';
+import { DropoffProofService } from '../../core/services/dropoff-proof.service';
+import { isProfileUuid } from '../../core/models/profile-id';
+
+type HistoryFilter = 'all' | 'accepted' | 'completed' | 'not-completed';
 
 @Component({
   selector: 'app-ride-history',
@@ -28,6 +32,11 @@ import { RideService } from '../../core/services/ride.service';
 export class RideHistoryPage implements OnInit {
 
   rides: LocalRide[] = [];
+  selectedFilter: HistoryFilter = 'all';
+  readonly dropoffProofUrls = new Map<string, string>();
+  proofLoadError = '';
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private refreshInFlight = false;
   private readonly destroyRef = inject(DestroyRef);
 
 
@@ -35,13 +44,15 @@ export class RideHistoryPage implements OnInit {
     private localRides: LocalRideService,
     private ridesApi: RideService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private dropoffProofs: DropoffProofService,
   ) {}
 
   ngOnInit(): void {
     this.localRides.rides$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadRides());
+    this.destroyRef.onDestroy(() => this.stopAutoRefresh());
   }
 
 
@@ -50,9 +61,12 @@ export class RideHistoryPage implements OnInit {
   // =========================
 
   ionViewWillEnter(): void {
-
     this.refresh();
+    this.startAutoRefresh();
+  }
 
+  ionViewDidLeave(): void {
+    this.stopAutoRefresh();
   }
 
 
@@ -61,8 +75,36 @@ export class RideHistoryPage implements OnInit {
   // =========================
 
   refresh(): void {
+    if (this.refreshInFlight) {
+      return;
+    }
     this.localRides.reloadFromStorage();
-    void this.ridesApi.hydrateFromCloud().catch(() => undefined);
+    if (!this.ridesApi.cloudBookings) {
+      return;
+    }
+    this.refreshInFlight = true;
+    void this.ridesApi.hydrateFromCloud()
+      .then(() => {
+        this.loadRides();
+        return this.loadDropoffProofs();
+      })
+      .catch(() => undefined)
+      .finally(() => { this.refreshInFlight = false; });
+  }
+
+  private startAutoRefresh(): void {
+    this.stopAutoRefresh();
+    if (!this.ridesApi.cloudBookings) {
+      return;
+    }
+    this.refreshTimer = setInterval(() => this.refresh(), 5_000);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 
   progressSteps(ride: LocalRide): RideProgressStep[] {
@@ -104,9 +146,38 @@ export class RideHistoryPage implements OnInit {
       return;
     }
     const name = account.fullName.trim().toLowerCase();
-    this.rides = this.localRides.getHistoryRides().filter(
-      (ride) => ride.passengerName.trim().toLowerCase() === name,
-    );
+    const allRides = this.localRides.getRides();
+    this.rides = this.ridesApi.cloudBookings
+      // Cloud RLS has already limited this cache to the signed-in participant.
+      ? allRides.filter((ride) => isProfileUuid(ride.id))
+      : allRides.filter((ride) => ride.passengerName.trim().toLowerCase() === name);
+    this.rides.sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
+    void this.loadDropoffProofs();
+  }
+
+  proofUrl(ride: LocalRide): string | null {
+    return this.dropoffProofUrls.get(ride.id) ?? null;
+  }
+
+  private async loadDropoffProofs(): Promise<void> {
+    if (!this.ridesApi.cloudBookings) {
+      this.dropoffProofUrls.clear();
+      return;
+    }
+    try {
+      const proofs = await this.dropoffProofs.listForCurrentPassenger();
+      const historyIds = new Set(this.rides.filter((ride) => ride.status === 'Completed').map((ride) => ride.id));
+      const urls = await Promise.all(proofs
+        .filter((proof) => historyIds.has(proof.bookingId))
+        .map(async (proof) => ({ bookingId: proof.bookingId, url: await this.dropoffProofs.createViewUrl(proof) })));
+      this.dropoffProofUrls.clear();
+      for (const item of urls) {
+        if (item.url) this.dropoffProofUrls.set(item.bookingId, item.url);
+      }
+      this.proofLoadError = '';
+    } catch {
+      this.proofLoadError = 'A safe-arrival photo could not be loaded right now.';
+    }
   }
 
 
@@ -166,64 +237,6 @@ export class RideHistoryPage implements OnInit {
 
   }
 
-
-  // =========================
-  // REQUEST RIDE
-  // =========================
-
-  requestRide(): void {
-
-    this.router.navigate([
-      '/request-ride'
-    ]);
-
-  }
-
-
-  // =========================
-  // REQUEST AGAIN
-  // =========================
-
-  requestAgain(
-    ride: LocalRide
-  ): void {
-
-    if (!ride) {
-
-      this.requestRide();
-
-      return;
-
-    }
-
-
-    const confirmed = confirm(
-
-      'Request another ride?\n\n' +
-
-      'Previous pickup:\n' +
-      ride.pickupLocation +
-
-      '\n\nPrevious destination:\n' +
-      ride.destination +
-
-      '\n\nYou can enter or update the trip details on the next page.'
-
-    );
-
-
-    if (!confirmed) {
-      return;
-    }
-
-
-    this.router.navigate([
-      '/request-ride'
-    ]);
-
-  }
-
-
   // =========================
   // NUMBER OF HISTORY RIDES
   // =========================
@@ -236,6 +249,53 @@ export class RideHistoryPage implements OnInit {
 
   statusTone(ride: LocalRide): string {
     return this.localRides.statusTone(ride.status);
+  }
+
+  get acceptedCount(): number {
+    return this.rides.filter((ride) => this.isAccepted(ride)).length;
+  }
+
+  get completedCount(): number {
+    return this.rides.filter((ride) => ride.status === 'Completed').length;
+  }
+
+  get notCompletedCount(): number {
+    return this.rides.filter((ride) => ['Rejected', 'Cancelled'].includes(ride.status)).length;
+  }
+
+  get displayedRides(): LocalRide[] {
+    return this.rides.filter((ride) => {
+      switch (this.selectedFilter) {
+        case 'accepted': return this.isAccepted(ride);
+        case 'completed': return ride.status === 'Completed';
+        case 'not-completed': return ['Rejected', 'Cancelled'].includes(ride.status);
+        default: return true;
+      }
+    });
+  }
+
+  selectFilter(filter: HistoryFilter): void {
+    this.selectedFilter = filter;
+  }
+
+  filterLabel(): string {
+    const labels: Record<HistoryFilter, string> = {
+      all: 'booking activity',
+      accepted: 'accepted rides',
+      completed: 'completed rides',
+      'not-completed': 'cancelled or declined rides',
+    };
+    return labels[this.selectedFilter];
+  }
+
+  statusLabel(ride: LocalRide): string {
+    if (ride.status === 'Rejected') return 'Declined';
+    if (this.isAccepted(ride)) return ride.status === 'In Progress' ? 'In progress' : 'Accepted';
+    return ride.status;
+  }
+
+  private isAccepted(ride: LocalRide): boolean {
+    return ['Driver Assigned', 'Driver On The Way', 'Arrived', 'Picked Up', 'In Progress'].includes(ride.status);
   }
 
 }

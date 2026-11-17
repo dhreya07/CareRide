@@ -19,6 +19,8 @@ export interface DeviceGpsFix {
   latitude: number;
   longitude: number;
   accuracyMeters: number | null;
+  /** Distinguishes malformed browser accuracy from an absent reading after normalization. */
+  accuracyNonfinite?: true;
   source: 'device-gps';
   /** Device time of this reading, when the browser provides it. */
   capturedAt?: string;
@@ -32,8 +34,12 @@ function deviceFixFromPosition(position: GeolocationPosition): DeviceGpsFix {
     accuracyMeters: Number.isFinite(accuracy) ? accuracy : null,
     source: 'device-gps',
   };
-  if (Number.isFinite(position.timestamp)) {
-    fix.capturedAt = new Date(position.timestamp).toISOString();
+  if (accuracy != null && !Number.isFinite(accuracy)) {
+    fix.accuracyNonfinite = true;
+  }
+  const capturedAt = new Date(position.timestamp);
+  if (Number.isFinite(position.timestamp) && Number.isFinite(capturedAt.getTime())) {
+    fix.capturedAt = capturedAt.toISOString();
   }
   return fix;
 }

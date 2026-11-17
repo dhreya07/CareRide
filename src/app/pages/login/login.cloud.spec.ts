@@ -26,7 +26,7 @@ describe('LoginPage cloud sign-in preparation', () => {
     expect(homePath).not.toHaveBeenCalled();
   });
 
-  it('uses a fresh cloud profile for admin, driver, and passenger destinations', async () => {
+  it('uses the freshly authenticated cloud role without a redundant profile request', async () => {
     localStorage.setItem('careride_logged_in', 'true');
     localStorage.setItem('careride_user_type', 'passenger');
     const homePath = vi.fn().mockResolvedValue('/admin');
@@ -41,7 +41,7 @@ describe('LoginPage cloud sign-in preparation', () => {
 
     await component.login();
 
-    expect(homePath).toHaveBeenCalled();
+    expect(homePath).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/admin']);
     expect(navigate).not.toHaveBeenCalledWith(['/dashboard']);
   });
@@ -81,11 +81,53 @@ describe('LoginPage cloud sign-in preparation', () => {
     expect(rejected.navigate).not.toHaveBeenCalled();
   });
 
+  it('shows invalid-credential and email-confirmation guidance and clears loading on login errors', async () => {
+    const invalid = await createLogin({
+      cloudAuthEnabled: true,
+      configured: false,
+      signIn: vi.fn().mockRejectedValue(new Error('Incorrect email or password. Check your details and try again.')),
+      homePath: vi.fn(),
+    });
+    invalid.component.email = 'pat@example.com';
+    invalid.component.password = 'secret-pass';
+    await invalid.component.login();
+    expect(invalid.component.errorMessage).toContain('Incorrect email or password');
+    expect(invalid.component.isLoading).toBe(false);
+
+    TestBed.resetTestingModule();
+    const unconfirmed = await createLogin({
+      cloudAuthEnabled: true,
+      configured: false,
+      signIn: vi.fn().mockRejectedValue(new Error('Please confirm your email address using the link we sent before signing in.')),
+      homePath: vi.fn(),
+    });
+    unconfirmed.component.email = 'pat@example.com';
+    unconfirmed.component.password = 'secret-pass';
+    await unconfirmed.component.login();
+    expect(unconfirmed.component.errorMessage).toContain('confirm your email address');
+    expect(unconfirmed.component.isLoading).toBe(false);
+  });
+
+  it('shows a useful network failure instead of leaving login loading', async () => {
+    const { component, navigate } = await createLogin({
+      cloudAuthEnabled: true,
+      configured: false,
+      signIn: vi.fn().mockRejectedValue(new Error('Unable to reach CareRide right now. Check your internet connection and try again.')),
+      homePath: vi.fn(),
+    });
+    component.email = 'pat@example.com';
+    component.password = 'secret-pass';
+    await component.login();
+    expect(component.errorMessage).toContain('Check your internet connection');
+    expect(component.isLoading).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('does not treat an unverified cloud profile as a successful login', async () => {
     const { component, navigate } = await createLogin({
       cloudAuthEnabled: true,
       configured: false,
-      signIn: vi.fn().mockResolvedValue('passenger'),
+      signIn: vi.fn().mockRejectedValue(new Error('No CareRide profile is linked to this account.')),
       homePath: vi.fn().mockResolvedValue('/login'),
     });
     component.email = 'pat@example.com';

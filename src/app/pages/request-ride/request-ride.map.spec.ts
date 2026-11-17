@@ -13,7 +13,18 @@ import { RoadRouteService } from '../../core/services/road-route.service';
 
 describe('Request Ride map selection', () => {
   let page: RequestRidePage;
-  let rides: { submitPassengerRide: ReturnType<typeof vi.fn>; cloudBookings: boolean };
+  let rides: {
+    submitPassengerRide: ReturnType<typeof vi.fn>;
+    listAvailablePassengerDrivers: ReturnType<typeof vi.fn>;
+    cloudBookings: boolean;
+  };
+  let authStub: {
+    cloudAuthEnabled: boolean;
+    listApprovedDrivers: () => ReturnType<typeof approvedDriver>[];
+    accountStatusOf: (account: ReturnType<typeof approvedDriver>) => string;
+    readAvailability: (account: ReturnType<typeof approvedDriver>) => string;
+    getLocalDisplayName: () => string;
+  };
   let liveFix: ((fix: { latitude: number; longitude: number; accuracyMeters: number | null; source: 'device-gps' }) => void) | null;
   let liveError: ((message: string, denied: boolean) => void) | null;
   let stopLiveGps: ReturnType<typeof vi.fn>;
@@ -26,6 +37,14 @@ describe('Request Ride map selection', () => {
     rides = {
       cloudBookings: false,
       submitPassengerRide: vi.fn(async () => ({ id: 'CR-NEW' })),
+      listAvailablePassengerDrivers: vi.fn(async () => []),
+    };
+    authStub = {
+      cloudAuthEnabled: false,
+      listApprovedDrivers: () => [approvedDriver()],
+      accountStatusOf: (account) => account.approvalStatus ?? 'pending',
+      readAvailability: (account) => account.availability ?? 'unknown',
+      getLocalDisplayName: () => 'Pat',
     };
     TestBed.configureTestingModule({
       providers: [
@@ -73,12 +92,7 @@ describe('Request Ride map selection', () => {
         { provide: ChangeDetectorRef, useValue: { markForCheck: () => undefined, detectChanges: () => undefined } },
         {
           provide: AuthService,
-          useValue: {
-            listApprovedDrivers: () => [approvedDriver()],
-            accountStatusOf: () => 'approved',
-            readAvailability: () => 'available',
-            getLocalDisplayName: () => 'Pat',
-          },
+          useValue: authStub,
         },
         { provide: ProfileService, useValue: { loadLocal: () => null } },
         { provide: SupabaseService, useValue: { configured: false } },
@@ -113,6 +127,54 @@ describe('Request Ride map selection', () => {
     expect(page.pickupLongitude).toBe(120.98);
     expect(page.destination).toBe('');
     expect(page.purpose).toBe('Checkup');
+  });
+
+  it('uses local approved available drivers when cloud auth is disabled', () => {
+    authStub.listApprovedDrivers = () => [
+      approvedDriver(),
+      { ...approvedDriver(), id: 'CR-UNKNOWN', availability: 'unknown' },
+      { ...approvedDriver(), id: 'CR-PENDING', approvalStatus: 'pending' },
+    ];
+
+    page.refreshDrivers();
+
+    expect(page.drivers.map((driver) => driver.id)).toEqual(['CR-DEMO-DRIVER']);
+    expect(rides.listAvailablePassengerDrivers).not.toHaveBeenCalled();
+  });
+
+  it('loads only stable, explicitly available cloud drivers', async () => {
+    authStub.cloudAuthEnabled = true;
+    rides.listAvailablePassengerDrivers.mockResolvedValue([
+      { id: '11111111-1111-4111-8111-111111111111', availability: 'available', name: 'Online' },
+      { id: '22222222-2222-4222-8222-222222222222', availability: 'unknown', name: 'Missing status' },
+      { id: 'not-a-profile-id', availability: 'available', name: 'Unstable id' },
+    ]);
+
+    page.refreshDrivers();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(page.drivers.map((driver) => driver.name)).toEqual(['Online']);
+  });
+
+  it('keeps the picker empty when the Passenger RPC returns no eligible drivers', async () => {
+    authStub.cloudAuthEnabled = true;
+    rides.listAvailablePassengerDrivers.mockResolvedValue([]);
+
+    page.refreshDrivers();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(page.drivers).toEqual([]);
+  });
+
+  it('keeps the picker empty and shows the lookup error when the Passenger RPC fails', async () => {
+    authStub.cloudAuthEnabled = true;
+    rides.listAvailablePassengerDrivers.mockRejectedValueOnce(new Error('Driver lookup is unavailable.'));
+
+    page.refreshDrivers();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(page.drivers).toEqual([]);
+    expect(page.formError).toBe('Driver lookup is unavailable.');
   });
 
   it('sets a destination without clearing the pickup', async () => {
@@ -271,7 +333,7 @@ describe('Request Ride map selection', () => {
     expect(page.pickupLocation).toBe('13.41181, 121.18095');
   });
 
-  it('requires confirmation for map points and still accepts a typed address without coordinates', async () => {
+  it('requires confirmation for map points and rejects a typed address without coordinates', async () => {
     fillBookableForm(page, 'now');
     page.pickupConfirmed = false;
 
@@ -287,11 +349,33 @@ describe('Request Ride map selection', () => {
     page.destination = 'Clinic entrance';
 
     await page.submitRideRequest();
+    expect(page.formError).toBe('Choose a valid pickup pin on the map.');
+    expect(rides.submitPassengerRide).not.toHaveBeenCalled();
+  });
+
+  it.each([NaN, Infinity, 181])('rejects invalid destination longitude %s', async (longitude) => {
+    fillBookableForm(page, 'now');
+    page.destinationLongitude = longitude;
+    await page.submitRideRequest();
+    expect(page.formError).toBe('Choose a valid destination pin on the map.');
+    expect(rides.submitPassengerRide).not.toHaveBeenCalled();
+  });
+
+  it('revalidates a changed manual pin after review and saves it once confirmed', async () => {
+    fillBookableForm(page, 'now');
+    await page.goToReview();
+    await page.placeManualPoint('pickup', 14.61, 120.99);
+    await page.submitRideRequest();
+    expect(page.formError).toBe('Confirm the pickup on the map before submitting.');
+    expect(rides.submitPassengerRide).not.toHaveBeenCalled();
+
+    page.mapMode = 'pickup';
+    page.confirmMapPoint();
+    await page.submitRideRequest();
     expect(rides.submitPassengerRide).toHaveBeenCalledWith(expect.objectContaining({
-      pickupLocation: 'Home gate',
-      destination: 'Clinic entrance',
-      pickupLatitude: null,
-      destinationLatitude: null,
+      pickupLatitude: 14.61,
+      pickupLongitude: 120.99,
+      pickupAccuracyMeters: null,
     }));
   });
 

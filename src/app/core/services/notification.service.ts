@@ -20,7 +20,8 @@ export type InAppNotificationType =
   | 'driver_change_declined'
   | 'ride_started'
   | 'ride_completed'
-  | 'booking_cancelled';
+  | 'booking_cancelled'
+  | 'dropoff_proof_uploaded';
 
 export interface InAppNotification {
   id: string;
@@ -64,7 +65,7 @@ export class NotificationService {
     const known: InAppNotificationType[] = [
       'booking_request', 'booking_accepted', 'booking_declined', 'referral_received',
       'referral_confirmation_needed', 'driver_change_confirmed', 'driver_change_declined',
-      'ride_started', 'ride_completed', 'booking_cancelled',
+      'ride_started', 'ride_completed', 'booking_cancelled', 'dropoff_proof_uploaded',
     ];
     this.cloudItems = rows
       .filter((row): row is typeof row & { type: InAppNotificationType } =>

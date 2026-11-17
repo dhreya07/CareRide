@@ -1,117 +1,281 @@
-<div class="driver-page care-frame">
+<div class="driver-page care-frame" [class.schedule-mode]="listTab === 'schedule'">
   <div class="driver-shell care-shell">
     <div class="shell-scroll">
 
-      <header class="driver-topbar">
-        <div class="top-row">
-          <span class="role-chip">Driver</span>
-          <div class="top-actions">
-            <button type="button" class="notification-button" (click)="openNotifications()" aria-label="Notifications">
-              <ion-icon name="notifications-outline"></ion-icon>
-              <span class="notification-count" *ngIf="notificationCount > 0">{{ notificationCount > 9 ? '9+' : notificationCount }}</span>
-            </button>
-            <button type="button" class="sign-out-button" (click)="signOut()">
-              Sign out
-            </button>
+      <!-- Home receives a dedicated mobile-first hero; other tab headers stay unchanged. -->
+      <div class="care-role-brand">
+        <img src="assets/careride-healthcare-mark.png" alt="" width="288" height="192">
+        <div><strong>CareRide</strong><span>Your healthcare transportation</span></div>
+      </div>
+
+      <header class="driver-topbar" [class.home-topbar]="isHome">
+        <ng-container *ngIf="isHome; else regularDriverHeader">
+          <section class="dashboard-hero" aria-label="CareRide Driver dashboard">
+            <div class="dashboard-hero-top">
+              <a class="hero-driver-profile" routerLink="/driver/profile" aria-label="View my driver profile">
+                <span class="hero-avatar" aria-hidden="true"
+                  [style.background]="driverAvatarBackground"
+                  [style.color]="driverAvatarForeground"
+                  style="overflow: hidden; display: inline-flex; align-items: center; justify-content: center;">
+                  <img *ngIf="driverProfilePhoto; else dashboardAvatarInitial"
+                    [src]="driverProfilePhoto" alt=""
+                    style="display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />
+                  <ng-template #dashboardAvatarInitial>{{ driverFirstName.slice(0, 1).toUpperCase() }}</ng-template>
+                </span>
+                <span class="hero-driver-title">
+                  <strong>CareRide Driver</strong>
+                  <small>DRIVER DASHBOARD</small>
+                </span>
+              </a>
+
+              <div class="top-actions hero-top-actions">
+                <div class="driver-live-clock hero-clock" role="timer" aria-label="Current local time">
+                  <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                  <span>{{ clockTime }}</span>
+                </div>
+                <button type="button" class="notification-button hero-notification" (click)="openNotifications()" aria-label="Notifications">
+                  <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
+                  <span class="notification-count" *ngIf="notificationCount > 0">{{ notificationCount > 9 ? '9+' : notificationCount }}</span>
+                </button>
+                <button type="button" class="sign-out-button hero-sign-out" (click)="signOut()" aria-label="Sign out">
+                  <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
+                  <span>Sign out</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="dashboard-hero-content">
+              <h1 class="dashboard-hero-greeting">{{ personalizedGreeting }}</h1>
+              <p class="hero-date">
+                <ion-icon name="calendar-outline" aria-hidden="true"></ion-icon>
+                <span>{{ clockFullDate }}</span>
+              </p>
+            </div>
+            <span class="hero-wave hero-wave-one" aria-hidden="true"></span>
+            <span class="hero-wave hero-wave-two" aria-hidden="true"></span>
+          </section>
+        </ng-container>
+
+        <ng-template #regularDriverHeader>
+          <div class="top-row">
+            <span class="role-chip">Driver</span>
+            <div class="top-actions">
+              <div class="driver-live-clock" role="timer" aria-label="Current local time">
+                <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                <span>{{ clockTime }}</span>
+              </div>
+              <button type="button" class="notification-button" (click)="openNotifications()" aria-label="Notifications">
+                <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
+                <span class="notification-count" *ngIf="notificationCount > 0">{{ notificationCount > 9 ? '9+' : notificationCount }}</span>
+              </button>
+              <button type="button" class="sign-out-button" (click)="signOut()">Sign out</button>
+            </div>
           </div>
-        </div>
-        <h1>{{ pageTitle }}</h1>
-        <p class="driver-rating" *ngIf="myRating">Your rating · {{ myRating }}</p>
-        <p class="live-note">
-          <span class="live-dot" aria-hidden="true"></span>
-          Realtime
-        </p>
-        <p class="live-clock" aria-live="polite">
-          <strong>{{ clockTime }}</strong>
-          <span>{{ clockWeekday }}, {{ clockDate }}</span>
-        </p>
+          <h1>{{ pageTitle }}</h1>
+          <p class="schedule-top-subtitle" *ngIf="listTab === 'schedule'">Your upcoming rides, organized by day.</p>
+        </ng-template>
       </header>
 
-      <section class="stats-grid" *ngIf="isHome" aria-label="Driver totals">
-        <div class="stat-card">
-          <span>Schedule</span>
-          <strong>{{ scheduleRides.length }}</strong>
-        </div>
-        <div class="stat-card">
-          <span>Assigned</span>
-          <strong>{{ assignedCount }}</strong>
-        </div>
-        <div class="stat-card">
-          <span>Ongoing</span>
-          <strong>{{ ongoingCount }}</strong>
-        </div>
-        <div class="stat-card">
-          <span>Done</span>
-          <strong>{{ historyRides.length }}</strong>
-        </div>
-      </section>
+      <ng-container *ngIf="isHome">
+        <div class="home-dashboard-body">
+          <!-- Current status: do not alter availability or GPS logic. -->
+          <section class="dashboard-status-grid" aria-label="Driver status">
+            <article class="dashboard-status-card availability-status-card">
+              <div class="status-card-top">
+                <span class="status-icon availability-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"></circle>
+                  </svg>
+                </span>
+                <span class="status-indicator" [class.indicator-online]="myAvailability === 'available'" aria-hidden="true"></span>
+              </div>
+              <span class="dashboard-card-label">Availability</span>
+              <strong class="status-card-value">{{ myAvailabilityLabel }}</strong>
+              <p *ngIf="availabilityError" class="dashboard-error" role="alert">{{ availabilityError }}</p>
+              <a routerLink="/driver/schedule" class="status-card-link">
+                View schedule <ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+              </a>
+            </article>
 
-      <section class="chart-card availability-card" *ngIf="isHome" aria-label="My availability">
-        <h2>My Availability</h2>
-        <p class="chart-note">Current status: {{ myAvailabilityLabel }}</p>
-        <div class="availability-choices" role="group" aria-label="Choose availability">
-          <button
-            type="button"
-            [class.selected]="myAvailability === 'available'"
-            [attr.aria-pressed]="myAvailability === 'available'"
-            (click)="setMyAvailability('available')"
-          >
-            Available
-          </button>
-          <button
-            type="button"
-            [class.selected]="myAvailability === 'busy'"
-            [attr.aria-pressed]="myAvailability === 'busy'"
-            (click)="setMyAvailability('busy')"
-          >
-            Busy
-          </button>
-          <button
-            type="button"
-            [class.selected]="myAvailability === 'offline'"
-            [attr.aria-pressed]="myAvailability === 'offline'"
-            (click)="setMyAvailability('offline')"
-          >
-            Offline
-          </button>
-        </div>
-      </section>
+            <article class="dashboard-status-card gps-status-card">
+              <div class="status-card-top">
+                <span class="status-icon gps-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle>
+                  </svg>
+                </span>
+                <!-- 'inactive' contains the word 'active'; exclude it from the green indicator. -->
+                <span class="status-indicator"
+                  [class.indicator-online]="cloudLocationEnabled && locationPublisher.message().toLowerCase().includes('active') && !locationPublisher.message().toLowerCase().includes('inactive')"
+                  aria-hidden="true"></span>
+              </div>
+              <span class="dashboard-card-label">Location sharing</span>
+              <strong class="status-card-value">{{ cloudLocationEnabled ? locationPublisher.message() : 'Unavailable' }}</strong>
+              <p *ngIf="cloudLocationEnabled && locationPublisher.diagnostic()">{{ locationPublisher.diagnostic() }}</p>
 
-      <section class="chart-card" *ngIf="isHome" aria-label="Trip overview">
-        <h2>Trip overview</h2>
-        <div class="bar-row" *ngFor="let bar of overviewBars">
-          <span>{{ bar.label }}</span>
-          <div class="bar-track">
-            <div class="bar-fill" [style.width.%]="bar.pct"></div>
+              <p *ngIf="cloudLocationEnabled && locationPublisher.accuracyMeters() !== null" aria-live="polite">
+                <strong>GPS accuracy:</strong>
+                &plusmn;{{ locationPublisher.accuracyMeters() | number:'1.0-0' }} m
+                ({{ locationPublisher.accuracyQuality() }})
+              </p>
+
+              <p *ngIf="!cloudLocationEnabled">Location sharing is unavailable.</p>
+              <div class="ride-actions" *ngIf="cloudLocationEnabled && myAvailability === 'available'" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                <button type="button" class="primary-button" [disabled]="locationShareBusy || availabilityUpdating" (click)="shareLiveLocation()">
+                  Share Live Location
+                </button>
+                <button type="button" class="secondary-button" [disabled]="locationShareBusy" (click)="stopLiveLocation()">
+                  Stop Sharing
+                </button>
+              </div>
+              <p *ngIf="cloudLocationEnabled && myAvailability === 'available'" style="margin-top: 8px;">Optional. You can stop sharing anytime.</p>
+              <p *ngIf="cloudLocationEnabled && myAvailability !== 'available'">Go Online to share your location.</p>
+            </article>
+          </section>
+
+          <!-- Loading and errors -->
+          <section class="dashboard-message" *ngIf="fetching && !homeLoaded" role="status">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Loading your dashboard...</span>
+          </section>
+          <section class="dashboard-message dashboard-error" *ngIf="homeLoadError" role="alert">
+            <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+            {{ homeLoadError }}
+          </section>
+
+          <ng-container *ngIf="homeLoaded">
+            <!-- Three trip summary cards -->
+            <section class="dashboard-section" aria-label="Trip overview">
+              <div class="dashboard-section-heading">
+                <div>
+                  <h2>Trip overview</h2>
+                </div>
+              </div>
+              <div class="dashboard-metrics">
+                <article class="metric-card">
+                  <span class="metric-icon today-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="5" width="18" height="15" rx="3"></rect><path d="M7 5V3M17 5V3M3 10h18M7 15h4"></path>
+                    </svg>
+                  </span>
+                  <strong class="metric-value">{{ todayTripCount }}</strong>
+                  <span class="metric-label">Today's trips</span>
+                </article>
+                <article class="metric-card">
+                  <span class="metric-icon completed-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="9"></circle><path d="m7.5 12 3 3 6-6"></path>
+                    </svg>
+                  </span>
+                  <strong class="metric-value">{{ completedTripCount }}</strong>
+                  <span class="metric-label">Completed trips</span>
+                </article>
+                <article class="metric-card rating-metric">
+                  <span class="metric-icon rating-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m12 2 3.1 6.3 7 .9-5.1 5 .9 7-5.9-3.3-5.9 3.3.9-7-5.1-5 7-.9L12 2Z"></path>
+                    </svg>
+                  </span>
+                  <strong class="metric-value">{{ myRating || '—' }}</strong>
+                  <span class="metric-label">{{ ratedCount }} reviews</span>
+                </article>
+              </div>
+            </section>
+
+            <!-- Actual upcoming rides, never fabricated demo data. -->
+            <section class="dashboard-content-card upcoming-card">
+              <div class="dashboard-section-heading">
+                <div>
+                  <h2>Upcoming schedule</h2>
+                </div>
+                <a routerLink="/driver/schedule" class="dashboard-view-link">
+                  View all <ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+                </a>
+              </div>
+
+              <div class="dashboard-empty" *ngIf="upcomingHomeRides.length === 0">
+                <span class="dashboard-empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="17" rx="3"></rect><path d="M8 2v4M16 2v4M3 10h18M9 15h6"></path>
+                  </svg>
+                </span>
+                <strong>No upcoming trips</strong>
+                <p>Scheduled trips appear here.</p>
+              </div>
+              <article class="dashboard-trip-item" *ngFor="let ride of upcomingHomeRides; trackBy: trackRide">
+                <div class="trip-date-icon" aria-hidden="true">
+                  <ion-icon name="car-outline"></ion-icon>
+                </div>
+                <div class="trip-item-info">
+                  <strong>{{ ride.passengerName || 'Passenger' }}</strong>
+                  <span>{{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}</span>
+                  <small>{{ ride.pickupLocation }} → {{ ride.destination }}</small>
+                </div>
+                <span class="trip-arrow" aria-hidden="true"><ion-icon name="chevron-forward-outline"></ion-icon></span>
+              </article>
+            </section>
+
+            <!-- Latest booking activity -->
+            <section class="dashboard-content-card recent-activity-card">
+              <div class="dashboard-section-heading">
+                <div>
+                  <h2>Recent activity</h2>
+                </div>
+              </div>
+              <div class="dashboard-empty" *ngIf="recentHomeRides.length === 0">
+                <span class="dashboard-empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 3h16v18l-4-2-4 2-4-2-4 2V3Z"></path><path d="M8 8h8M8 12h8"></path>
+                  </svg>
+                </span>
+                <strong>No recent activity</strong>
+                <p>Booking updates appear here.</p>
+              </div>
+              <article class="activity-item" *ngFor="let ride of recentHomeRides; trackBy: trackRide">
+                <span class="activity-dot" aria-hidden="true"></span>
+                <div class="activity-info">
+                  <strong>{{ ride.passengerName || 'Passenger' }}</strong>
+                  <span>{{ statusLabel(ride) }}</span>
+                  <small>Last updated: {{ (ride.updatedAt | date:'medium') || 'Unavailable' }}</small>
+                </div>
+              </article>
+            </section>
+
+            <!-- Driver support shortcut -->
+            <a class="dashboard-help-card" routerLink="/driver/profile" fragment="driver-help">
+              <span class="help-icon" aria-hidden="true"><ion-icon name="help-buoy-outline"></ion-icon></span>
+              <span>
+                <strong>Need assistance?</strong>
+                <small>Visit Driver Help &amp; Support</small>
+              </span>
+              <ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+            </a>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <!-- SCHEDULE: calendar-first design; availability settings intentionally not shown here. -->
+      <div class="driver-schedule-view" *ngIf="listTab === 'schedule'">
+        <section class="schedule-calendar-panel" aria-label="Driver schedule calendar">
+          <div class="schedule-panel-heading">
+            <div>
+              <span class="schedule-panel-eyebrow">YOUR CALENDAR</span>
+              <h2>Plan your rides</h2>
+            </div>
+            <span class="schedule-legend"><i aria-hidden="true"></i> Scheduled trip</span>
           </div>
-          <strong>{{ bar.value }}</strong>
-        </div>
-      </section>
 
-      <section class="chart-card" *ngIf="isHome" aria-label="Client ratings">
-        <h2>Client ratings</h2>
-        <p class="chart-note">{{ ratedCount }} of {{ clientReviews.length }} completed trips have a rating.</p>
-        <div class="bar-row" *ngFor="let bar of ratingBars">
-          <span>{{ bar.label }}</span>
-          <div class="bar-track">
-            <div class="bar-fill rating" [style.width.%]="bar.pct"></div>
-          </div>
-          <strong>{{ bar.value }}</strong>
-        </div>
-      </section>
-
-      <ng-container *ngIf="listTab === 'schedule'">
-        <section class="calendar-card" aria-label="Schedule calendar">
           <div class="calendar-nav">
             <button type="button" class="cal-nav-button" (click)="shiftCalendar(-1)" aria-label="Previous month">
-              <ion-icon name="chevron-back-outline"></ion-icon>
+              <ion-icon name="chevron-back-outline" aria-hidden="true"></ion-icon>
             </button>
-            <h2>{{ calendarTitle }}</h2>
+            <h3>{{ calendarTitle }}</h3>
             <button type="button" class="cal-nav-button" (click)="shiftCalendar(1)" aria-label="Next month">
-              <ion-icon name="chevron-forward-outline"></ion-icon>
+              <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </button>
           </div>
-          <div class="calendar-weekdays">
+
+          <div class="calendar-weekdays" aria-hidden="true">
             <span *ngFor="let label of weekdayLabels">{{ label }}</span>
           </div>
           <div class="calendar-grid">
@@ -124,40 +288,135 @@
               [class.today]="cell.today"
               [class.selected]="cell.selected"
               [class.has-clients]="cell.count > 0"
+              [attr.aria-pressed]="cell.selected"
+              [attr.aria-label]="cell.key + (cell.count ? ', ' + cell.count + ' scheduled trips' : ', no scheduled trips')"
               (click)="selectCalendarDay(cell.key)"
             >
               <strong>{{ cell.day }}</strong>
-              <em *ngIf="cell.count">{{ cell.count }}</em>
+              <span class="calendar-event-dot" *ngIf="cell.count > 0" aria-hidden="true"></span>
             </button>
           </div>
+          <p class="schedule-calendar-hint">Tap a date to see its trips. Mint dots mark dates with a schedule.</p>
         </section>
 
-        <div class="section-heading">
-          <h2>{{ selectedDayLabel }}</h2>
-        </div>
-
-        <section class="empty-card" *ngIf="selectedDayRides.length === 0">
-          <div class="empty-icon">
-            <ion-icon name="calendar-outline"></ion-icon>
+        <section class="schedule-day-section" aria-label="Trips on selected date">
+          <div class="schedule-day-heading">
+            <div>
+              <span class="schedule-panel-eyebrow">SELECTED DAY</span>
+              <h2>{{ selectedDayLabel }}</h2>
+            </div>
+            <span class="schedule-trip-count">{{ selectedDayRides.length }} {{ selectedDayRides.length === 1 ? 'trip' : 'trips' }}</span>
           </div>
-          <h2>No clients this day</h2>
-          <p>Passengers who scheduled a trip with you will appear on their date.</p>
-        </section>
 
-        <article class="ride-card compact" *ngFor="let ride of selectedDayRides; trackBy: trackRide">
+          <div class="schedule-day-empty" *ngIf="selectedDayRides.length === 0">
+            <span class="schedule-empty-icon" aria-hidden="true"><ion-icon name="calendar-clear-outline"></ion-icon></span>
+            <h3>No trips scheduled</h3>
+            <p>When you have a confirmed trip on this date, it will appear here.</p>
+          </div>
+
+          <article class="schedule-ride-card" *ngFor="let ride of selectedDayRides; trackBy: trackRide">
+            <div class="schedule-ride-card-top">
+              <span class="schedule-ride-time"><ion-icon name="time-outline" aria-hidden="true"></ion-icon> {{ formatTime(ride.time) }}</span>
+              <span class="status-badge" [attr.data-tone]="statusTone(ride)">{{ statusLabel(ride) }}</span>
+            </div>
+            <h3 class="schedule-passenger-name">{{ ride.passengerName || 'Passenger' }}</h3>
+            <div class="schedule-route-list">
+              <div class="schedule-route-row">
+                <span class="schedule-route-marker pickup" aria-hidden="true"></span>
+                <div class="schedule-route-copy"><span>Pickup</span><strong>{{ ride.pickupLocation }}</strong></div>
+              </div>
+              <div class="schedule-route-row">
+                <span class="schedule-route-marker destination" aria-hidden="true"></span>
+                <div class="schedule-route-copy"><span>Destination</span><strong>{{ ride.destination }}</strong></div>
+              </div>
+            </div>
+            <p class="schedule-request-note" *ngIf="canRespond(ride)">
+              This Passenger selected you. Accept to confirm this scheduled trip.
+            </p>
+            <div class="ride-actions" *ngIf="canRespond(ride)">
+              <button type="button" class="primary-button" (click)="acceptRequest(ride)">Accept</button>
+              <button type="button" class="secondary-button" (click)="declineRequest(ride)">Decline</button>
+            </div>
+            <button type="button" class="schedule-view-details" (click)="viewRide(ride)">
+              View trip details <ion-icon name="arrow-forward-outline" aria-hidden="true"></ion-icon>
+            </button>
+          </article>
+        </section>
+      </div>
+
+      <!-- Read-only nearby pickup map: only requests already visible to this driver. -->
+      <section *ngIf="listTab === 'active'" class="ride-card" aria-label="Nearby booking requests" style="margin-bottom: 16px;">
+        <div class="ride-card-header">
+          <div><h2>Nearby booking requests</h2></div>
+        </div>
+        <button type="button" class="schedule-view-details" *ngIf="!nearbyLocationEnabled" (click)="enableNearbyLocation()">Enable Nearby Location</button>
+        <button type="button" class="schedule-view-details" *ngIf="nearbyLocationEnabled" (click)="disableNearbyLocation()">Stop Nearby Location</button>
+        <p *ngIf="nearbyLocationError" role="alert">{{ nearbyLocationError }}</p>
+        <p *ngIf="nearbyLocationEnabled && !nearbyDriverPoint">Waiting for GPS…</p>
+        <ng-container *ngIf="nearbyLocationEnabled && nearbyDriverPoint">
+          <app-location-map
+            [driver]="nearbyDriverPoint"
+            [driverAccuracyMeters]="nearbyAccuracyMeters"
+            [nearbyPickups]="nearbyMapMarkers"
+            [selectionEnabled]="false"
+            [compact]="true"
+          ></app-location-map>
+          <p *ngIf="nearbyBookings.length === 0">No nearby requests.</p>
+          <div *ngFor="let nearby of nearbyBookings">
+            <p><strong>{{ nearby.ride.pickupLocation || 'Pickup' }}</strong> · {{ nearby.distanceKm | number:'1.1-1' }} km away</p>
+            <button type="button" class="schedule-view-details" (click)="viewRide(nearby.ride)">View request</button>
+          </div>
+        </ng-container>
+        <p *ngIf="!nearbyLocationEnabled && !nearbyLocationError">Turn on location to view nearby requests.</p>
+      </section>
+
+      <!-- EMPTY STATE -->
+      <section class="empty-card" *ngIf="!isHome && listTab !== 'schedule' && visibleRides.length === 0">
+        <div class="empty-icon">
+          <ion-icon [name]="listTab === 'history' ? 'time-outline' : 'car-outline'"></ion-icon>
+        </div>
+        <h2>
+          {{ listTab === 'active'
+            ? 'No available or assigned rides'
+            : listTab === 'clients'
+              ? 'No past clients yet'
+              : 'No completed trips yet' }}
+        </h2>
+        <p *ngIf="listTab === 'active'">
+          Available and assigned trips appear here.
+        </p>
+        <p *ngIf="listTab === 'history'">
+          Completed and cancelled trips appear here.
+        </p>
+        <p *ngIf="listTab === 'clients'">
+          Completed trips and reviews appear here.
+        </p>
+      </section>
+
+      <!-- ACTIVE TRIPS, HISTORY AND CLIENTS -->
+      <ng-container *ngIf="!isHome && listTab !== 'schedule'">
+        <article class="ride-card" *ngFor="let ride of visibleRides; trackBy: trackRide">
           <div class="ride-card-header">
             <div>
-              <span class="ride-number">{{ formatTime(ride.time) }}</span>
-              <h2 class="person-name">{{ ride.passengerName || 'Passenger' }}</h2>
+              <span class="ride-number">RIDE {{ ride.id | slice:0:12 }}</span>
+              <h2>{{ ride.passengerName || 'Passenger' }}</h2>
             </div>
             <span class="status-badge" [attr.data-tone]="statusTone(ride)">
               {{ statusLabel(ride) }}
             </span>
           </div>
+
+          <p class="client-slot" *ngIf="isScheduledRequest(ride)">
+            Scheduled pickup · {{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}
+          </p>
+          <p class="client-slot" *ngIf="!isScheduledRequest(ride)">
+            {{ ride.status === 'Pending' ? 'Immediate ride' : 'Client' }} · {{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}
+          </p>
+
           <section class="route-section">
             <div class="route-item">
               <div class="route-marker">A</div>
-              <div class="stack">
+              <div>
                 <span>Pickup</span>
                 <strong>{{ ride.pickupLocation }}</strong>
               </div>
@@ -165,232 +424,180 @@
             <div class="route-connector"></div>
             <div class="route-item">
               <div class="route-marker">B</div>
-              <div class="stack">
+              <div>
                 <span>Destination</span>
                 <strong>{{ ride.destination }}</strong>
               </div>
             </div>
           </section>
-          <div class="ride-actions">
+
+          <section class="details-grid">
+            <div class="detail-box">
+              <span>Date</span>
+              <strong>{{ formatDate(ride.date) }}</strong>
+            </div>
+            <div class="detail-box">
+              <span>Time</span>
+              <strong>{{ formatTime(ride.time) }}</strong>
+            </div>
+          </section>
+
+          <section class="info-section" *ngIf="ride.vehicleLabel">
+            <span>Assigned vehicle</span>
+            <strong>{{ ride.vehicleLabel }}</strong>
+          </section>
+
+          <section class="info-section">
+            <span>Trip purpose</span>
+            <strong>{{ ride.purpose || 'Not specified' }}</strong>
+          </section>
+
+          <section class="info-section">
+            <span>Assistance needed</span>
+            <strong>{{ assistanceSummary(ride) }}</strong>
+            <p *ngIf="ride.otherAssistanceNotes">{{ ride.otherAssistanceNotes }}</p>
+          </section>
+
+          <section class="info-section" *ngIf="ride.notes">
+            <span>Passenger notes</span>
+            <strong>{{ ride.notes }}</strong>
+          </section>
+
+          <section class="info-section" *ngIf="listTab === 'clients' || ride.clientRating">
+            <span>Rating from {{ ride.passengerName }}</span>
+            <strong>{{ stars(ride.clientRating) }}</strong>
+            <p *ngIf="ride.clientComment">“{{ ride.clientComment }}”</p>
+            <p *ngIf="!ride.clientRating">This passenger has not rated this trip yet.</p>
+          </section>
+
+          <section class="emergency-section" *ngIf="listTab !== 'clients'">
+            <span>Emergency contact</span>
+            <strong>{{ ride.emergencyContactName || 'Not provided' }}</strong>
+            <p>{{ ride.emergencyContactNumber || 'No number provided' }}</p>
+          </section>
+
+          <p class="referral-note" *ngIf="hasPendingReferral(ride)">
+            Pending referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
+          </p>
+          <p class="referral-note" *ngIf="ride.referralStatus === 'passenger_declined'">
+            The passenger declined the referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
+          </p>
+
+          <div class="ride-actions" *ngIf="listTab === 'active' && canAcceptReferral(ride)">
+            <button type="button" class="primary-button" (click)="acceptReferral(ride)">
+              Accept referral
+            </button>
+            <button type="button" class="secondary-button" (click)="declineReferral(ride)">
+              Decline referral
+            </button>
+          </div>
+
+          <div class="ride-actions" *ngIf="listTab === 'active' && canRespond(ride)">
+            <button type="button" class="primary-button" (click)="acceptRequest(ride)">
+              Accept
+            </button>
+            <button type="button" class="secondary-button" (click)="declineRequest(ride)">
+              Decline
+            </button>
+          </div>
+
+          <div class="ride-actions" *ngIf="listTab === 'active' && !canRespond(ride)">
+            <button
+              *ngIf="canStartRide(ride)"
+              type="button"
+              class="primary-button"
+              [disabled]="rideActionId !== null"
+              (click)="startRide(ride)"
+            >
+              Start Ride
+            </button>
+            <button
+              *ngIf="canCompleteRide(ride)"
+              type="button"
+              class="primary-button"
+              [disabled]="rideActionId !== null"
+              (click)="completeRide(ride)"
+            >
+              Complete Ride
+            </button>
+            <button
+              *ngIf="canShareLocation(ride)"
+              type="button"
+              class="secondary-button"
+              (click)="toggleLocationShare(ride)"
+            >
+              {{ sharingLocation(ride) ? 'Stop sharing location' : 'Share my location' }}
+            </button>
             <button type="button" class="secondary-button" (click)="viewRide(ride)">
-              View details
+              View ride details
+            </button>
+            <button type="button" class="report-button" (click)="reportIssue(ride)">
+              Report an issue
+            </button>
+            <button
+              *ngIf="ride.status === 'Driver Assigned'"
+              type="button"
+              class="cancel-button"
+              (click)="cancelRide(ride)"
+            >
+              Cancel assignment
+            </button>
+          </div>
+
+          <section class="driver-share-map" *ngIf="sharingLocation(ride)">
+            <p *ngIf="!driverFix(ride)">Waiting for a GPS reading. No position was invented.</p>
+            <ng-container *ngIf="driverFix(ride) as fix">
+              <app-location-map
+                [compact]="true"
+                [selectionEnabled]="false"
+                [pickup]="ridePoint(ride.pickupLatitude, ride.pickupLongitude)"
+                [destination]="ridePoint(ride.destinationLatitude, ride.destinationLongitude)"
+                [driver]="{ latitude: fix.latitude, longitude: fix.longitude }"
+                [driverAccuracyMeters]="fix.accuracyMeters"
+              ></app-location-map>
+              <p>
+                Last update {{ fix.capturedAt }}.
+                <span *ngIf="fix.accuracyMeters !== null"> GPS ±{{ fix.accuracyMeters }} m.</span>
+              </p>
+              <p *ngIf="driverFixIsStale(fix)">This GPS reading is stale. It is not a new position.</p>
+              <p *ngIf="driverAccuracyNote(fix)">{{ driverAccuracyNote(fix) }}</p>
+              <p *ngIf="driverShareOffline">This device is offline. The last GPS reading is shown.</p>
+            </ng-container>
+          </section>
+
+          <div class="ride-actions" *ngIf="listTab === 'history' || listTab === 'clients'">
+            <button
+              *ngIf="listTab === 'history' && canUploadDropoffProof(ride)"
+              type="button"
+              class="primary-button"
+              [disabled]="dropoffProofUploading"
+              (click)="chooseDropoffProof(ride, dropoffProofInput)"
+            >
+              {{ dropoffProofUploading ? 'Verifying & sending photo…' : 'Take safe-arrival photo' }}
+            </button>
+            <span *ngIf="listTab === 'history' && uploadedProofIds.has(ride.id)" class="referral-note">
+              Safe-arrival photo sent to the passenger.
+            </span>
+            <button type="button" class="secondary-button" (click)="viewRide(ride)">
+              View ride details
             </button>
           </div>
         </article>
       </ng-container>
-
-      <section class="empty-card" *ngIf="!isHome && listTab !== 'schedule' && visibleRides.length === 0">
-        <div class="empty-icon">
-          <ion-icon [name]="listTab === 'history' ? 'time-outline' : 'car-outline'"></ion-icon>
-        </div>
-        <h2>
-          {{ listTab === 'active'
-            ? 'Waiting for assigned rides'
-            : listTab === 'clients'
-              ? 'No past clients yet'
-              : 'No completed trips yet' }}
-        </h2>
-        <p *ngIf="listTab === 'active'">
-          Immediate and scheduled requests for you appear here. Accept a future schedule to place it on My Schedule.
-        </p>
-        <p *ngIf="listTab === 'history'">
-          Completed, cancelled, and declined trips stay in this list.
-        </p>
-        <p *ngIf="listTab === 'clients'">
-          Completed trips appear here with the passenger’s star rating and comment after they rate you.
-        </p>
-      </section>
-
-      <ng-container *ngIf="!isHome && listTab !== 'schedule'">
-      <article class="ride-card" *ngFor="let ride of visibleRides; trackBy: trackRide">
-        <div class="ride-card-header">
-          <div>
-            <span class="ride-number">RIDE {{ ride.id | slice:0:12 }}</span>
-            <h2>{{ ride.passengerName || 'Passenger' }}</h2>
-          </div>
-          <span class="status-badge" [attr.data-tone]="statusTone(ride)">
-            {{ statusLabel(ride) }}
-          </span>
-        </div>
-
-        <p class="client-slot" *ngIf="isScheduledRequest(ride)">
-          Scheduled pickup · {{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}
-        </p>
-        <p class="client-slot" *ngIf="!isScheduledRequest(ride)">
-          {{ ride.status === 'Pending' ? 'Immediate ride' : 'Client' }} · {{ formatDate(ride.date) }} · {{ formatTime(ride.time) }}
-        </p>
-
-        <section class="route-section">
-          <div class="route-item">
-            <div class="route-marker">A</div>
-            <div>
-              <span>Pickup</span>
-              <strong>{{ ride.pickupLocation }}</strong>
-            </div>
-          </div>
-          <div class="route-connector"></div>
-          <div class="route-item">
-            <div class="route-marker">B</div>
-            <div>
-              <span>Destination</span>
-              <strong>{{ ride.destination }}</strong>
-            </div>
-          </div>
-        </section>
-
-        <section class="details-grid">
-          <div class="detail-box">
-            <span>Date</span>
-            <strong>{{ formatDate(ride.date) }}</strong>
-          </div>
-          <div class="detail-box">
-            <span>Time</span>
-            <strong>{{ formatTime(ride.time) }}</strong>
-          </div>
-        </section>
-
-        <section class="info-section" *ngIf="ride.vehicleLabel">
-          <span>Assigned vehicle</span>
-          <strong>{{ ride.vehicleLabel }}</strong>
-        </section>
-
-        <section class="info-section">
-          <span>Trip purpose</span>
-          <strong>{{ ride.purpose || 'Not specified' }}</strong>
-        </section>
-
-        <section class="info-section">
-          <span>Assistance needed</span>
-          <strong>{{ assistanceSummary(ride) }}</strong>
-          <p *ngIf="ride.otherAssistanceNotes">{{ ride.otherAssistanceNotes }}</p>
-        </section>
-
-        <section class="info-section" *ngIf="ride.notes">
-          <span>Passenger notes</span>
-          <strong>{{ ride.notes }}</strong>
-        </section>
-
-        <section class="info-section" *ngIf="listTab === 'clients' || ride.clientRating">
-          <span>Rating from {{ ride.passengerName }}</span>
-          <strong>{{ stars(ride.clientRating) }}</strong>
-          <p *ngIf="ride.clientComment">“{{ ride.clientComment }}”</p>
-          <p *ngIf="!ride.clientRating">This passenger has not rated this trip yet.</p>
-        </section>
-
-        <section class="emergency-section" *ngIf="listTab !== 'clients'">
-          <span>Emergency contact</span>
-          <strong>{{ ride.emergencyContactName || 'Not provided' }}</strong>
-          <p>{{ ride.emergencyContactNumber || 'No number provided' }}</p>
-        </section>
-
-        <p class="referral-note" *ngIf="hasPendingReferral(ride)">
-          Pending referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
-        </p>
-        <p class="referral-note" *ngIf="ride.referralStatus === 'passenger_declined'">
-          The passenger declined the referral to {{ ride.referralProposedDriverName || 'another driver' }}. This booking is still yours.
-        </p>
-
-        <div class="ride-actions" *ngIf="listTab === 'active' && canAcceptReferral(ride)">
-          <button type="button" class="primary-button" (click)="acceptReferral(ride)">
-            Accept referral
-          </button>
-          <button type="button" class="secondary-button" (click)="declineReferral(ride)">
-            Decline referral
-          </button>
-        </div>
-
-        <div class="ride-actions" *ngIf="listTab === 'active' && canRespond(ride)">
-          <button type="button" class="primary-button" (click)="acceptRequest(ride)">
-            Accept
-          </button>
-          <button type="button" class="secondary-button" (click)="declineRequest(ride)">
-            Decline
-          </button>
-          <button
-            *ngIf="showRefer(ride)"
-            type="button"
-            class="secondary-button"
-            (click)="referRequest(ride)"
-          >
-            Refer to another driver
-          </button>
-        </div>
-
-        <div class="ride-actions" *ngIf="listTab === 'active' && !canRespond(ride)">
-          <button
-            *ngIf="canStartRide(ride)"
-            type="button"
-            class="primary-button"
-            [disabled]="rideActionId !== null"
-            (click)="startRide(ride)"
-          >
-            Start Ride
-          </button>
-          <button
-            *ngIf="canCompleteRide(ride)"
-            type="button"
-            class="primary-button"
-            [disabled]="rideActionId !== null"
-            (click)="completeRide(ride)"
-          >
-            Complete Ride
-          </button>
-          <button
-            *ngIf="canShareLocation(ride)"
-            type="button"
-            class="secondary-button"
-            (click)="toggleLocationShare(ride)"
-          >
-            {{ sharingLocation(ride) ? 'Stop sharing location' : 'Share my location' }}
-          </button>
-          <button type="button" class="secondary-button" (click)="viewRide(ride)">
-            View ride details
-          </button>
-          <button type="button" class="report-button" (click)="reportIssue(ride)">
-            Report an issue
-          </button>
-          <button
-            *ngIf="ride.status === 'Driver Assigned'"
-            type="button"
-            class="cancel-button"
-            (click)="cancelRide(ride)"
-          >
-            Cancel assignment
-          </button>
-        </div>
-
-        <section class="driver-share-map" *ngIf="sharingLocation(ride)">
-          <p *ngIf="!driverFix(ride)">Waiting for a GPS reading. No position was invented.</p>
-          <ng-container *ngIf="driverFix(ride) as fix">
-            <app-location-map
-              [compact]="true"
-              [selectionEnabled]="false"
-              [pickup]="ridePoint(ride.pickupLatitude, ride.pickupLongitude)"
-              [destination]="ridePoint(ride.destinationLatitude, ride.destinationLongitude)"
-              [driver]="{ latitude: fix.latitude, longitude: fix.longitude }"
-              [driverAccuracyMeters]="fix.accuracyMeters"
-            ></app-location-map>
-            <p>
-              Last update {{ fix.capturedAt }}.
-              <span *ngIf="fix.accuracyMeters !== null"> GPS ±{{ fix.accuracyMeters }} m.</span>
-            </p>
-            <p *ngIf="driverFixIsStale(fix)">This GPS reading is stale. It is not a new position.</p>
-            <p *ngIf="driverAccuracyNote(fix)">{{ driverAccuracyNote(fix) }}</p>
-            <p *ngIf="driverShareOffline">This device is offline. The last GPS reading is shown.</p>
-          </ng-container>
-        </section>
-
-        <div class="ride-actions" *ngIf="listTab === 'history' || listTab === 'clients'">
-          <button type="button" class="secondary-button" (click)="viewRide(ride)">
-            View ride details
-          </button>
-        </div>
-      </article>
-      </ng-container>
     </div>
+
+    <input
+      #dropoffProofInput
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      capture="environment"
+      hidden
+      (change)="uploadDropoffProof($event)"
+    >
 
     <app-driver-navigation></app-driver-navigation>
 
+    <!-- DIALOG -->
     <div class="dialog-backdrop" *ngIf="dialog" (click)="closeDialog()">
       <div
         class="dialog-card"
