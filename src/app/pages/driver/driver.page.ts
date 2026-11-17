@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import { DriverLocationPublisherService } from '../../core/services/driver-location-publisher.service';
 import { ChangeDetectorRef, Component, DestroyRef, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -141,6 +143,36 @@ async enableNearbyLocation(): Promise<void> {
     ) {
       this.nearbyLocationError =
         'Device location is unavailable.';
+      return;
+    }
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        let permission = await Geolocation.checkPermissions();
+
+        if (
+          permission.location !== 'granted' &&
+          permission.coarseLocation !== 'granted'
+        ) {
+          permission = await Geolocation.requestPermissions();
+        }
+
+        if (
+          permission.location !== 'granted' &&
+          permission.coarseLocation !== 'granted'
+        ) {
+          this.nearbyLocationError =
+            'Location permission was denied. Allow location access in Android Settings.';
+          return;
+        }
+      } catch {
+        this.nearbyLocationError =
+          'Unable to request location permission. Check Android app settings.';
+        return;
+      }
+    }
+
+    if (token !== this.nearbyStartToken) {
       return;
     }
 
@@ -545,7 +577,7 @@ disableNearbyLocation(clearError = true): void {
 
   get ratingBars(): Array<{ label: string; value: number; pct: number }> {
     const counts = [1, 2, 3, 4, 5].map((star) => ({
-      label: `${star}★`,
+      label: `${star}â˜…`,
       value: this.clientReviews.filter((ride) => ride.clientRating === star).length,
     }));
     const max = Math.max(...counts.map((item) => item.value), 1);
@@ -561,7 +593,7 @@ disableNearbyLocation(clearError = true): void {
     if (value < 1) {
       return 'Not rated yet';
     }
-    return `${'★'.repeat(value)}${'☆'.repeat(5 - value)} ${value}.0`;
+    return `${'â˜…'.repeat(value)}${'â˜†'.repeat(5 - value)} ${value}.0`;
   }
 
   get calendarTitle(): string {
@@ -1328,7 +1360,7 @@ disableNearbyLocation(clearError = true): void {
         return;
       }
       await this.fetchRides();
-      this.showNotice(`Ride status updated to “${nextStatus}”.`, 'Updated');
+      this.showNotice(`Ride status updated to â€œ${nextStatus}â€.`, 'Updated');
     } catch (error: unknown) {
       this.showNotice(error instanceof Error ? error.message : 'Unable to update the ride.');
     }
@@ -1527,7 +1559,7 @@ disableNearbyLocation(clearError = true): void {
           plateNumber: driver.plateNumber,
           availability: 'Available',
           ratingText: driver.ratingCount
-            ? `${driver.rating?.toFixed(1) ?? '0.0'} ★ · ${driver.ratingCount} reviews`
+            ? `${driver.rating?.toFixed(1) ?? '0.0'} â˜… Â· ${driver.ratingCount} reviews`
             : 'Not yet rated',
         }));
       if (!drivers.length) {

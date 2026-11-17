@@ -36,6 +36,14 @@ export class RequestRidePage implements OnDestroy {
   rideType: 'now' | 'schedule' = 'now';
   rideDate = '';
   rideTime = '';
+
+  get todayLocalDate(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
   passengerType: LocalPassengerType = 'self';
   passengerName = '';
 

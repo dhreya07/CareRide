@@ -309,6 +309,7 @@
                 name="rideDate"
                 class="standard-input"
                 type="date"
+                [min]="todayLocalDate"
                 [(ngModel)]="rideDate"
                 (ngModelChange)="refreshDrivers()"
                 [class.locked]="rideType === 'now'"
