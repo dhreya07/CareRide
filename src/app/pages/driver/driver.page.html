@@ -330,8 +330,11 @@
                 <div class="schedule-route-copy"><span>Destination</span><strong>{{ ride.destination }}</strong></div>
               </div>
             </div>
-            <p class="schedule-request-note" *ngIf="canRespond(ride)">
+            <p class="schedule-request-note" *ngIf="canRespond(ride) && isScheduledRequest(ride)">
               This Passenger selected you. Accept to confirm this scheduled trip.
+            </p>
+            <p class="schedule-request-note" *ngIf="canRespond(ride) && isRideNowRequest(ride)">
+              Ride Now for today. Accept to confirm this trip, or decline if you cannot take it.
             </p>
             <div class="ride-actions" *ngIf="canRespond(ride)">
               <button type="button" class="primary-button" (click)="acceptRequest(ride)">Accept</button>

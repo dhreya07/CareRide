@@ -8,7 +8,13 @@ import { SupabaseService } from './supabase.service';
 
 const STORAGE_KEY = 'careride.local.notifications';
 
-export type RideNotificationEvent = 'ride_request_submitted'|'ride_confirmed'|'driver_assigned'|'driver_on_the_way'|'driver_arrived'|'ride_completed'|'ride_cancelled'|'safety_alert';
+/** Events accepted by the server-side notification function. */
+export type RideNotificationEvent = 'driver_accepted';
+
+export interface SmsNotificationResult {
+  rideId: string;
+  acceptedByProvider: boolean;
+}
 
 export type InAppNotificationType =
   | 'booking_request'
@@ -38,6 +44,8 @@ export interface InAppNotification {
 export class NotificationService {
   private readonly changed = new BehaviorSubject<void>(undefined);
   readonly changes$ = this.changed.asObservable();
+  private readonly smsResult = new BehaviorSubject<SmsNotificationResult | null>(null);
+  readonly smsResults$ = this.smsResult.asObservable();
   private cloudItems: InAppNotification[] | null = null;
   private readonly cloudReadIds = new Set<string>();
 
@@ -253,20 +261,30 @@ export class NotificationService {
 
   async notify(event: RideNotificationEvent, rideId: string): Promise<void> {
     if (!this.supabase.client) {
-      return;
+      this.smsResult.next({ rideId, acceptedByProvider: false });
+      throw new Error('SMS notifications are not configured for this app.');
     }
     const { data, error } = await this.supabase.client.functions.invoke('send-ride-notification', {
       body: { event, rideId },
     });
     if (error) {
+      this.smsResult.next({ rideId, acceptedByProvider: false });
       throw new Error('The server notification function did not accept this request. No SMS delivery is confirmed.');
     }
-    if (data && typeof data === 'object' && 'delivered' in data && data.delivered !== true) {
-      throw new Error(
-        typeof data === 'object' && data && 'error' in data && typeof data.error === 'string'
-          ? data.error
-          : 'SMS was not delivered.',
-      );
+    const response = data && typeof data === 'object'
+      ? data as Record<string, unknown>
+      : null;
+    // UniSMS function returns smsSent. Also accept legacy delivered.
+    const acceptedByProvider =
+      response?.['smsSent'] === true || response?.['delivered'] === true;
+    this.smsResult.next({ rideId, acceptedByProvider });
+    if (!acceptedByProvider) {
+      const detail = typeof response?.['error'] === 'string'
+        ? response['error']
+        : typeof response?.['reason'] === 'string'
+          ? response['reason']
+          : 'SMS confirmation was not accepted by the provider.';
+      throw new Error(`The booking was accepted, but ${detail}`);
     }
   }
 }

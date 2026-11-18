@@ -38,6 +38,20 @@ import { LocationMapComponent } from '../../shared/location-map.component';
 
             <span class="status-pill">{{ ride.status }}</span>
 
+            <section class="detail-card" *ngIf="canDriverRespondToRequest">
+              <h2>Booking request</h2>
+              <p class="page-subtitle">Choose whether to accept this passenger request.</p>
+              <p class="page-subtitle" *ngIf="driverResponseError" role="alert">{{ driverResponseError }}</p>
+              <div class="rating-actions">
+                <button type="button" class="primary-button" [disabled]="driverResponseInFlight" (click)="acceptDriverRequest()">
+                  {{ driverResponseInFlight ? 'Saving...' : 'Accept booking' }}
+                </button>
+                <button type="button" class="secondary-button" *ngIf="canDriverDeclineRequest" [disabled]="driverResponseInFlight" (click)="declineDriverRequest()">
+                  Decline booking
+                </button>
+              </div>
+            </section>
+
             <section class="detail-card" *ngIf="isPassenger">
               <h2>Progress</h2>
               <div class="detail-row"><small>Booking ID</small><strong>{{ ride.id }}</strong></div>
@@ -337,7 +351,10 @@ export class RideDetailsPage implements OnInit {
   private placeLabelToken = 0;
   private rideLoadToken = 0;
   private authorizedOpenRideId: string | null = null;
+  private authorizedDriverResponseId: string | null = null;
   private ratingScrollDone = false;
+  driverResponseInFlight = false;
+  driverResponseError = '';
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
@@ -410,6 +427,24 @@ export class RideDetailsPage implements OnInit {
     }
     const account = this.auth.getLocalAccount();
     return Boolean(account && normalizeAccountRole(account.accountType) === 'passenger');
+  }
+
+  /** This id is set only after the driver-only server RPC authorizes the request. */
+  get canDriverRespondToRequest(): boolean {
+    return Boolean(
+      this.ridesApi.cloudBookings &&
+      this.role === 'driver' &&
+      this.ride &&
+      this.authorizedDriverResponseId === this.ride.id &&
+      (this.ride.status === 'Pending' || this.ride.status === 'Scheduled'),
+    );
+  }
+
+  /** Declining is permitted only for a request assigned to this Driver. */
+  get canDriverDeclineRequest(): boolean {
+    return this.canDriverRespondToRequest && Boolean(
+      this.ride?.preferredDriverId || this.ride?.driverId,
+    );
   }
 
   get progressSteps(): RideProgressStep[] {
@@ -706,10 +741,26 @@ private showRide(): void {
           if (token !== this.rideLoadToken || id !== this.readRideId()) return;
           const listed = available.find((ride) => ride.id === id);
           if (listed) {
-            if (!listed.driverId && !listed.preferredDriverId) {
+            // Keep the rendering role and the authorization result in the same
+            // async path so a slow role lookup cannot hide a valid request.
+            this.role = role;
+            this.authorizedDriverResponseId = id;
+            let authorizedRide = listed;
+            try {
+              // A selected Driver may have RLS access to the complete row.
+              // The discovery RPC remains the authorization boundary; this
+              // optional read only fills fields omitted by older RPC versions.
+              const completeRide = await this.ridesApi.getLocalRide(id);
+              if (completeRide) {
+                authorizedRide = completeRide;
+              }
+            } catch {
+              // Open requests intentionally remain limited to the RPC fields.
+            }
+            if (!authorizedRide.driverId && !authorizedRide.preferredDriverId) {
               this.authorizedOpenRideId = id;
             }
-            this.applyRide(listed);
+            this.applyRide(authorizedRide);
             return;
           }
         }
@@ -730,6 +781,40 @@ private showRide(): void {
       if (token === this.rideLoadToken && id === this.readRideId()) {
         this.applyRide(null);
       }
+    }
+  }
+
+  async acceptDriverRequest(): Promise<void> {
+    await this.respondToDriverRequest('accept');
+  }
+
+  async declineDriverRequest(): Promise<void> {
+    await this.respondToDriverRequest('decline');
+  }
+
+  private async respondToDriverRequest(action: 'accept' | 'decline'): Promise<void> {
+    const ride = this.ride;
+    if (!ride || !this.canDriverRespondToRequest || this.driverResponseInFlight) {
+      return;
+    }
+
+    this.driverResponseInFlight = true;
+    this.driverResponseError = '';
+    try {
+      const saved = action === 'accept'
+        ? await this.ridesApi.acceptBooking(ride.id)
+        : await this.ridesApi.declineBooking(ride.id);
+      this.authorizedDriverResponseId = null;
+      this.authorizedOpenRideId = null;
+      this.applyRide(saved);
+      await this.router.navigate(['/driver/active'], { replaceUrl: true });
+    } catch (error: unknown) {
+      this.driverResponseError = error instanceof Error
+        ? error.message
+        : 'The booking could not be updated. Please try again.';
+    } finally {
+      this.driverResponseInFlight = false;
+      this.changes.markForCheck();
     }
   }
 

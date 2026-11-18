@@ -450,7 +450,26 @@ revoke all on function careride_private.schedule_block_reason(uuid, uuid, date, 
 revoke all on function careride_private.booking_visible(public.bookings, uuid) from public, anon, authenticated, authenticator, service_role, supabase_auth_admin;
 revoke all on function careride_private.driver_has_ongoing(uuid, uuid) from public, anon, authenticated, authenticator, service_role, supabase_auth_admin;
 
-create or replace function public.create_booking(p_booking jsonb)
+-- The legacy staging booking RPCs return UUIDs. PostgreSQL cannot change a
+-- function return type with CREATE OR REPLACE. Replace only the exact booking
+-- RPC signatures in this transaction so callers cannot observe a mixed contract.
+-- DROP FUNCTION uses RESTRICT by default: the migration stops and rolls back if
+-- a database object depends on one of these legacy functions.
+drop function if exists public.create_booking(jsonb);
+drop function if exists public.accept_booking(uuid);
+drop function if exists public.decline_booking(uuid);
+drop function if exists public.refer_booking(uuid, uuid);
+drop function if exists public.accept_referral(uuid);
+drop function if exists public.confirm_driver_change(uuid);
+drop function if exists public.decline_driver_change(uuid);
+drop function if exists public.cancel_booking(uuid);
+drop function if exists public.advance_booking(uuid, text);
+drop function if exists public.start_booking(uuid);
+drop function if exists public.complete_booking(uuid);
+drop function if exists public.rate_completed_booking(uuid, integer, text);
+drop function if exists public.assign_booking(uuid, uuid);
+
+create function public.create_booking(p_booking jsonb)
 returns public.bookings
 language plpgsql
 security definer

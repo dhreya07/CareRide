@@ -1,5 +1,6 @@
-import { Router } from '@angular/router';
-
+﻿import { Router } from '@angular/router';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -310,16 +311,86 @@ export class DriverProfilePage implements OnInit {
    * Opens the camera on supported mobile devices.
    * Desktop browsers may show a regular file picker instead.
    */
-  openCamera(input: HTMLInputElement): void {
-    if (!this.canEditPhoto) {
+ 
+async openCamera(input: HTMLInputElement): Promise<void> {
+  if (!this.canEditPhoto || !this.account) {
+    return;
+  }
+
+  this.photoError = '';
+  this.photoSuccess = '';
+
+  // Keep the existing browser fallback.
+  if (!Capacitor.isNativePlatform()) {
+    input.click();
+    return;
+  }
+
+  const driverId = this.account.id;
+  const sequence = this.loadSequence;
+
+  this.photoSaving = true;
+  this.changes.markForCheck();
+
+  try {
+    const photo = await Camera.getPhoto({
+      quality: 85,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+      source: CameraSource.Camera,
+      saveToGallery: false,
+      correctOrientation: true,
+    });
+
+    if (!photo.webPath) {
+      throw new Error('Camera did not return a photo.');
+    }
+
+    const response = await fetch(photo.webPath);
+
+    if (!response.ok) {
+      throw new Error('Unable to read the captured photo.');
+    }
+
+    const blob = await response.blob();
+    const mimeType = blob.type || 'image/jpeg';
+    const extension = mimeType === 'image/png' ? 'png' : 'jpg';
+
+    const file = new File(
+      [blob],
+      `driver-profile-${Date.now()}.${extension}`,
+      { type: mimeType },
+    );
+
+    const savedPhoto = await this.photos.savePhoto(driverId, file);
+
+    if (
+      sequence !== this.loadSequence ||
+      this.account?.id !== driverId
+    ) {
       return;
     }
 
-    this.photoError = '';
-    this.photoSuccess = '';
+    this.profilePhoto = savedPhoto;
+    this.photoSuccess = 'Profile picture saved on this device.';
+    this.photoSourceOpen = false;
+  } catch (error: unknown) {
+    if (sequence !== this.loadSequence) {
+      return;
+    }
 
-    input.click();
+    const message = error instanceof Error ? error.message : '';
+
+    // Closing the camera should not show a failure message.
+    if (!/cancel|cancelled|canceled|user cancelled/i.test(message)) {
+      this.photoError = message || 'Unable to take a photo.';
+    }
+  } finally {
+    this.photoSaving = false;
+    this.changes.markForCheck();
   }
+}
+
 
   /**
    * Validates and saves the selected image locally.

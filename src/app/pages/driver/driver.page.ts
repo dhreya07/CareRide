@@ -397,6 +397,17 @@ disableNearbyLocation(clearError = true): void {
     this.notifications.changes$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refreshNotificationCount());
+    this.notifications.smsResults$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        this.showNotice(
+          result.acceptedByProvider
+            ? 'The booking was accepted and the SMS provider accepted the confirmation request.'
+            : 'The booking was accepted, but SMS confirmation was not verified. Check the SMS server setup before retrying another booking.',
+          'SMS confirmation',
+        );
+      });
     this.driverGps.changes$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.changes.markForCheck());
@@ -673,6 +684,13 @@ disableNearbyLocation(clearError = true): void {
     this.selectedDay = key;
   }
 
+  /** Ride Now only lives on Today — open Schedule focused on the current day. */
+  private focusScheduleOnToday(): void {
+    const today = new Date();
+    this.selectedDay = this.toDayKey(today);
+    this.calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  }
+
   private toDayKey(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -694,6 +712,9 @@ disableNearbyLocation(clearError = true): void {
 
   showTab(tab: 'home' | 'schedule' | 'active' | 'history' | 'clients'): void {
     if (tab !== 'active') this.disableNearbyLocation();
+    if (tab === 'schedule') {
+      this.focusScheduleOnToday();
+    }
     this.listTab = tab;
   }
 
@@ -701,6 +722,7 @@ disableNearbyLocation(clearError = true): void {
     const path = this.router.url.split('?')[0];
     if (!path.endsWith('/active')) this.disableNearbyLocation();
     if (path.endsWith('/schedule')) {
+      this.focusScheduleOnToday();
       this.listTab = 'schedule';
       return;
     }
@@ -1030,7 +1052,7 @@ disableNearbyLocation(clearError = true): void {
     this.showNotice(
       scheduled
         ? 'Scheduled booking confirmed. It is on My Schedule.'
-        : 'Booking confirmed. It is now on your active trips.',
+        : 'Ride Now confirmed. It is on Today\'s trips.',
       'Accepted',
     );
   }
@@ -1257,6 +1279,11 @@ async signOut(): Promise<void> {
 
   isScheduledRequest(ride: LocalRide): boolean {
     return ride.status === 'Scheduled';
+  }
+
+  /** Unaccepted Ride Now — shown only under Today's schedule. */
+  isRideNowRequest(ride: LocalRide): boolean {
+    return ride.status === 'Pending';
   }
 
   canAcceptReferral(ride: LocalRide): boolean {
@@ -1640,11 +1667,17 @@ private async fetchRides(): Promise<void> {
   }
 
   private async acceptCloudRequest(ride: LocalRide): Promise<void> {
+    const wasRideNow = ride.status === 'Pending';
     try {
       const saved = await this.ridesApi.acceptBooking(ride.id);
       this.localRides.saveRide(saved);
       this.applyRides();
-      this.showNotice('Booking confirmed. It is now on your active trips.', 'Accepted');
+      this.showNotice(
+        wasRideNow
+          ? 'Ride Now confirmed. It is on Today\'s trips. SMS confirmation was sent to the passenger contact.'
+          : 'Scheduled booking confirmed. It is on My Schedule. SMS confirmation was sent to the passenger contact.',
+        'Accepted',
+      );
     } catch (error: unknown) {
       this.showNotice(error instanceof Error ? error.message : 'This booking can no longer be accepted.');
     }
@@ -1867,18 +1900,43 @@ private async fetchRides(): Promise<void> {
 
   private applyRides(): void {
     const sessionDriverId = this.sessionDriverId();
+    const todayKey = this.toDayKey(new Date());
     this.me = this.localRides.findDriver(sessionDriverId) ?? this.localRides.localDemoDriver();
+    // Ride Now (Pending) is Today-only on My Schedule. Active keeps Scheduled requests.
     this.requestRides = sessionDriverId
-      ? this.ridesApi.cloudBookings
-        ? this.cloudAvailableRides.filter((ride) => this.canRespond(ride))
-        : this.localRides.getRides().filter((ride) => this.canRespond(ride))
+      ? (this.ridesApi.cloudBookings
+        ? this.cloudAvailableRides
+        : this.localRides.getRides()
+      ).filter((ride) => this.canRespond(ride) && ride.status !== 'Pending')
       : [];
     const scheduleOwner = sessionDriverId;
-    this.scheduleRides = this.localRides.getDriverScheduleRides(scheduleOwner ?? undefined).filter((ride) =>
+    const fromLocal = this.localRides.getDriverScheduleRides(scheduleOwner ?? undefined).filter((ride) =>
       Boolean(scheduleOwner) && (
         ride.driverId === scheduleOwner ||
-        (ride.status === 'Scheduled' && ride.preferredDriverId === scheduleOwner)
+        (ride.status === 'Scheduled' && ride.preferredDriverId === scheduleOwner) ||
+        (ride.status === 'Pending'
+          && ride.preferredDriverId === scheduleOwner
+          && this.rideDayKey(ride) === todayKey)
       ) && (!this.ridesApi.cloudBookings || isProfileUuid(ride.id)),
+    );
+    // Cloud Ride Now may only appear in list_available_bookings until accepted.
+    const todayRideNow = scheduleOwner
+      ? (this.ridesApi.cloudBookings ? this.cloudAvailableRides : this.localRides.getRides()).filter((ride) =>
+        ride.status === 'Pending'
+        && this.canRespond(ride)
+        && this.rideDayKey(ride) === todayKey
+        && (!this.ridesApi.cloudBookings || isProfileUuid(ride.id)),
+      )
+      : [];
+    const scheduleById = new Map<string, LocalRide>();
+    for (const ride of fromLocal) {
+      scheduleById.set(ride.id, ride);
+    }
+    for (const ride of todayRideNow) {
+      scheduleById.set(ride.id, ride);
+    }
+    this.scheduleRides = [...scheduleById.values()].sort(
+      (a, b) => (this.pickupStart(a) ?? Number.MAX_SAFE_INTEGER) - (this.pickupStart(b) ?? Number.MAX_SAFE_INTEGER),
     );
     this.rides = this.localRides.getDriverQueueRides().filter((ride) =>
       Boolean(scheduleOwner) && ride.driverId === scheduleOwner

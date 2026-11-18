@@ -44,11 +44,6 @@ export class RideService {
       if (ride.preferredDriverId) {
         this.notifications.bookingRequested(ride.preferredDriverId, ride);
       }
-      try {
-        await this.notifications.notify('ride_request_submitted', ride.id);
-      } catch {
-        // Ride is already saved. SMS failure must not mark the request as failed.
-      }
       return ride;
     }
 
@@ -82,10 +77,21 @@ export class RideService {
     return ride ? this.cacheCloudRide(ride) : this.localRides.getRideById(id);
   }
 
-  async acceptBooking(id: string): Promise<LocalRide> {
-    const ride = await this.cloudBookingsApi.acceptBooking(this.requireCloudBooking(id));
-    return this.cacheCloudRide(ride);
-  }
+  
+async acceptBooking(id: string): Promise<LocalRide> {
+  // Existing booking approval — unchanged.
+  const ride = await this.cloudBookingsApi.acceptBooking(
+    this.requireCloudBooking(id),
+  );
+
+  const savedRide = await this.cacheCloudRide(ride);
+
+  // SMS is secondary: the server validates the accepted booking and prevents
+  // duplicate sends. A provider delay must never undo or delay the acceptance.
+  void this.notifications.notify('driver_accepted', ride.id).catch(() => undefined);
+
+  return savedRide;
+}
 
   async declineBooking(id: string): Promise<LocalRide> {
     const ride = await this.cloudBookingsApi.declineBooking(this.requireCloudBooking(id));
